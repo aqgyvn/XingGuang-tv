@@ -1,8 +1,5 @@
 # 影視
 
-### 基於 CatVod 項目
-
-https://github.com/CatVodTVOfficial/CatVodTVJarLoader
 
 ### 點播欄位
 
@@ -220,51 +217,3 @@ scheme://username:password@host:port
 }
 ```
 
-### 爬蟲本地代理
-
-Java
-
-```
-proxy://
-```
-
-```
-Proxy.getUrl(boolean local)
-```
-
-Python
-
-```
-proxy://do=py
-```
-
-```
-getProxyUrl(boolean local)
-```
-
-JS
-
-```
-proxy://do=js
-```
-
-```
-getProxy(boolean local)
-```
-
-### 配置範例
-
-[本地/線上](other/sample/config.json)
-
-### 飛機群
-
-[討論群組](https://t.me/fongmi_official)  
-[發布頻道](https://t.me/fongmi_release)
-
-### 贊助
-
-![photo_2024-01-10_11-39-12](https://github.com/FongMi/TV/assets/3471963/fdc12771-386c-4d5d-9a4d-d0bec0276fa7)
-
-### Star
-
-[![Star History Chart](https://api.star-history.com/svg?repos=FongMi/TV&type=Date)](https://www.star-history.com/#FongMi/TV&Date)
