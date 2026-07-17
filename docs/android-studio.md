@@ -33,7 +33,7 @@ app\build\outputs\apk\debug\app-debug.apk
 
 ## 当前功能范围
 
-- 首页显示“星空影视”。
+- 首页显示“星光影视”。
 - 支持输入视频 URL。
 - 支持进入原生 `VideoView` 播放页调试。
 
