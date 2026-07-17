@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_margin="8.0dip"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <com.google.android.material.imageview.ShapeableImageView android:id="@+id/image" android:background="@color/black_20" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_margin="8.0dip" android:foreground="@drawable/shape_vod_oval" app:shapeAppearanceOverlay="@style/Vod.Circle" />
+    <com.google.android.material.textview.MaterialTextView android:textSize="14.0sp" android:textColor="@color/xg_text_primary" android:gravity="center" android:id="@+id/name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" android:layout_below="@id/image" android:layout_alignStart="@id/image" android:layout_alignEnd="@id/image" />
+</RelativeLayout>

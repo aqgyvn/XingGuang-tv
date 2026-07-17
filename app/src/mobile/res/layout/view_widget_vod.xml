@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <com.google.android.material.textview.MaterialTextView android:textSize="14.0sp" android:textColor="@color/white" android:gravity="center" android:layout_gravity="center|top" android:id="@+id/error" android:background="@drawable/shape_widget" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="24.0dip" />
+    <androidx.appcompat.widget.LinearLayoutCompat android:gravity="center" android:layout_gravity="center|top" android:orientation="horizontal" android:id="@+id/seek" android:background="@drawable/shape_widget" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="24.0dip">
+        <androidx.appcompat.widget.AppCompatImageView android:id="@+id/action" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/ic_widget_rewind" android:layout_marginEnd="8.0dip" />
+        <com.google.android.material.textview.MaterialTextView android:textSize="14.0sp" android:textColor="@color/white" android:id="@+id/time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFeatureSettings="tnum" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+    <androidx.appcompat.widget.AppCompatImageView android:layout_gravity="center|top" android:id="@+id/speed" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="24.0dip" android:src="@drawable/ic_widget_forward" />
+    <androidx.appcompat.widget.LinearLayoutCompat android:gravity="center" android:layout_gravity="center|top" android:orientation="horizontal" android:id="@+id/bright" android:background="@drawable/shape_widget" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="24.0dip">
+        <androidx.appcompat.widget.AppCompatImageView android:id="@+id/brightIcon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="12.0dip" />
+        <com.google.android.material.progressindicator.LinearProgressIndicator android:id="@+id/brightProgress" android:layout_width="120.0dip" android:layout_height="wrap_content" app:indicatorColor="@color/white" app:trackColor="@color/grey_500" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+    <androidx.appcompat.widget.LinearLayoutCompat android:gravity="center" android:layout_gravity="center|top" android:orientation="horizontal" android:id="@+id/volume" android:background="@drawable/shape_widget" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="24.0dip">
+        <androidx.appcompat.widget.AppCompatImageView android:id="@+id/volumeIcon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="12.0dip" />
+        <com.google.android.material.progressindicator.LinearProgressIndicator android:id="@+id/volumeProgress" android:layout_width="120.0dip" android:layout_height="wrap_content" app:indicatorColor="@color/white" app:trackColor="@color/grey_500" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+</FrameLayout>

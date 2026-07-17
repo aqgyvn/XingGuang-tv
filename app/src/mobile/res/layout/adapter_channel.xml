@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat android:gravity="center" android:orientation="horizontal" android:background="@drawable/shape_live" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4.0dip" android:layout_marginBottom="4.0dip"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.google.android.material.textview.MaterialTextView android:textSize="14.0sp" android:textColor="@color/live" android:id="@+id/number" android:duplicateParentState="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="12.0dip" android:fontFeatureSettings="tnum" />
+    <androidx.appcompat.widget.AppCompatImageView android:id="@+id/logo" android:visibility="gone" android:layout_width="44.0dip" android:layout_height="33.0dip" android:layout_marginEnd="12.0dip" />
+    <com.google.android.material.textview.MaterialTextView android:textSize="14.0sp" android:textColor="@color/live" android:ellipsize="marquee" android:id="@+id/name" android:duplicateParentState="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" />
+</androidx.appcompat.widget.LinearLayoutCompat>

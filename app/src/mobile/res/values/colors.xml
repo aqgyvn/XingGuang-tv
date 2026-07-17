@@ -1,0 +1,28 @@
+<resources>
+
+    <color name="primary">@color/xg_primary</color>
+    <color name="primaryDark">@color/xg_primary_dark</color>
+    <color name="accent">@color/xg_primary</color>
+    <color name="indicator">@color/xg_control_fill_active</color>
+    <color name="xg_site_icon">#ff6b778c</color>
+    <color name="xg_background">#fff7faff</color>
+    <color name="xg_card_fill">#ffffffff</color>
+    <color name="xg_control_fill">#1a2f6fdb</color>
+    <color name="xg_control_fill_active">#262f6fdb</color>
+    <color name="xg_control_ripple">#332f6fdb</color>
+    <color name="xg_icon_default">#ff182235</color>
+    <color name="xg_nav_inactive">#ff6b778c</color>
+    <color name="xg_overlay_soft">#a60b1020</color>
+    <color name="xg_overlay_strong">#e60b1020</color>
+    <color name="xg_primary">#ff2f6fdb</color>
+    <color name="xg_primary_dark">#ff1b4f9b</color>
+    <color name="xg_surface">#ffffffff</color>
+    <color name="xg_text_primary">#ff182235</color>
+    <color name="xg_line">#ffd8e2ef</color>
+    <color name="xg_panel_soft">#ffe8eef6</color>
+    <color name="xg_media_fill">#ffd6dee9</color>
+    <color name="xg_badge_blue">#332f6fdb</color>
+    <color name="xg_badge_teal">#332f6fdb</color>
+    <color name="xg_badge_slate">#33748eb8</color>
+
+</resources>

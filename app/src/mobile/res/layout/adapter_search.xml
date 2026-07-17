@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:background="@drawable/shape_paper_panel" android:layout_width="fill_parent" android:layout_height="128.0dip" android:layout_marginTop="6.0dip" android:layout_marginBottom="6.0dip" android:foreground="@drawable/shape_vod" android:layout_marginStart="12.0dip" android:layout_marginEnd="12.0dip"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <com.google.android.material.imageview.ShapeableImageView android:id="@+id/image" android:background="@color/xg_media_fill" android:layout_width="72.0dip" android:layout_height="104.0dip" android:layout_centerVertical="true" app:shapeAppearanceOverlay="@style/Vod.Grid.Large" />
+    <androidx.appcompat.widget.LinearLayoutCompat android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent" android:paddingStart="12.0dip" android:layout_toEndOf="@id/image">
+        <com.google.android.material.textview.MaterialTextView android:textSize="16.0sp" android:textColor="@color/xg_text_primary" android:ellipsize="end" android:id="@+id/name" android:layout_width="fill_parent" android:layout_height="0.0dip" android:maxLines="2" android:layout_weight="1.0" />
+        <com.google.android.material.textview.MaterialTextView android:textSize="12.0sp" android:textColor="@color/xg_nav_inactive" android:id="@+id/site" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="4.0dip" android:singleLine="true" />
+        <com.google.android.material.textview.MaterialTextView android:textSize="12.0sp" android:textColor="@color/xg_nav_inactive" android:id="@+id/remark" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="6.0dip" android:singleLine="true" />
+        <LinearLayout android:orientation="horizontal" android:layout_width="wrap_content" android:layout_height="wrap_content">
+            <TextView android:textSize="11.0sp" android:textColor="@color/control" android:background="@drawable/shape_vod_site" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="来源" android:singleLine="true" />
+            <TextView android:textSize="11.0sp" android:textColor="@color/control" android:background="@drawable/shape_vod_remark" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="播放" android:singleLine="true" android:layout_marginStart="6.0dip" />
+        </LinearLayout>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+</RelativeLayout>

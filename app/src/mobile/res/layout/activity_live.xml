@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:layout_width="fill_parent" android:layout_height="fill_parent" android:keepScreenOn="true"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <FrameLayout android:id="@+id/video" android:background="@color/black" android:focusable="true" android:clickable="true" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <androidx.media3.ui.PlayerView android:id="@+id/exo" android:layout_width="fill_parent" android:layout_height="fill_parent" app:surface_type="texture_view" style="@style/Player.Live" />
+        <include android:id="@+id/widget" android:layout_width="fill_parent" android:layout_height="fill_parent" layout="@layout/view_widget_live" />
+        <include android:id="@+id/control" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="fill_parent" layout="@layout/view_control_live" />
+        <include android:id="@+id/progress" android:layout_width="fill_parent" android:layout_height="fill_parent" layout="@layout/view_progress" />
+        <androidx.appcompat.widget.AppCompatImageView android:layout_gravity="start|top" android:id="@+id/liveBack" android:background="?selectableItemBackgroundBorderless" android:layout_width="40.0dip" android:layout_height="40.0dip" android:layout_marginTop="12.0dip" android:src="@drawable/ic_control_back" android:scaleType="center" android:layout_marginStart="12.0dip" android:elevation="8.0dip" />
+    </FrameLayout>
+    <androidx.appcompat.widget.LinearLayoutCompat android:orientation="horizontal" android:id="@+id/recycler" android:background="@drawable/shape_live_list" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="fill_parent">
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/group" android:padding="8.0dip" android:clipChildren="false" android:clipToPadding="false" android:layout_width="0.0dip" android:layout_height="fill_parent" app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/channel" android:padding="8.0dip" android:clipChildren="false" android:clipToPadding="false" android:layout_width="0.0dip" android:layout_height="fill_parent" android:translationX="-16.0dip" app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/epgData" android:padding="8.0dip" android:clipChildren="false" android:clipToPadding="false" android:layout_width="0.0dip" android:layout_height="fill_parent" app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+</FrameLayout>

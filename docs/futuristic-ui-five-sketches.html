@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>星光视频 - 克制版真实功能 UI 草图</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page: #080a0f;
+      --text: #f6f8fc;
+      --muted: #9fa9b8;
+      --line: rgba(255,255,255,.11);
+      font-family: Inter, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: linear-gradient(180deg, #111722 0, #080a0f 420px, #050609 100%);
+      letter-spacing: 0;
+    }
+    h1, h2, h3, p { margin: 0; }
+    svg { display: block; }
+    .page { width: min(1500px, calc(100vw - 32px)); margin: 0 auto; padding: 28px 0 64px; }
+    .intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 22px;
+      align-items: center;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #101620;
+      box-shadow: 0 24px 70px rgba(0,0,0,.34);
+    }
+    h1 { font-size: 40px; line-height: 1.08; font-weight: 850; }
+    .intro p { margin-top: 8px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+    .tags, .nav, .chips, .actions, .bottom, .tools { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tags { max-width: 620px; justify-content: flex-end; }
+    .tag, .chip, .tool, .nav span {
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 9px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .board { display: grid; gap: 26px; margin-top: 26px; }
+    .direction {
+      --bg: #0b1018;
+      --panel: #121a27;
+      --surface: #192335;
+      --soft: #263449;
+      --fg: #f7f9ff;
+      --sub: #a8b2c0;
+      --a: #7dd3fc;
+      --b: #e879f9;
+      overflow: hidden;
+      color: var(--fg);
+      border: 1px solid color-mix(in srgb, var(--a) 28%, rgba(255,255,255,.1));
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--a) 10%, transparent), transparent 42%),
+        linear-gradient(180deg, var(--bg), #07090f);
+      box-shadow: 0 26px 80px rgba(0,0,0,.36);
+    }
+    .head {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 18px 20px;
+      border-bottom: 1px solid color-mix(in srgb, var(--a) 24%, rgba(255,255,255,.08));
+      background: rgba(255,255,255,.032);
+    }
+    .brand {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: var(--a);
+      border: 1px solid color-mix(in srgb, var(--a) 58%, rgba(255,255,255,.14));
+      background: color-mix(in srgb, var(--a) 14%, transparent);
+    }
+    .brand svg { width: 32px; height: 32px; }
+    h2 { font-size: 23px; font-weight: 820; }
+    .head p { margin-top: 4px; color: var(--sub); font-size: 12px; line-height: 1.55; }
+    .nav { justify-content: flex-end; }
+    .nav span { color: var(--fg); border-color: color-mix(in srgb, var(--a) 34%, rgba(255,255,255,.12)); }
+    .screens {
+      display: grid;
+      grid-template-columns: 1.18fr .82fr;
+      gap: 14px;
+      padding: 16px;
+    }
+    .primary, .side {
+      min-height: 560px;
+      border: 1px solid color-mix(in srgb, var(--a) 21%, rgba(255,255,255,.09));
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--panel) 94%, black 3%);
+      overflow: hidden;
+    }
+    .side {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+      background: rgba(255,255,255,.025);
+    }
+    .mini {
+      position: relative;
+      min-height: 268px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+    .title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 38px;
+      padding: 9px 11px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.035);
+      font-size: 12px;
+      font-weight: 760;
+    }
+    .title small { color: var(--sub); font-size: 10px; font-weight: 500; }
+    .content { padding: 12px; }
+    .topbar {
+      display: grid;
+      grid-template-columns: 36px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 11px;
+      padding: 10px;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--surface) 82%, black 4%);
+    }
+    .appmark, .iconbtn {
+      display: grid;
+      place-items: center;
+      color: var(--a);
+      background: color-mix(in srgb, var(--a) 13%, transparent);
+      border: 1px solid color-mix(in srgb, var(--a) 40%, rgba(255,255,255,.12));
+      border-radius: 8px;
+    }
+    .appmark { width: 36px; height: 36px; }
+    .iconbtn { width: 30px; height: 30px; }
+    .appmark svg, .iconbtn svg { width: 17px; height: 17px; }
+    .topbar b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+    .topbar span, .muted { color: var(--sub); font-size: 10px; }
+    .actions { gap: 6px; }
+    .hero {
+      min-height: 148px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 16px;
+      border-radius: 8px;
+      background:
+        linear-gradient(130deg, color-mix(in srgb, var(--a) 26%, transparent), transparent 58%),
+        linear-gradient(180deg, color-mix(in srgb, var(--soft) 86%, black 3%), color-mix(in srgb, var(--surface) 92%, black 5%));
+    }
+    .hero b { display: block; max-width: 540px; font-size: 28px; line-height: 1.14; }
+    .hero span { margin-top: 8px; color: var(--sub); font-size: 12px; }
+    .chips { margin-top: 11px; }
+    .chip.active, .tool.active, .navitem.active, .cell.active, .row.active {
+      color: var(--fg);
+      border-color: var(--a);
+      background: color-mix(in srgb, var(--a) 24%, transparent);
+    }
+    .poster-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 9px;
+      margin-top: 12px;
+    }
+    .poster {
+      min-height: 126px;
+      padding: 9px;
+      border-radius: 8px;
+      background: linear-gradient(150deg, color-mix(in srgb, var(--soft) 86%, black 3%), color-mix(in srgb, var(--surface) 90%, black 8%));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.055);
+      font-size: 11px;
+    }
+    .poster b { display: block; margin-top: 76px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .badge {
+      min-height: 18px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--b) 34%, rgba(0,0,0,.14));
+      color: var(--fg);
+      font-size: 10px;
+    }
+    .fab-stack {
+      position: absolute;
+      right: 10px;
+      bottom: 58px;
+      display: grid;
+      gap: 6px;
+    }
+    .fab {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--fg);
+      background: color-mix(in srgb, var(--a) 34%, var(--surface));
+      border: 1px solid color-mix(in srgb, var(--a) 54%, transparent);
+      font-size: 10px;
+    }
+    .bottom {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      justify-content: space-around;
+      padding: 7px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--surface) 78%, rgba(0,0,0,.22));
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    .navitem {
+      min-width: 72px;
+      min-height: 32px;
+      display: grid;
+      place-items: center;
+      grid-auto-flow: column;
+      gap: 6px;
+      border-radius: 999px;
+      color: var(--sub);
+      font-size: 10px;
+    }
+    .video {
+      position: relative;
+      min-height: 118px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #020305;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .video::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 72% 28%, color-mix(in srgb, var(--a) 24%, transparent), transparent 34%),
+        linear-gradient(180deg, transparent, rgba(0,0,0,.84));
+    }
+    .play {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      z-index: 2;
+      color: var(--fg);
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--a) 32%, rgba(0,0,0,.52));
+      border: 1px solid color-mix(in srgb, var(--a) 54%, transparent);
+    }
+    .seek {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      height: 4px;
+      border-radius: 999px;
+      z-index: 2;
+      background: rgba(255,255,255,.18);
+    }
+    .seek b { display: block; width: 58%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--a), var(--b)); }
+    .rows { display: grid; gap: 7px; margin-top: 9px; }
+    .row, .source {
+      min-height: 32px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 9px;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--surface) 84%, black 4%);
+      font-size: 10px;
+    }
+    .row span, .source span { color: var(--sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .episode { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 8px; }
+    .cell {
+      min-height: 26px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      background: color-mix(in srgb, var(--surface) 84%, black 4%);
+      font-size: 10px;
+    }
+    .live {
+      position: relative;
+      min-height: 208px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #020305;
+    }
+    .live::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.82), rgba(0,0,0,.26) 50%, rgba(0,0,0,.78)),
+        radial-gradient(circle at 70% 25%, color-mix(in srgb, var(--a) 20%, transparent), transparent 33%);
+    }
+    .drawer {
+      position: absolute;
+      left: 9px;
+      right: 9px;
+      top: 36px;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: .74fr 1fr 1.15fr;
+      gap: 7px;
+    }
+    .col {
+      min-height: 122px;
+      padding: 7px;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--panel) 80%, rgba(0,0,0,.34));
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    .col b { display: block; margin-bottom: 6px; color: var(--sub); font-size: 10px; }
+    .liveitem {
+      min-height: 24px;
+      padding: 6px;
+      margin-top: 5px;
+      border-radius: 7px;
+      background: rgba(255,255,255,.06);
+      font-size: 10px;
+    }
+    .liveitem.active { background: color-mix(in srgb, var(--a) 30%, transparent); }
+    .tools {
+      position: absolute;
+      left: 9px;
+      right: 9px;
+      bottom: 9px;
+      z-index: 3;
+    }
+    .source {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      margin-bottom: 7px;
+    }
+    .iconpair { display: flex; gap: 5px; }
+    .tiny {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border-radius: 6px;
+      color: var(--a);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      font-size: 10px;
+    }
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 8px; }
+    .mist { --bg:#0b1017; --panel:#121a25; --surface:#1b2636; --soft:#2a3647; --a:#7dd3fc; --b:#c084fc; }
+    .graphite { --bg:#0c0d10; --panel:#15171d; --surface:#20242d; --soft:#303642; --a:#d8dee9; --b:#8aa4ff; }
+    .indigo { --bg:#0d1020; --panel:#151a31; --surface:#202746; --soft:#303a65; --a:#8da2ff; --b:#f7c873; }
+    .teal { --bg:#071210; --panel:#0e201c; --surface:#17332d; --soft:#224d43; --a:#5eead4; --b:#a7f3d0; }
+    .ivory {
+      color-scheme: light;
+      --bg:#eef3f7; --panel:#f8fbff; --surface:#e7eef6; --soft:#d6e1ec; --fg:#162033; --sub:#58677a; --a:#2563eb; --b:#00a78e;
+      color: var(--fg);
+      background: linear-gradient(180deg, #f8fbff, #e9f1f8);
+    }
+    .ivory .primary, .ivory .side, .ivory .mini { background: rgba(255,255,255,.72); }
+    .ivory .video, .ivory .live { color: #f7f9ff; }
+    @media (max-width: 1080px) {
+      .screens { grid-template-columns: 1fr; }
+      .primary { min-height: auto; }
+    }
+    @media (max-width: 760px) {
+      .intro, .head { grid-template-columns: 1fr; }
+      .tags, .nav { justify-content: flex-start; }
+      .side { grid-template-columns: 1fr; }
+      .poster-grid { grid-template-columns: repeat(2, 1fr); }
+      .drawer { grid-template-columns: 1fr; }
+      h1 { font-size: 31px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="intro">
+      <div>
+        <h1>回到更克制的真实功能 UI 草图</h1>
+        <p>这版不追求强烈概念风，而是按项目现有页面和功能做更像实际 App 的视觉方案：底部导航、点播、播放详情、直播、主设置、播放器设置都保留。</p>
+      </div>
+      <div class="tags">
+        <span class="tag">HomeActivity：点播 / 直播 / 设置</span>
+        <span class="tag">VodFragment：搜索 / 收藏 / 历史 / 继续观看 / 分类 / 筛选 / 链接 / 置顶</span>
+        <span class="tag">VideoActivity：投屏 / 信息 / 收藏 / 设置 / 线路 / 画质 / 选集 / 简介</span>
+        <span class="tag">LiveActivity：分组 / 频道 / EPG</span>
+        <span class="tag">Settings：源配置 / 播放器设置</span>
+      </div>
+    </section>
+
+    <section class="board">
+      <article class="direction mist">
+        <header class="head">
+          <div class="brand" aria-label="雾蓝播放图标"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M8 24c8-10 24-14 32-6-8 10-24 14-32 6Z" stroke="currentColor" stroke-width="3"/><path d="M21 17v14l11-7-11-7Z" fill="currentColor"/></svg></div>
+          <div><h2>01 雾蓝影院版</h2><p>比上一版更稳的深色视频 App 方向：低亮度底色、蓝紫焦点、内容层级清楚。</p></div>
+          <nav class="nav"><span>点播</span><span>播放</span><span>直播</span><span>设置</span><span>播放器设置</span></nav>
+        </header>
+        <div class="screens">
+          <section class="primary">
+            <div class="title">点播页 <small>搜索 / 收藏 / 历史 / 分类 / 筛选 / 链接 / 置顶</small></div>
+            <div class="content">
+              <div class="topbar"><div class="appmark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4V6Z" stroke="currentColor" stroke-width="2"/><path d="m10 9 5 3-5 3V9Z" fill="currentColor"/></svg></div><div><b>星光视频 · 当前站点</b><span>线路优先 · 自动测速 · 片单视图</span></div><div class="actions"><span class="iconbtn">⌕</span><span class="iconbtn">☆</span><span class="iconbtn">↺</span></div></div>
+              <div class="hero"><b>继续观看：长安十二时辰 第 18 集</b><span>EXO · 主线 · 点击影片继续 · 延续项目继续观看入口</span></div>
+              <div class="chips"><span class="chip active">推荐</span><span class="chip">电影</span><span class="chip">剧集</span><span class="chip">动漫</span><span class="chip">综艺</span><span class="chip">筛选</span><span class="chip">链接</span><span class="chip">置顶</span></div>
+              <div class="poster-grid"><div class="poster"><span class="badge">1080P</span><b>繁花</b></div><div class="poster"><span class="badge">更新</span><b>庆余年</b></div><div class="poster"><span class="badge">站点</span><b>三体</b></div><div class="poster"><span class="badge">进度</span><b>流浪地球</b></div><div class="poster"><span class="badge">收藏</span><b>我的片单</b></div></div>
+            </div>
+          </section>
+          <section class="side">
+            <div class="mini"><div class="title">首页容器 <small>BottomNavigationView</small></div><div class="content"><div class="hero"><b>FragmentContainerView</b><span>承载点播、直播、设置</span></div></div><div class="bottom"><div class="navitem active">点播</div><div class="navitem">直播</div><div class="navitem">设置</div></div></div>
+            <div class="mini"><div class="title">播放详情页 <small>VideoActivity</small></div><div class="content"><div class="video"><div class="play">▶</div><div class="seek"><b></b></div></div><div class="chips"><span class="tool active">投屏</span><span class="tool">信息</span><span class="tool">收藏</span><span class="tool">设置</span></div><div class="rows"><div class="row active">线路 <span>主线</span></div><div class="row">画质 <span>1080P</span></div></div><div class="episode"><div class="cell">15</div><div class="cell">16</div><div class="cell active">18</div><div class="cell">19</div><div class="cell">更多</div></div><div class="row">简介 <span>导演 / 演员 / 剧情</span></div></div></div>
+            <div class="mini"><div class="title">直播页 <small>LiveActivity</small></div><div class="content"><div class="live"><div class="drawer"><div class="col"><b>分组</b><div class="liveitem active">央视</div><div class="liveitem">卫视</div></div><div class="col"><b>频道</b><div class="liveitem active">CCTV-1</div><div class="liveitem">CCTV-6</div></div><div class="col"><b>EPG</b><div class="liveitem active">20:00 直播</div><div class="liveitem">21:30 电影</div></div></div><div class="tools"><span class="tool active">配置</span><span class="tool">换线</span><span class="tool">跨源</span></div></div></div></div>
+            <div class="mini"><div class="title">设置页 + 播放器设置 <small>真实功能</small></div><div class="content"><div class="source active"><b>点播配置</b><span>vod.json</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">↺</i></div></div><div class="source"><b>直播配置</b><span>live.txt</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">↺</i></div></div><div class="source"><b>壁纸配置</b><span>wall</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">⟳</i></div></div><div class="settings-grid"><div class="row">播放器设置 <span>进入</span></div><div class="row">隐身模式 <span>关</span></div><div class="row">图片尺寸 <span>中</span></div><div class="row">DoH <span>自动</span></div><div class="row">缓存 / 备份 / 恢复 / 版本 <span>管理</span></div><div class="row active">播放内核 / 渲染方式 / 画面比例 / 字幕 / 缓冲次数 / 播放速度 / 隧道播放 / 音频解码 / 视频解码 / 自动换线 / AAC 音轨 / 弹幕加载 / 广告拦截 / 后台播放 / User-Agent <span>完整</span></div></div></div></div>
+          </section>
+        </div>
+      </article>
+
+      <article class="direction graphite">
+        <header class="head">
+          <div class="brand" aria-label="石墨窗口图标"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M8 13h32v24H8V13Z" stroke="currentColor" stroke-width="3"/><path d="M8 21h32M18 21v16" stroke="currentColor" stroke-width="3"/></svg></div>
+          <div><h2>02 石墨系统版</h2><p>接近系统级媒体中心，灰阶克制、蓝色只做焦点，适合长期使用。</p></div>
+          <nav class="nav"><span>点播</span><span>播放</span><span>直播</span><span>设置</span><span>播放器设置</span></nav>
+        </header>
+        <div class="screens">
+          <section class="primary"><div class="title">点播页 <small>系统媒体中心</small></div><div class="content"><div class="topbar"><div class="appmark">▶</div><div><b>星光视频 · 系统片库</b><span>搜索 / 收藏 / 历史</span></div><div class="actions"><span class="iconbtn">⌕</span><span class="iconbtn">☆</span><span class="iconbtn">↺</span></div></div><div class="hero"><b>继续观看放在稳定焦点位</b><span>线路优先 · EXO · 分类、筛选、链接、置顶保留</span></div><div class="chips"><span class="chip active">推荐</span><span class="chip">电影</span><span class="chip">剧集</span><span class="chip">筛选</span><span class="chip">链接</span><span class="chip">置顶</span></div><div class="poster-grid"><div class="poster"><span class="badge">年份</span><b>影片</b></div><div class="poster"><span class="badge">站点</span><b>剧集</b></div><div class="poster"><span class="badge">进度</span><b>动漫</b></div><div class="poster"><span class="badge">备注</span><b>综艺</b></div><div class="poster"><span class="badge">历史</span><b>最近</b></div></div></div></section>
+          <section class="side"><div class="mini"><div class="title">首页容器 <small>三导航</small></div><div class="content"><div class="row active">点播 <span>当前</span></div><div class="row">直播 <span>频道</span></div><div class="row">设置 <span>配置</span></div></div><div class="bottom"><div class="navitem active">点播</div><div class="navitem">直播</div><div class="navitem">设置</div></div></div><div class="mini"><div class="title">播放详情页 <small>播放控制</small></div><div class="content"><div class="video"><div class="play">▶</div><div class="seek"><b></b></div></div><div class="rows"><div class="row active">投屏 / 信息 / 收藏 / 设置 <span>顶部控制</span></div><div class="row">线路 / 画质 <span>横滑</span></div><div class="row">选集 / 简介 <span>详情</span></div></div></div></div><div class="mini"><div class="title">直播页 <small>三列抽屉</small></div><div class="content"><div class="live"><div class="drawer"><div class="col"><b>分组</b><div class="liveitem active">央视</div><div class="liveitem">体育</div></div><div class="col"><b>频道</b><div class="liveitem active">CCTV-5</div><div class="liveitem">卫视</div></div><div class="col"><b>EPG</b><div class="liveitem active">正在直播</div><div class="liveitem">下一节目</div></div></div></div></div></div><div class="mini"><div class="title">设置页 <small>列表清晰</small></div><div class="content"><div class="source active"><b>点播配置</b><span>URL</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">↺</i></div></div><div class="source"><b>直播配置</b><span>URL</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">↺</i></div></div><div class="source"><b>壁纸配置</b><span>URL</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">⟳</i></div></div><div class="settings-grid"><div class="row">播放器设置 <span>进入</span></div><div class="row">隐身模式 / 图片尺寸 / DoH / 缓存 / 备份 / 恢复 / 版本 <span>主设置</span></div><div class="row active">播放内核 / 渲染方式 / 画面比例 / 字幕 / 缓冲次数 / 播放速度 / 隧道播放 / 音频解码 / 视频解码 / 自动换线 / AAC 音轨 / 弹幕加载 / 广告拦截 / 后台播放 / User-Agent <span>完整</span></div></div></div></div></section>
+        </div>
+      </article>
+
+      <article class="direction indigo">
+        <header class="head">
+          <div class="brand" aria-label="靛蓝星图图标"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 7 29 20l12 4-12 4-5 13-5-13-12-4 12-4 5-13Z" stroke="currentColor" stroke-width="3"/><circle cx="38" cy="11" r="3" fill="currentColor"/></svg></div>
+          <div><h2>03 靛蓝星图版</h2><p>比纯黑更有层次，适合“未来感”但不刺眼的方向，金色只用于进度和选中状态。</p></div>
+          <nav class="nav"><span>点播</span><span>播放</span><span>直播</span><span>设置</span><span>播放器设置</span></nav>
+        </header>
+        <div class="screens">
+          <section class="primary"><div class="title">点播页 <small>星图层级</small></div><div class="content"><div class="topbar"><div class="appmark">✦</div><div><b>星光视频 · 星图片库</b><span>搜索 / 收藏 / 历史 / 自动测速</span></div><div class="actions"><span class="iconbtn">⌕</span><span class="iconbtn">☆</span><span class="iconbtn">↺</span></div></div><div class="hero"><b>继续观看，层级清楚但不厚重</b><span>EXO · 线路优先 · 分类 / 筛选 / 链接 / 置顶</span></div><div class="chips"><span class="chip active">推荐</span><span class="chip">电影</span><span class="chip">剧集</span><span class="chip">动漫</span><span class="chip">综艺</span></div><div class="poster-grid"><div class="poster"><span class="badge">1080P</span><b>影片</b></div><div class="poster"><span class="badge">更新</span><b>剧集</b></div><div class="poster"><span class="badge">站点</span><b>片源</b></div><div class="poster"><span class="badge">历史</span><b>记录</b></div><div class="poster"><span class="badge">收藏</span><b>Keep</b></div></div></div></section>
+          <section class="side"><div class="mini"><div class="title">首页容器 <small>底部导航</small></div><div class="content"><div class="hero"><b>点播 / 直播 / 设置</b><span>不加额外首页，保持项目结构</span></div></div><div class="bottom"><div class="navitem active">点播</div><div class="navitem">直播</div><div class="navitem">设置</div></div></div><div class="mini"><div class="title">播放详情页 <small>线路画质</small></div><div class="content"><div class="video"><div class="play">▶</div><div class="seek"><b></b></div></div><div class="chips"><span class="tool active">投屏</span><span class="tool">信息</span><span class="tool">收藏</span><span class="tool">设置</span></div><div class="episode"><div class="cell">01</div><div class="cell active">02</div><div class="cell">03</div><div class="cell">04</div><div class="cell">更多</div></div><div class="row">简介 <span>导演 / 演员 / 剧情</span></div></div></div><div class="mini"><div class="title">直播页 <small>EPG</small></div><div class="content"><div class="live"><div class="drawer"><div class="col"><b>分组</b><div class="liveitem active">央视</div><div class="liveitem">卫视</div></div><div class="col"><b>频道</b><div class="liveitem active">CCTV-1</div><div class="liveitem">CCTV-13</div></div><div class="col"><b>EPG</b><div class="liveitem active">新闻</div><div class="liveitem">剧场</div></div></div></div></div></div><div class="mini"><div class="title">设置页 <small>完整设置</small></div><div class="content"><div class="source active"><b>点播配置</b><span>vod</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">↺</i></div></div><div class="source"><b>直播配置</b><span>live</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">↺</i></div></div><div class="settings-grid"><div class="row">壁纸配置 / 播放器设置 / 隐身模式 / 图片尺寸 / DoH / 缓存 / 备份 / 恢复 / 版本 <span>主设置</span></div><div class="row active">播放内核 / 渲染方式 / 画面比例 / 字幕 / 缓冲次数 / 播放速度 / 隧道播放 / 音频解码 / 视频解码 / 自动换线 / AAC 音轨 / 弹幕加载 / 广告拦截 / 后台播放 / User-Agent <span>播放器</span></div></div></div></div></section>
+        </div>
+      </article>
+
+      <article class="direction teal">
+        <header class="head">
+          <div class="brand" aria-label="青绿源控图标"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M10 12h12v10H10V12Zm16 0h12v10H26V12ZM10 28h12v8H10v-8Zm16 0h12v8H26v-8Z" stroke="currentColor" stroke-width="3"/><path d="M22 17h4M16 22v6M32 22v6" stroke="currentColor" stroke-width="3"/></svg></div>
+          <div><h2>04 青绿源控版</h2><p>保留专业感，但不做终端黑客风；适合突出源配置、线路、DoH、缓存和 UA。</p></div>
+          <nav class="nav"><span>点播</span><span>播放</span><span>直播</span><span>设置</span><span>播放器设置</span></nav>
+        </header>
+        <div class="screens">
+          <section class="primary"><div class="title">设置页 <small>源配置优先</small></div><div class="content"><div class="source active"><b>点播配置</b><span>https://site/vod.json</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">↺</i></div></div><div class="source"><b>直播配置</b><span>https://site/live.txt</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">↺</i></div></div><div class="source"><b>壁纸配置</b><span>wallpaper service</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">⟳</i></div></div><div class="settings-grid"><div class="row active">播放器设置 <span>进入</span></div><div class="row">隐身模式 <span>关</span></div><div class="row">图片尺寸 <span>大</span></div><div class="row">DoH <span>自动</span></div><div class="row">缓存 <span>128M</span></div><div class="row">备份 / 恢复 / 版本 <span>管理</span></div><div class="row active">播放内核 <span>EXO</span></div><div class="row">渲染方式 / 画面比例 / 字幕 / 缓冲次数 / 播放速度 / 隧道播放 <span>基础播放</span></div><div class="row">音频解码 / 视频解码 / 自动换线 / AAC 音轨 / 弹幕加载 / 广告拦截 / 后台播放 / User-Agent <span>高级策略</span></div></div></div></section>
+          <section class="side"><div class="mini"><div class="title">首页容器 <small>状态导航</small></div><div class="content"><div class="row active">点播 <span>source ok</span></div><div class="row">直播 <span>epg sync</span></div><div class="row">设置 <span>config</span></div></div><div class="bottom"><div class="navitem active">点播</div><div class="navitem">直播</div><div class="navitem">设置</div></div></div><div class="mini"><div class="title">点播页 <small>源状态片库</small></div><div class="content"><div class="topbar"><div class="appmark">▦</div><div><b>当前站点</b><span>搜索 / 收藏 / 历史</span></div><div class="actions"><span class="iconbtn">⌕</span><span class="iconbtn">↺</span></div></div><div class="hero"><b>继续观看 + 线路状态</b><span>分类 / 筛选 / 链接 / 置顶</span></div></div></div><div class="mini"><div class="title">播放详情页 <small>线路</small></div><div class="content"><div class="video"><div class="play">▶</div><div class="seek"><b></b></div></div><div class="rows"><div class="row active">线路 <span>main 120ms</span></div><div class="row">画质 <span>1080P</span></div><div class="row">投屏 / 信息 / 收藏 / 设置 <span>控制</span></div><div class="row">选集 / 简介 <span>详情</span></div></div></div></div><div class="mini"><div class="title">直播页 <small>源 + EPG</small></div><div class="content"><div class="live"><div class="drawer"><div class="col"><b>分组</b><div class="liveitem active">源一</div><div class="liveitem">源二</div></div><div class="col"><b>频道</b><div class="liveitem active">CCTV</div><div class="liveitem">卫视</div></div><div class="col"><b>EPG</b><div class="liveitem active">sync ok</div><div class="liveitem">next</div></div></div></div></div></div></section>
+        </div>
+      </article>
+
+      <article class="direction ivory">
+        <header class="head">
+          <div class="brand" aria-label="云白媒体图标"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M8 14h32v22H8V14Z" stroke="currentColor" stroke-width="3"/><path d="M8 22h32M18 22v14" stroke="currentColor" stroke-width="3"/><path d="m27 27 6 4-6 4v-8Z" fill="currentColor"/></svg></div>
+          <div><h2>05 云白轻系统版</h2><p>浅色但不是网页感，强调干净片库和设置可读性；视频和直播仍保留深色视频区域。</p></div>
+          <nav class="nav"><span>点播</span><span>播放</span><span>直播</span><span>设置</span><span>播放器设置</span></nav>
+        </header>
+        <div class="screens">
+          <section class="primary"><div class="title">点播页 <small>浅色片库</small></div><div class="content"><div class="topbar"><div class="appmark">▶</div><div><b>星光视频</b><span>线路优先 · 自动测速 · 片单视图</span></div><div class="actions"><span class="iconbtn">⌕</span><span class="iconbtn">☆</span><span class="iconbtn">↺</span></div></div><div class="hero"><b>继续观看，清晰但不压迫</b><span>搜索 / 收藏 / 历史 / 分类 / 筛选 / 链接 / 置顶</span></div><div class="chips"><span class="chip active">推荐</span><span class="chip">电影</span><span class="chip">剧集</span><span class="chip">动漫</span><span class="chip">综艺</span></div><div class="poster-grid"><div class="poster"><span class="badge">1080P</span><b>影片</b></div><div class="poster"><span class="badge">更新</span><b>剧集</b></div><div class="poster"><span class="badge">站点</span><b>片源</b></div><div class="poster"><span class="badge">历史</span><b>记录</b></div><div class="poster"><span class="badge">收藏</span><b>Keep</b></div></div></div></section>
+          <section class="side"><div class="mini"><div class="title">首页容器 <small>浅色底部导航</small></div><div class="content"><div class="row active">点播 <span>当前</span></div><div class="row">直播 <span>频道</span></div><div class="row">设置 <span>配置</span></div></div><div class="bottom"><div class="navitem active">点播</div><div class="navitem">直播</div><div class="navitem">设置</div></div></div><div class="mini"><div class="title">播放详情页 <small>黑色视频区</small></div><div class="content"><div class="video"><div class="play">▶</div><div class="seek"><b></b></div></div><div class="chips"><span class="tool active">投屏</span><span class="tool">信息</span><span class="tool">收藏</span><span class="tool">设置</span></div><div class="rows"><div class="row active">线路 <span>主线</span></div><div class="row">画质 <span>高清</span></div><div class="row">选集 / 简介 <span>完整</span></div></div></div></div><div class="mini"><div class="title">直播页 <small>轻量抽屉</small></div><div class="content"><div class="live"><div class="drawer"><div class="col"><b>分组</b><div class="liveitem active">央视</div><div class="liveitem">卫视</div></div><div class="col"><b>频道</b><div class="liveitem active">CCTV-1</div><div class="liveitem">CCTV-5</div></div><div class="col"><b>EPG</b><div class="liveitem active">20:00 正在播放</div><div class="liveitem">21:00 下一节目</div></div></div></div></div></div><div class="mini"><div class="title">设置页 <small>可读性优先</small></div><div class="content"><div class="source active"><b>点播配置</b><span>URL</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">↺</i></div></div><div class="source"><b>直播配置</b><span>URL</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">↺</i></div></div><div class="source"><b>壁纸配置</b><span>URL</span><div class="iconpair"><i class="tiny">⌂</i><i class="tiny">⟳</i></div></div><div class="settings-grid"><div class="row">播放器设置 <span>进入</span></div><div class="row">隐身模式 / 图片尺寸 / DoH / 缓存 / 备份 / 恢复 / 版本 <span>主设置</span></div><div class="row active">播放内核 / 渲染方式 / 画面比例 / 字幕 / 缓冲次数 / 播放速度 / 隧道播放 / 音频解码 / 视频解码 / 自动换线 / AAC 音轨 / 弹幕加载 / 广告拦截 / 后台播放 / User-Agent <span>完整</span></div></div></div></div></section>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

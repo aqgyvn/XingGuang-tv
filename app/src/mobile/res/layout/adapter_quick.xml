@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat android:orientation="vertical" android:background="@drawable/shape_item" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_margin="8.0dip"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.google.android.material.textview.MaterialTextView android:textSize="14.0sp" android:textColor="@color/xg_text_primary" android:id="@+id/name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" />
+    <com.google.android.material.textview.MaterialTextView android:textSize="12.0sp" android:textColor="@color/xg_nav_inactive" android:id="@+id/site" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2.0dip" android:singleLine="true" />
+    <com.google.android.material.textview.MaterialTextView android:textSize="12.0sp" android:textColor="@color/xg_nav_inactive" android:id="@+id/remark" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2.0dip" android:singleLine="true" />
+</androidx.appcompat.widget.LinearLayoutCompat>

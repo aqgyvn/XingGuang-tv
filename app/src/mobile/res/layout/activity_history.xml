@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat android:orientation="vertical" android:background="@color/xg_background" android:fitsSystemWindows="true" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <com.google.android.material.appbar.MaterialToolbar android:id="@+id/toolbar" android:background="@color/xg_surface" android:layout_width="fill_parent" android:layout_height="?actionBarSize" app:menu="@menu/menu_history" app:navigationIconTint="@color/xg_icon_default" app:title="@string/app_history" app:titleTextAppearance="@style/ToolbarTextAppearance" />
+    <com.fongmi.android.tv.ui.custom.ProgressLayout android:id="@+id/progressLayout" android:background="@color/xg_background" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/recycler" android:paddingBottom="8.0dip" android:clipChildren="false" android:clipToPadding="false" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_marginTop="-8.0dip" android:paddingStart="8.0dip" android:paddingEnd="8.0dip" />
+    </com.fongmi.android.tv.ui.custom.ProgressLayout>
+</androidx.appcompat.widget.LinearLayoutCompat>

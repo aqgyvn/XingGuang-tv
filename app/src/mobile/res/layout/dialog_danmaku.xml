@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <androidx.appcompat.widget.LinearLayoutCompat android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_margin="16.0dip">
+        <com.google.android.material.textview.MaterialTextView android:textSize="16.0sp" android:textColor="?android:textColorPrimary" android:id="@+id/title" android:layout_width="0.0dip" android:layout_height="wrap_content" android:text="@string/danmaku_select" android:layout_weight="1.0" />
+        <androidx.appcompat.widget.AppCompatImageView android:id="@+id/choose" android:background="?selectableItemBackgroundBorderless" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/ic_action_choose" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+    <com.fongmi.android.tv.ui.custom.CustomRecyclerView android:id="@+id/recycler" android:paddingBottom="16.0dip" android:clipChildren="false" android:clipToPadding="false" android:layout_width="fill_parent" android:layout_height="wrap_content" android:paddingStart="16.0dip" android:paddingEnd="16.0dip" app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" app:maxHeight="204.0dip" />
+</androidx.appcompat.widget.LinearLayoutCompat>

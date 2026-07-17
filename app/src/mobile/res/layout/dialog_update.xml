@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat android:orientation="vertical" android:paddingTop="16.0dip" android:layout_width="fill_parent" android:layout_height="wrap_content" android:paddingStart="24.0dip" android:paddingEnd="24.0dip"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <androidx.core.widget.NestedScrollView android:layout_width="fill_parent" android:layout_height="wrap_content" android:fillViewport="true">
+        <com.google.android.material.textview.MaterialTextView android:textSize="14.0sp" android:textColor="?android:textColorPrimary" android:id="@+id/desc" android:layout_width="fill_parent" android:layout_height="wrap_content" android:lineSpacingExtra="8.0dip" android:letterSpacing="0.02" />
+    </androidx.core.widget.NestedScrollView>
+</androidx.appcompat.widget.LinearLayoutCompat>

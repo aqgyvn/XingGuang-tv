@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.journeyapps.barcodescanner.BarcodeView android:id="@+id/zxing_barcode_surface" android:layout_width="fill_parent" android:layout_height="fill_parent" />
+    <com.journeyapps.barcodescanner.ViewfinderView android:id="@+id/zxing_viewfinder_view" android:layout_width="fill_parent" android:layout_height="fill_parent" />
+    <com.google.android.material.textview.MaterialTextView android:textSize="16.0sp" android:textColor="@color/zxing_status_text" android:layout_gravity="center|bottom" android:id="@+id/zxing_status_view" android:background="@color/zxing_transparent" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="16.0dip" android:text="@string/device_scan" />
+</merge>

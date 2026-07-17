@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>星光视频 - 未来感 UI 草图</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #06080d;
+      --panel: #0d121a;
+      --panel-2: #111923;
+      --line: #1e3442;
+      --line-hot: #47e5ff;
+      --text: #f3f8ff;
+      --muted: #94a8b7;
+      --cyan: #47e5ff;
+      --green: #59ffa0;
+      --amber: #ffb84d;
+      --coral: #ff5a67;
+      --magenta: #ff4fd8;
+      --radius: 8px;
+      --shadow: 0 18px 60px rgba(0, 0, 0, .36);
+      font-family: Inter, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(71, 229, 255, .08), transparent 360px),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, .035) 0 1px, transparent 1px 72px),
+        repeating-linear-gradient(180deg, rgba(255, 255, 255, .028) 0 1px, transparent 1px 72px),
+        var(--bg);
+      color: var(--text);
+      letter-spacing: 0;
+    }
+
+    .page {
+      width: min(1440px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      background: rgba(13, 18, 26, .82);
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .brand img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 54px);
+      line-height: 1.02;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .signal-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid rgba(71, 229, 255, .34);
+      background: rgba(71, 229, 255, .08);
+      color: var(--text);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      box-shadow: 0 0 12px rgba(89, 255, 160, .9);
+    }
+
+    .brief {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .brief-card {
+      min-height: 104px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: rgba(13, 18, 26, .74);
+    }
+
+    .brief-card b {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .brief-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: 390px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .artboard {
+      border: 1px solid var(--line);
+      background: rgba(10, 15, 22, .88);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .artboard-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .artboard-title strong {
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 780px;
+      margin: 0 auto;
+      padding: 14px;
+      background: #080b10;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .home-head {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(71, 229, 255, .18);
+      background: linear-gradient(135deg, rgba(71, 229, 255, .12), rgba(255, 90, 103, .07));
+    }
+
+    .home-head img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+
+    .home-head b {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 17px;
+      white-space: nowrap;
+    }
+
+    .home-head span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .icon-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn,
+    .nav-btn {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(255, 255, 255, .05);
+      color: var(--text);
+      font-size: 11px;
+    }
+
+    .continue {
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid rgba(89, 255, 160, .32);
+      background: rgba(89, 255, 160, .07);
+    }
+
+    .eyebrow {
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .continue h2 {
+      margin-top: 5px;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    .progress-line {
+      height: 3px;
+      margin: 10px 0 8px;
+      background: rgba(255, 255, 255, .12);
+    }
+
+    .progress-line i {
+      display: block;
+      width: 64%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--cyan));
+    }
+
+    .tabs,
+    .episode-row,
+    .setting-actions {
+      display: flex;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .tab,
+    .episode,
+    .mini-pill {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      background: rgba(255, 255, 255, .055);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tab.active,
+    .episode.active {
+      border-color: var(--cyan);
+      color: var(--text);
+      box-shadow: 0 0 0 1px rgba(71, 229, 255, .24) inset;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 18px 0 10px;
+      font-size: 13px;
+    }
+
+    .section-head span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .poster-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .poster {
+      position: relative;
+      min-height: 142px;
+      padding: 8px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      overflow: hidden;
+      background:
+        linear-gradient(150deg, rgba(255, 255, 255, .14), transparent 32%),
+        var(--poster, #15202b);
+    }
+
+    .poster::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(0deg, transparent 0 11px, rgba(255, 255, 255, .05) 11px 12px);
+      opacity: .45;
+    }
+
+    .poster b,
+    .poster span {
+      position: relative;
+      z-index: 1;
+      display: block;
+      text-shadow: 0 1px 8px rgba(0, 0, 0, .8);
+    }
+
+    .poster b {
+      margin-top: 78px;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .poster span {
+      margin-top: 4px;
+      color: #dce9f3;
+      font-size: 10px;
+    }
+
+    .p1 { --poster: linear-gradient(135deg, #173b48, #ff5a67); }
+    .p2 { --poster: linear-gradient(135deg, #243019, #47e5ff); }
+    .p3 { --poster: linear-gradient(135deg, #3d233c, #ffb84d); }
+    .p4 { --poster: linear-gradient(135deg, #0f2c24, #ff4fd8); }
+    .p5 { --poster: linear-gradient(135deg, #342614, #59ffa0); }
+    .p6 { --poster: linear-gradient(135deg, #1a1d2a, #ff5a67); }
+
+    .bottom-nav {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 18px;
+      padding: 9px;
+      border: 1px solid rgba(71, 229, 255, .16);
+      background: rgba(13, 18, 26, .92);
+    }
+
+    .nav-btn {
+      width: auto;
+      color: var(--muted);
+    }
+
+    .nav-btn.active {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      background: rgba(71, 229, 255, .1);
+    }
+
+    .wide {
+      min-height: 428px;
+    }
+
+    .tv-screen,
+    .live-screen,
+    .player-screen,
+    .settings-screen {
+      min-height: 428px;
+      padding: 20px;
+      background:
+        linear-gradient(180deg, rgba(0, 0, 0, .12), rgba(0, 0, 0, .52)),
+        #070a0f;
+    }
+
+    .tv-toolbar {
+      display: grid;
+      grid-template-columns: 50px minmax(0, 1fr) auto auto;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .tv-toolbar img {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+    }
+
+    .tv-toolbar h2 {
+      font-size: 26px;
+    }
+
+    .clock {
+      color: var(--muted);
+      font-size: 22px;
+    }
+
+    .tv-hero {
+      display: grid;
+      grid-template-columns: minmax(260px, .8fr) minmax(0, 1.2fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .focus-poster {
+      min-height: 260px;
+      border: 2px solid var(--cyan);
+      background:
+        linear-gradient(135deg, rgba(71, 229, 255, .32), transparent 42%),
+        linear-gradient(150deg, #132a34, #4a1f35 55%, #352611);
+      box-shadow: 0 0 0 4px rgba(71, 229, 255, .14), 0 0 34px rgba(71, 229, 255, .22);
+    }
+
+    .focus-copy {
+      align-self: end;
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(0, 0, 0, .34);
+    }
+
+    .focus-copy h3 {
+      font-size: 30px;
+      line-height: 1.1;
+    }
+
+    .focus-copy p {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .rail {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .tile {
+      min-height: 92px;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, .11);
+      background: rgba(255, 255, 255, .055);
+    }
+
+    .tile b {
+      display: block;
+      margin-top: 42px;
+      font-size: 13px;
+    }
+
+    .player-screen {
+      display: grid;
+      grid-template-columns: 42% minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .video-card {
+      position: relative;
+      min-height: 260px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background:
+        linear-gradient(135deg, rgba(255, 90, 103, .2), transparent 38%),
+        #020304;
+      overflow: hidden;
+    }
+
+    .video-card::before {
+      content: "";
+      position: absolute;
+      inset: 18px;
+      border: 1px solid rgba(71, 229, 255, .22);
+    }
+
+    .play-core {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: var(--cyan);
+      font-size: 52px;
+    }
+
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      padding: 10px;
+      border: 1px solid rgba(71, 229, 255, .24);
+      background: rgba(0, 0, 0, .6);
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .detail-panel,
+    .settings-panel {
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(13, 18, 26, .74);
+    }
+
+    .detail-panel h3,
+    .settings-panel h3 {
+      font-size: 24px;
+      line-height: 1.15;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .meta .mini-pill:nth-child(1) {
+      border-color: rgba(89, 255, 160, .5);
+      color: var(--green);
+    }
+
+    .meta .mini-pill:nth-child(2) {
+      border-color: rgba(255, 184, 77, .5);
+      color: var(--amber);
+    }
+
+    .detail-panel p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .live-screen {
+      position: relative;
+      min-height: 452px;
+      background:
+        linear-gradient(135deg, rgba(71, 229, 255, .12), transparent 34%),
+        linear-gradient(180deg, transparent, rgba(0, 0, 0, .72)),
+        #030507;
+      overflow: hidden;
+    }
+
+    .live-back {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, .18);
+      background: rgba(0, 0, 0, .42);
+    }
+
+    .live-info {
+      position: absolute;
+      left: 24px;
+      bottom: 24px;
+      width: 320px;
+      padding: 14px;
+      border: 1px solid rgba(71, 229, 255, .22);
+      background: rgba(0, 0, 0, .52);
+    }
+
+    .live-info b {
+      display: block;
+      font-size: 22px;
+    }
+
+    .live-info span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .live-drawer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(520px, 58%);
+      display: grid;
+      grid-template-columns: .8fr 1fr 1.15fr;
+      gap: 1px;
+      border-left: 1px solid rgba(71, 229, 255, .22);
+      background: rgba(0, 0, 0, .42);
+    }
+
+    .live-col {
+      padding: 18px 10px;
+      background: rgba(13, 18, 26, .78);
+    }
+
+    .live-col h3 {
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .live-item {
+      margin-bottom: 8px;
+      padding: 9px;
+      border: 1px solid transparent;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .live-item.active {
+      border-color: var(--cyan);
+      color: var(--text);
+      background: rgba(71, 229, 255, .09);
+    }
+
+    .settings-screen {
+      display: grid;
+      grid-template-columns: minmax(220px, .78fr) minmax(0, 1.22fr);
+      gap: 18px;
+      min-height: 390px;
+    }
+
+    .settings-menu {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .setting-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 46px;
+      padding: 0 12px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      background: rgba(255, 255, 255, .05);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .setting-row.active {
+      border-color: rgba(255, 184, 77, .65);
+      color: var(--text);
+      background: rgba(255, 184, 77, .08);
+    }
+
+    .setting-row span:first-child {
+      color: var(--cyan);
+      font-size: 11px;
+    }
+
+    .setting-main h3 {
+      margin-bottom: 12px;
+      font-size: 28px;
+    }
+
+    .setting-main p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .config-box {
+      min-height: 86px;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      background: rgba(0, 0, 0, .24);
+    }
+
+    .config-box b {
+      display: block;
+      font-size: 13px;
+    }
+
+    .config-box span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .notes {
+      margin-top: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: rgba(13, 18, 26, .78);
+    }
+
+    .notes h2 {
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .notes ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    @media (max-width: 1100px) {
+      .brief {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .board {
+        grid-template-columns: 1fr;
+      }
+
+      .phone {
+        width: min(390px, 100%);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        width: min(100vw - 20px, 430px);
+        padding-top: 14px;
+      }
+
+      .topbar,
+      .brief,
+      .tv-hero,
+      .player-screen,
+      .settings-screen {
+        grid-template-columns: 1fr;
+      }
+
+      .signal-row {
+        justify-content: flex-start;
+      }
+
+      .brief {
+        gap: 10px;
+      }
+
+      .tv-toolbar {
+        grid-template-columns: 42px minmax(0, 1fr);
+      }
+
+      .tv-toolbar .clock,
+      .tv-toolbar .chip {
+        display: none;
+      }
+
+      .rail {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .live-drawer {
+        left: 0;
+        width: 100%;
+        top: 42%;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .live-info {
+        width: calc(100% - 48px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div class="brand">
+        <img src="../app/src/main/res/drawable-nodpi/ic_logo.png" alt="星光视频标识">
+        <div>
+          <h1>星光视频未来感 UI 草图</h1>
+          <p class="subtitle">基于现有 mobile / leanback 结构：点播首页、播放详情、直播频道、搜索入口、收藏历史和配置中心。</p>
+        </div>
+      </div>
+      <div class="signal-row" aria-label="设计关键词">
+        <span class="chip"><i class="dot"></i>OLED 深色</span>
+        <span class="chip">冷光焦点</span>
+        <span class="chip">影院信息层</span>
+        <span class="chip">TV 遥控可扫视</span>
+      </div>
+    </header>
+
+    <section class="brief" aria-label="设计原则">
+      <div class="brief-card">
+        <b>视觉方向</b>
+        <span>深黑底、细网格、冷色边缘光，配少量珊瑚红和琥珀色区分播放、告警、配置状态。</span>
+      </div>
+      <div class="brief-card">
+        <b>不改业务结构</b>
+        <span>保留底部导航、频道三列抽屉、播放器叠层和设置列表，仅替换层次、色彩、焦点和卡片密度。</span>
+      </div>
+      <div class="brief-card">
+        <b>移动优先</b>
+        <span>首页优先展示继续观看、分类、片库；播放页保持小窗播放器和剧集横滑的现有使用习惯。</span>
+      </div>
+      <div class="brief-card">
+        <b>TV 优先焦点</b>
+        <span>Leanback 版本用更强焦点框、较大标题和横向内容带，适配遥控器远距离识别。</span>
+      </div>
+    </section>
+
+    <section class="board">
+      <article class="artboard">
+        <div class="artboard-title"><strong>Mobile Home</strong><span>首页 / 分类 / 继续观看</span></div>
+        <div class="phone">
+          <div class="status"><span>09:20</span><span>5G 82%</span></div>
+          <div class="home-head">
+            <img src="../app/src/main/res/drawable-nodpi/ic_logo.png" alt="">
+            <div>
+              <b>星光视频</b>
+              <span>线路优先 / 自动测速 / 片单视图</span>
+            </div>
+            <div class="icon-row" aria-label="快捷入口">
+              <span class="icon-btn">搜</span>
+              <span class="icon-btn">藏</span>
+              <span class="icon-btn">史</span>
+            </div>
+          </div>
+
+          <div class="continue">
+            <span class="eyebrow">继续观看</span>
+            <h2>上次播放记录 · 第 12 集</h2>
+            <div class="progress-line"><i></i></div>
+            <div class="tabs">
+              <span class="mini-pill">EXO</span>
+              <span class="mini-pill">线路优先</span>
+              <span class="mini-pill">64% 进度</span>
+            </div>
+          </div>
+
+          <div class="section-head">
+            <b>片库分类</b>
+            <span>筛选 / 置顶</span>
+          </div>
+          <div class="tabs">
+            <span class="tab active">推荐</span>
+            <span class="tab">电影</span>
+            <span class="tab">剧集</span>
+            <span class="tab">动漫</span>
+            <span class="tab">综艺</span>
+          </div>
+
+          <div class="section-head">
+            <b>今日片单</b>
+            <span>自动换源可用</span>
+          </div>
+          <div class="poster-grid">
+            <div class="poster p1"><b>星际档案</b><span>更新至 8</span></div>
+            <div class="poster p2"><b>城市回声</b><span>4K / HDR</span></div>
+            <div class="poster p3"><b>夜航计划</b><span>热播</span></div>
+            <div class="poster p4"><b>轨道边缘</b><span>新片</span></div>
+            <div class="poster p5"><b>深空食堂</b><span>综艺</span></div>
+            <div class="poster p6"><b>明日之外</b><span>完结</span></div>
+          </div>
+
+          <nav class="bottom-nav" aria-label="底部导航草图">
+            <span class="nav-btn active">点播</span>
+            <span class="nav-btn">直播</span>
+            <span class="nav-btn">收藏</span>
+            <span class="nav-btn">历史</span>
+            <span class="nav-btn">设置</span>
+          </nav>
+        </div>
+      </article>
+
+      <div class="stack">
+        <article class="artboard wide">
+          <div class="artboard-title"><strong>Leanback Home</strong><span>TV 首页 / 遥控焦点</span></div>
+          <div class="tv-screen">
+            <div class="tv-toolbar">
+              <img src="../app/src/main/res/drawable-nodpi/ic_logo.png" alt="">
+              <h2>星光视频</h2>
+              <span class="chip">片库同步正常</span>
+              <span class="clock">21:48</span>
+            </div>
+            <div class="tv-hero">
+              <div class="focus-poster"></div>
+              <div class="focus-copy">
+                <h3>聚焦卡片使用冷光边框</h3>
+                <p>替代单纯放大效果，远距离更容易确认当前遥控焦点；海报信息只保留片名、更新状态、来源标签。</p>
+                <div class="meta">
+                  <span class="mini-pill">继续观看</span>
+                  <span class="mini-pill">自动测速</span>
+                  <span class="mini-pill">4K 源</span>
+                </div>
+              </div>
+            </div>
+            <div class="rail">
+              <div class="tile p2"><b>推荐</b></div>
+              <div class="tile p3"><b>电影</b></div>
+              <div class="tile p4"><b>剧集</b></div>
+              <div class="tile p5"><b>直播</b></div>
+              <div class="tile p6"><b>设置</b></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="artboard wide">
+          <div class="artboard-title"><strong>Vod Player</strong><span>小窗播放 / 剧集 / 简介</span></div>
+          <div class="player-screen">
+            <div class="video-card">
+              <div class="play-core">▶</div>
+              <div class="hud">
+                <div>00:42:16 / 01:08:20 · 191 KB/s · EXO</div>
+                <div class="progress-line"><i></i></div>
+              </div>
+            </div>
+            <div class="detail-panel">
+              <h3>播放详情信息层</h3>
+              <div class="meta">
+                <span class="mini-pill">线路优先</span>
+                <span class="mini-pill">第 12 集</span>
+                <span class="mini-pill">弹幕可用</span>
+              </div>
+              <p>现有上播放器、下详情的结构不变；未来感主要落在半透明 HUD、细线分区、剧集焦点和更清晰的播放状态。</p>
+              <div class="section-head">
+                <b>剧集</b>
+                <span>倒序 / 更多</span>
+              </div>
+              <div class="episode-row">
+                <span class="episode">10</span>
+                <span class="episode">11</span>
+                <span class="episode active">12</span>
+                <span class="episode">13</span>
+                <span class="episode">14</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="artboard wide">
+          <div class="artboard-title"><strong>Live Overlay</strong><span>直播 / 频道组 / 节目单</span></div>
+          <div class="live-screen">
+            <div class="live-back">返回</div>
+            <div class="live-info">
+              <b>卫视频道 · 当前节目</b>
+              <span>20:30-21:30 正在播放 / 支持回看 / EPG 已同步</span>
+            </div>
+            <div class="live-drawer">
+              <div class="live-col">
+                <h3>分组</h3>
+                <div class="live-item active">央视</div>
+                <div class="live-item">卫视</div>
+                <div class="live-item">电影</div>
+                <div class="live-item">体育</div>
+              </div>
+              <div class="live-col">
+                <h3>频道</h3>
+                <div class="live-item active">CCTV-1</div>
+                <div class="live-item">CCTV-6</div>
+                <div class="live-item">CCTV-8</div>
+                <div class="live-item">CCTV-13</div>
+              </div>
+              <div class="live-col">
+                <h3>节目单</h3>
+                <div class="live-item">19:30 新闻联播</div>
+                <div class="live-item active">20:30 黄金剧场</div>
+                <div class="live-item">21:30 今日说法</div>
+                <div class="live-item">22:10 夜间新闻</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="artboard wide">
+          <div class="artboard-title"><strong>Config Center</strong><span>设置 / 源管理 / 播放器</span></div>
+          <div class="settings-screen">
+            <div class="settings-menu">
+              <div class="setting-row active"><span>01</span><b>点播配置</b><small>已启用</small></div>
+              <div class="setting-row"><span>02</span><b>直播配置</b><small>EPG</small></div>
+              <div class="setting-row"><span>03</span><b>壁纸配置</b><small>默认</small></div>
+              <div class="setting-row"><span>04</span><b>播放器</b><small>EXO</small></div>
+              <div class="setting-row"><span>05</span><b>缓存与备份</b><small>正常</small></div>
+            </div>
+            <div class="setting-main">
+              <h3>配置中心改成状态面板</h3>
+              <p>设置页当前是单列列表，信息密度足够但状态弱。草图把高频配置源、播放器、隐身模式、缓存、备份恢复放进统一状态面板，减少进入二级弹窗前的判断成本。</p>
+              <div class="config-grid">
+                <div class="config-box"><b>点播源</b><span>显示源名、可搜索、可换源状态。</span></div>
+                <div class="config-box"><b>直播源</b><span>显示频道数、EPG 同步、回看状态。</span></div>
+                <div class="config-box"><b>播放内核</b><span>EXO / IJK / MPV 与当前缓冲策略。</span></div>
+                <div class="config-box"><b>数据维护</b><span>备份、恢复、缓存清理合并在同区。</span></div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="notes">
+      <h2>落地映射</h2>
+      <ul>
+        <li>颜色：将 mobile 当前暖色纸面风格替换为 OLED 深色背景、冷光描边、珊瑚红播放强调和琥珀色配置状态。</li>
+        <li>首页：保留 `activity_home` 底部导航和 `fragment_vod` 顶部功能区，把继续观看做成最高优先级状态卡。</li>
+        <li>播放页：保留现有小窗播放器、剧集横滑和简介分区，增强播放 HUD、进度、网速与当前集选中态。</li>
+        <li>直播页：保留三列列表，但改为右侧半透明抽屉，减少遮挡主画面，当前节目和回看信息放左下角。</li>
+        <li>TV 端：保留 leanback 横向网格，新增更明确的焦点边框和信息摘要，保证遥控器操作时不会迷失焦点。</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

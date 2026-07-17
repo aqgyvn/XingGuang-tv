@@ -1,0 +1,21 @@
+.idea
+.gradle
+*.jks
+lib-*.aar
+*build
+/media*
+/Release
+/local.properties
+
+# Local SDK/tool bundles and generated delivery artifacts
+/android-sdk/
+/tools/
+/output/
+/tmp/
+/apkwork/
+/archive/
+*.apk
+*.aab
+*.p12
+*.pfx
+*.pem

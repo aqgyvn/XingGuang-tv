@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat android:gravity="center_vertical" android:orientation="horizontal" android:background="@drawable/shape_accent" android:layout_width="fill_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <androidx.appcompat.widget.LinearLayoutCompat android:orientation="vertical" android:layout_width="0.0dip" android:layout_height="wrap_content" android:layout_weight="1.0" android:layout_marginEnd="8.0dip">
+        <com.google.android.material.textview.MaterialTextView android:textSize="14.0sp" android:textColor="?android:textColorPrimary" android:id="@+id/name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" />
+        <com.google.android.material.textview.MaterialTextView android:textSize="12.0sp" android:textColor="?android:textColorSecondary" android:id="@+id/time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+    <androidx.appcompat.widget.AppCompatImageView android:id="@+id/delete" android:background="?selectableItemBackgroundBorderless" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/ic_setting_delete" />
+</androidx.appcompat.widget.LinearLayoutCompat>
