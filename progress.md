@@ -2004,3 +2004,18 @@
 - `docs/LIVE.md`: converted live-source format descriptions, examples, commands, and anchors to Simplified Chinese.
 - `progress.md`: appended this documentation conversion, verification evidence, and rollback record.
 - Rollback method: run `git revert <this-task-commit>` after the task commit is created, then push the generated revert commit to `main`.
+
+## 2026-07-17 - Task: Remove the unused rebuild documentation
+### What was done
+- Deleted the unused `docs/xingguang-rebuild.md` document.
+- Confirmed no active README or documentation links reference the deleted file.
+- Left the rebuild script and its signing-file naming unchanged because they are separate executable configuration.
+
+### Testing
+- Passed: `rg` found no active repository reference to `docs/xingguang-rebuild.md` or its title outside historical progress records.
+- Passed: the deleted file is absent from the working tree and no other files changed unexpectedly.
+
+### Notes
+- `docs/xingguang-rebuild.md`: deleted as unused documentation.
+- `progress.md`: appended this deletion, verification evidence, and rollback record.
+- Rollback method: restore `docs/xingguang-rebuild.md` from the parent commit with `git show HEAD^:docs/xingguang-rebuild.md > docs/xingguang-rebuild.md`, then commit and push the restoration.
