@@ -2019,3 +2019,19 @@
 - `docs/xingguang-rebuild.md`: deleted as unused documentation.
 - `progress.md`: appended this deletion, verification evidence, and rollback record.
 - Rollback method: restore `docs/xingguang-rebuild.md` from the parent commit with `git show HEAD^:docs/xingguang-rebuild.md > docs/xingguang-rebuild.md`, then commit and push the restoration.
+
+## 2026-07-17 - Task: Restore active documentation links in README
+### What was done
+- Restored links in README for Android Studio configuration, version management, general configuration, and live-source configuration.
+- Kept the deleted `docs/xingguang-rebuild.md` link absent.
+- Kept build commands and local SDK setup instructions out of the README.
+
+### Testing
+- Passed: all four restored relative links resolve to existing files.
+- Passed: `docs/xingguang-rebuild.md` remains absent and is not referenced by README.
+- Passed: the README contains no Gradle build command or `local.properties` setup block.
+
+### Notes
+- `README.md`: added the four active documentation links under `相关文档`.
+- `progress.md`: appended this README link restoration, verification evidence, and rollback record.
+- Rollback method: run `git revert <this-task-commit>` after the task commit is created, then push the generated revert commit to `main`.
