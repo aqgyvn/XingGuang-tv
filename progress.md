@@ -1987,3 +1987,20 @@
 - `README.md`: removed all homepage build and local-environment instructions.
 - `progress.md`: appended this focused README cleanup, verification evidence, and rollback record.
 - Rollback method: run `git revert <this-task-commit>` after the task commit is created, then push the generated revert commit to `main`.
+
+## 2026-07-17 - Task: Convert linked documentation to Simplified Chinese
+### What was done
+- Converted the Chinese text in `docs/CONFIG.md` and `docs/LIVE.md` from Traditional Chinese to Simplified Chinese.
+- Normalized remaining Taiwan-specific wording such as fields, request headers, defaults, examples, and global settings while preserving JSON keys, commands, URLs, and Markdown structure.
+- Confirmed `docs/android-studio.md`, `docs/xingguang-rebuild.md`, and `docs/release-version.md` contain no Traditional Chinese characters and required no conversion.
+
+### Testing
+- Passed: OpenCC Traditional-to-Simplified verification reports no Traditional character differences in all five requested documents.
+- Passed: Markdown internal-link targets remain present in `docs/CONFIG.md` and `docs/LIVE.md` after heading and anchor conversion.
+- Passed: `git diff --check` reports no whitespace errors and all edited files remain UTF-8 without a BOM.
+
+### Notes
+- `docs/CONFIG.md`: converted configuration reference headings, tables, descriptions, examples, and anchors to Simplified Chinese.
+- `docs/LIVE.md`: converted live-source format descriptions, examples, commands, and anchors to Simplified Chinese.
+- `progress.md`: appended this documentation conversion, verification evidence, and rollback record.
+- Rollback method: run `git revert <this-task-commit>` after the task commit is created, then push the generated revert commit to `main`.

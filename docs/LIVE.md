@@ -1,172 +1,172 @@
-# 直播來源格式說明
+# 直播来源格式说明
 
-LiveParser 依內容自動偵測格式，支援三種直播來源：
+LiveParser 依内容自动检测格式，支持三种直播来源：
 
-| 格式               | 判斷條件                          |
+| 格式               | 判断条件                          |
 |------------------|-------------------------------|
-| [JSON](#json-格式) | 內容為 JSON（`[` 開頭）              |
+| [JSON](#json-格式) | 内容为 JSON（`[` 开头）              |
 | [M3U](#m3u-格式)   | 任一行含 `#EXTM3U`（且不含 `#genre#`） |
 | [TXT](#txt-格式)   | 其他                            |
 
 ---
 
-## 目錄
+## 目录
 
 - [TXT 格式](#txt-格式)
 - [M3U 格式](#m3u-格式)
 - [JSON 格式](#json-格式)
-- [頻道指令](#頻道指令)
-- [DRM 宣告](#drm-宣告)
-- [追看/時移](#追看時移)
+- [频道指令](#频道指令)
+- [DRM 声明](#drm-声明)
+- [回看/时移](#回看时移)
 
 ---
 
 ## TXT 格式
 
-每行以逗號 `,` 分為兩欄。含 `#genre#` 的行宣告分組，含 `://` 的行為頻道。
+每行以逗号 `,` 分为两栏。含 `#genre#` 的行声明分组，含 `://` 的行为频道。
 
 ```
-分組名稱,#genre#
-頻道名稱,播放URL
+分组名称,#genre#
+频道名称,播放URL
 ```
 
-**行的解析規則：**
+**行的解析规则：**
 
-| 行的形式             | 說明                              |
+| 行的形式             | 说明                              |
 |------------------|---------------------------------|
-| `名稱,#genre#`     | 宣告新分組，後續頻道歸入此分組                 |
-| `名稱,URL`         | 頻道項目（第二欄含 `://`）                |
-| `名稱_密碼,#genre#`  | 建立密碼保護的隱藏分組                     |
-| 不含 `://` 的行      | 頻道[指令行](#頻道指令)，作用至下一個 `#genre#` |
-| 首個頻道前無 `#genre#` | 自動建立無名預設分組                      |
+| `名称,#genre#`     | 声明新分组，后续频道归入此分组                 |
+| `名称,URL`         | 频道项目（第二栏含 `://`）                |
+| `名称_密码,#genre#`  | 创建密码保护的隐藏分组                     |
+| 不含 `://` 的行      | 频道[指令行](#频道指令)，作用至下一个 `#genre#` |
+| 首个频道前无 `#genre#` | 自动创建无名默认分组                      |
 
-**多線路備援**：以 `#` 分隔多個 URL，播放器依序嘗試：
+**多线路备援**：以 `#` 分隔多个 URL，播放器依序尝试：
 
 ```
 CCTV1,http://cdn1.example.com/cctv1.m3u8#http://cdn2.example.com/cctv1.m3u8
 ```
 
-**行內標頭**：URL 後接 `|key=value`，多個以 `&` 連接，多線路時每段各自帶標頭：
+**行内请求头**：URL 后接 `|key=value`，多个以 `&` 连接，多线路时每段各自带请求头：
 
 ```
 CCTV1,http://cdn1.example.com/cctv1.m3u8|User-Agent=okhttp#http://cdn2.example.com/cctv1.m3u8|Referer=https://example.com/
 ```
 
-**範例：**
+**示例：**
 
 ```
-新聞台,#genre#
+新闻台,#genre#
 CCTV1,http://cdn1.example.com/cctv1.m3u8#http://cdn2.example.com/cctv1.m3u8
-鳳凰資訊,http://example.com/phoenix.m3u8|User-Agent=Mozilla/5.0
+凤凰信息,http://example.com/phoenix.m3u8|User-Agent=Mozilla/5.0
 
-體育台,#genre#
+体育台,#genre#
 ua=Mozilla/5.0
 referer=https://sports.example.com/
 CCTV5,http://example.com/cctv5.m3u8
 CCTV5+,http://example.com/cctv5plus.m3u8
 
-電影台,#genre#
+电影台,#genre#
 header={"Authorization":"Bearer token123"}
 HBO,http://example.com/hbo.m3u8
 
 成人_secretpass,#genre#
-某頻道,http://example.com/adult.m3u8
+某频道,http://example.com/adult.m3u8
 ```
 
 ---
 
 ## M3U 格式
 
-以 `#EXTM3U` 開頭，每個頻道由 `#EXTINF:` 行與其後的 URL 行組成，中間可插入任意指令行。
+以 `#EXTM3U` 开头，每个频道由 `#EXTINF:` 行与其后的 URL 行组成，中间可插入任意指令行。
 
 ```m3u
-#EXTM3U [全域屬性...]
-#EXTINF:-1 [頻道屬性...],頻道顯示名稱
-[選用指令行...]
-http://example.com/stream.m3u8[|行內標頭]
+#EXTM3U [全局属性...]
+#EXTINF:-1 [频道属性...],频道显示名称
+[选用指令行...]
+http://example.com/stream.m3u8[|行内请求头]
 ```
 
-### `#EXTM3U` 全域屬性
+### `#EXTM3U` 全局属性
 
-| 屬性                    | 說明                                       |
+| 属性                    | 说明                                       |
 |-----------------------|------------------------------------------|
-| `tvg-url="…"`         | XMLTV EPG 節目表 URL（僅當 Live 配置未設定 EPG 時生效） |
-| `url-tvg="…"`         | 同 `tvg-url`，備用寫法（同上條件）                   |
-| `catchup="…"`         | 全域預設追看類型                                 |
-| `catchup-source="…"`  | 全域追看 URL 模板                              |
-| `catchup-replace="…"` | 全域追看 URL 替換字串                            |
+| `tvg-url="…"`         | XMLTV EPG 节目表 URL（仅当 Live 配置未设置 EPG 时生效） |
+| `url-tvg="…"`         | 同 `tvg-url`，备用写法（同上条件）                   |
+| `catchup="…"`         | 全局默认回看类型                                 |
+| `catchup-source="…"`  | 全局回看 URL 模板                              |
+| `catchup-replace="…"` | 全局回看 URL 替换字符串                            |
 
 ```m3u
 #EXTM3U tvg-url="https://epg.example.com/xmltv.xml" catchup="append" catchup-source="?playseek=${(b)yyyyMMddHHmmss}-${(e)yyyyMMddHHmmss}"
 ```
 
-### `#EXTINF` 頻道屬性
+### `#EXTINF` 频道属性
 
-屬性寫在逗號前，頻道顯示名稱寫在逗號後至行尾。
+属性写在逗号前，频道显示名称写在逗号后至行尾。
 
-| 屬性                    | 說明                 |
+| 属性                    | 说明                 |
 |-----------------------|--------------------|
-| `tvg-id="…"`          | EPG 頻道 ID          |
-| `tvg-name="…"`        | EPG 頻道名稱（可與顯示名稱不同） |
-| `tvg-chno="…"`        | 頻道號碼               |
-| `tvg-logo="…"`        | 頻道 Logo URL        |
-| `group-title="…"`     | 所屬分組名稱             |
-| `http-user-agent="…"` | 播放請求 User-Agent    |
-| `catchup="…"`         | 此頻道追看類型，覆蓋全域設定     |
-| `catchup-source="…"`  | 此頻道追看 URL 模板       |
-| `catchup-replace="…"` | 此頻道追看替換字串          |
+| `tvg-id="…"`          | EPG 频道 ID          |
+| `tvg-name="…"`        | EPG 频道名称（可与显示名称不同） |
+| `tvg-chno="…"`        | 频道号码               |
+| `tvg-logo="…"`        | 频道 Logo URL        |
+| `group-title="…"`     | 所属分组名称             |
+| `http-user-agent="…"` | 播放请求 User-Agent    |
+| `catchup="…"`         | 此频道回看类型，覆盖全局设置     |
+| `catchup-source="…"`  | 此频道回看 URL 模板       |
+| `catchup-replace="…"` | 此频道回看替换字符串          |
 
 ```m3u
-#EXTINF:-1 tvg-id="CCTV1" tvg-name="CCTV-1" tvg-chno="1" tvg-logo="https://example.com/logo/cctv1.png" group-title="央視",CCTV-1
+#EXTINF:-1 tvg-id="CCTV1" tvg-name="CCTV-1" tvg-chno="1" tvg-logo="https://example.com/logo/cctv1.png" group-title="央视",CCTV-1
 ```
 
-### M3U 專屬指令行
+### M3U 专属指令行
 
-在 `#EXTINF:` 與 URL 行之間插入，作用於緊接的下一個 URL（[通用指令](#頻道指令)同樣適用）。
+在 `#EXTINF:` 与 URL 行之间插入，作用于紧接的下一个 URL（[通用指令](#频道指令)同样适用）。
 
-| 指令                             | 說明                             |
+| 指令                             | 说明                             |
 |--------------------------------|--------------------------------|
-| `#EXTHTTP:{"Key":"Value"}`     | JSON 格式 HTTP 標頭                |
-| `#EXTVLCOPT:http-user-agent=…` | VLC 風格 User-Agent              |
-| `#EXTVLCOPT:http-referrer=…`   | VLC 風格 Referer                 |
-| `#EXTVLCOPT:http-origin=…`     | VLC 風格 Origin                  |
-| `#KODIPROP:…`                  | DRM 與媒體格式，詳見 [DRM 宣告](#drm-宣告) |
+| `#EXTHTTP:{"Key":"Value"}`     | JSON 格式 HTTP 请求头                |
+| `#EXTVLCOPT:http-user-agent=…` | VLC 风格 User-Agent              |
+| `#EXTVLCOPT:http-referrer=…`   | VLC 风格 Referer                 |
+| `#EXTVLCOPT:http-origin=…`     | VLC 风格 Origin                  |
+| `#KODIPROP:…`                  | DRM 与媒体格式，详见 [DRM 声明](#drm-声明) |
 
-**行內標頭**：URL 末接 `|key=value&key2=value2`：
+**行内请求头**：URL 末接 `|key=value&key2=value2`：
 
 ```m3u
 http://example.com/stream.m3u8|User-Agent=Mozilla/5.0&Referer=https://example.com/
 ```
 
-**範例：**
+**示例：**
 
 ```m3u
 #EXTM3U tvg-url="https://epg.example.com/xmltv.xml.gz" catchup="append" catchup-source="?playseek=${(b)yyyyMMddHHmmss}-${(e)yyyyMMddHHmmss}"
 
-#EXTINF:-1 tvg-id="CCTV1" tvg-chno="1" tvg-logo="https://example.com/logo/cctv1.png" group-title="央視",CCTV-1
+#EXTINF:-1 tvg-id="CCTV1" tvg-chno="1" tvg-logo="https://example.com/logo/cctv1.png" group-title="央视",CCTV-1
 http://cdn1.example.com/cctv1.m3u8
 
-#EXTINF:-1 tvg-id="CCTV5" group-title="央視",CCTV-5 體育
+#EXTINF:-1 tvg-id="CCTV5" group-title="央视",CCTV-5 体育
 #EXTVLCOPT:http-user-agent=Mozilla/5.0
 #EXTVLCOPT:http-referrer=https://sports.example.com/
 http://cdn1.example.com/cctv5.m3u8|User-Agent=Mozilla/5.0
 
-#EXTINF:-1 group-title="加密頻道",Premium HD
+#EXTINF:-1 group-title="加密频道",Premium HD
 #KODIPROP:inputstream.adaptive.license_type=widevine
 #KODIPROP:inputstream.adaptive.license_key=https://license.example.com/widevine|User-Agent=Mozilla/5.0
 format=mpd
 http://example.com/premium.mpd
 
-#EXTINF:-1 group-title="加密頻道",PlayReady 頻道
+#EXTINF:-1 group-title="加密频道",PlayReady 频道
 #KODIPROP:inputstream.adaptive.drm_legacy=playready|https://license.example.com/playready
 http://example.com/playready.mpd
 
-#EXTINF:-1 group-title="一般頻道",需解析頻道
+#EXTINF:-1 group-title="一般频道",需解析频道
 parse=1
 click=https://example.com/click
 http://example.com/parse-needed.m3u8
 
-#EXTINF:-1 group-title="帶標頭頻道",自訂標頭
+#EXTINF:-1 group-title="带请求头频道",自定义请求头
 #EXTHTTP:{"Authorization":"Bearer mytoken","X-Custom":"value"}
 http://example.com/auth-stream.m3u8
 ```
@@ -175,15 +175,15 @@ http://example.com/auth-stream.m3u8
 
 ## JSON 格式
 
-內容以 `[` 開頭時，直接反序列化為 `List<Group>`，結構與 Live 配置的 `groups` 欄位相同。
+内容以 `[` 开头时，直接反串行化为 `List<Group>`，结构与 Live 配置的 `groups` 字段相同。
 
 ```json
 [
   {
-    "name": "新聞台",
+    "name": "新闻台",
     "channel": [
       {
-        "name": "TVBS新聞台",
+        "name": "TVBS新闻台",
         "urls": [
           "http://cdn1.example.com/tvbs.m3u8",
           "http://cdn2.example.com/tvbs.m3u8"
@@ -200,7 +200,7 @@ http://example.com/auth-stream.m3u8
     ]
   },
   {
-    "name": "加密頻道",
+    "name": "加密频道",
     "pass": "secretpass",
     "channel": [
       {
@@ -222,84 +222,84 @@ http://example.com/auth-stream.m3u8
 ]
 ```
 
-> 完整欄位定義見 [CONFIG.md — channel 頻道項目](CONFIG.md#channel--頻道項目)。
+> 完整字段定义见 [CONFIG.md — channel 频道项目](CONFIG.md#channel--频道项目)。
 
 ---
 
-## 頻道指令
+## 频道指令
 
-以下指令在 **M3U** 與 **TXT** 格式中均適用，寫法完全一致。
+以下指令在 **M3U** 与 **TXT** 格式中均适用，写法完全一致。
 
-- **TXT**：指令行寫在頻道行前，作用至下一個 `#genre#`（包含該分組內所有後續頻道及其多線路 URL）。
-- **M3U**：指令行寫在 `#EXTINF:` 與 URL 行之間，僅作用於緊接的下一個 URL（每個 URL 處理後立即清除）。
+- **TXT**：指令行写在频道行前，作用至下一个 `#genre#`（包含该分组内所有后续频道及其多线路 URL）。
+- **M3U**：指令行写在 `#EXTINF:` 与 URL 行之间，仅作用于紧接的下一个 URL（每个 URL 处理后立即清除）。
 
-| 指令          | 範例                             | 說明                                    |
+| 指令          | 示例                             | 说明                                    |
 |-------------|--------------------------------|---------------------------------------|
-| `ua=`       | `ua=Mozilla/5.0`               | 播放請求 User-Agent                       |
-| `origin=`   | `origin=https://example.com`   | 請求 Origin 標頭                          |
-| `referer=`  | `referer=https://example.com/` | 請求 Referer 標頭（`referrer=` 雙 r 寫法同樣接受） |
-| `header=`   | `header={"X-Token":"abc"}`     | 任意 HTTP 標頭（JSON 格式）                   |
-| `format=`   | `format=mpd`                   | 強制指定媒體格式                              |
-| `parse=`    | `parse=1`                      | `1` = 需透過解析器處理此 URL                   |
-| `click=`    | `click=https://example.com/c`  | 點擊攔截處理 URL                            |
-| `forceKey=` | `forceKey=true`                | 強制使用 DRM 金鑰                           |
+| `ua=`       | `ua=Mozilla/5.0`               | 播放请求 User-Agent                       |
+| `origin=`   | `origin=https://example.com`   | 请求 Origin 请求头                          |
+| `referer=`  | `referer=https://example.com/` | 请求 Referer 请求头（`referrer=` 双 r 写法同样接受） |
+| `header=`   | `header={"X-Token":"abc"}`     | 任意 HTTP 请求头（JSON 格式）                   |
+| `format=`   | `format=mpd`                   | 强制指定媒体格式                              |
+| `parse=`    | `parse=1`                      | `1` = 需通过解析器处理此 URL                   |
+| `click=`    | `click=https://example.com/c`  | 点击拦截处理 URL                            |
+| `forceKey=` | `forceKey=true`                | 强制使用 DRM 密钥                           |
 
-**`format` 可選值：**
+**`format` 可选值：**
 
-| 值              | 說明                                   |
+| 值              | 说明                                   |
 |----------------|--------------------------------------|
 | `hls`          | HLS 串流（`application/x-mpegURL`）      |
 | `dash` 或 `mpd` | MPEG-DASH 串流（`application/dash+xml`） |
 
 ---
 
-## DRM 宣告
+## DRM 声明
 
-僅 M3U 格式支援，透過 `#KODIPROP:` 行宣告，寫在 `#EXTINF:` 與 URL 行之間。
+仅 M3U 格式支持，通过 `#KODIPROP:` 行声明，写在 `#EXTINF:` 与 URL 行之间。
 
-| 指令                                                  | 說明                                           |
+| 指令                                                  | 说明                                           |
 |-----------------------------------------------------|----------------------------------------------|
-| `#KODIPROP:inputstream.adaptive.license_type=…`     | DRM 類型：`widevine` / `playready` / `clearkey` |
-| `#KODIPROP:inputstream.adaptive.license_key=…`      | DRM 授權伺服器 URL（或 ClearKey JSON）               |
-| `#KODIPROP:inputstream.adaptive.drm_legacy=類型\|URL` | 快速宣告，類型與授權 URL 合一                            |
-| `#KODIPROP:inputstream.adaptive.manifest_type=…`    | 媒體格式：`mpd` / `dash` / `hls`                  |
-| `#KODIPROP:inputstream.adaptive.stream_headers=…`   | 串流請求標頭（`key=val&key2=val2`）                  |
-| `#KODIPROP:inputstream.adaptive.common_headers=…`   | 通用請求標頭（同上格式）                                 |
+| `#KODIPROP:inputstream.adaptive.license_type=…`     | DRM 类型：`widevine` / `playready` / `clearkey` |
+| `#KODIPROP:inputstream.adaptive.license_key=…`      | DRM 授权服务器 URL（或 ClearKey JSON）               |
+| `#KODIPROP:inputstream.adaptive.drm_legacy=类型\|URL` | 快速声明，类型与授权 URL 合一                            |
+| `#KODIPROP:inputstream.adaptive.manifest_type=…`    | 媒体格式：`mpd` / `dash` / `hls`                  |
+| `#KODIPROP:inputstream.adaptive.stream_headers=…`   | 串流请求请求头（`key=val&key2=val2`）                  |
+| `#KODIPROP:inputstream.adaptive.common_headers=…`   | 通用请求请求头（同上格式）                                 |
 
-**授權伺服器標頭**：附加於 `license_key` URL 後，以 `|` 分隔：
+**授权服务器请求头**：附加于 `license_key` URL 后，以 `|` 分隔：
 
 ```m3u
 #KODIPROP:inputstream.adaptive.license_key=https://license.example.com/widevine|User-Agent=Mozilla/5.0&token=abc
 ```
 
-**標準寫法（Widevine）：**
+**标准写法（Widevine）：**
 
 ```m3u
-#EXTINF:-1 group-title="加密頻道",Premium HD
+#EXTINF:-1 group-title="加密频道",Premium HD
 #KODIPROP:inputstream.adaptive.license_type=widevine
 #KODIPROP:inputstream.adaptive.license_key=https://license.example.com/widevine|User-Agent=Mozilla/5.0
 format=mpd
 http://example.com/premium.mpd
 ```
 
-**快速寫法（`drm_legacy`）：**
+**快速写法（`drm_legacy`）：**
 
 ```m3u
-#EXTINF:-1 group-title="加密頻道",PlayReady 頻道
+#EXTINF:-1 group-title="加密频道",PlayReady 频道
 #KODIPROP:inputstream.adaptive.drm_legacy=playready|https://license.example.com/playready
 http://example.com/playready.mpd
 ```
 
-**ClearKey（本地 JSON 金鑰）：**
+**ClearKey（本地 JSON 密钥）：**
 
 ```m3u
-#EXTINF:-1 group-title="加密頻道",ClearKey 頻道
+#EXTINF:-1 group-title="加密频道",ClearKey 频道
 #KODIPROP:inputstream.adaptive.license_type=clearkey
 #KODIPROP:inputstream.adaptive.license_key={"keys":[{"kty":"oct","k":"base64key","kid":"base64kid"}],"type":"temporary"}
 http://example.com/clearkey.mpd
 ```
 
-**ClearKey（簡短 hex 格式）：** 以 `kid_hex:key_hex` 表示，多對以逗號分隔，框架自動轉換為標準 JSON：
+**ClearKey（简短 hex 格式）：** 以 `kid_hex:key_hex` 表示，多对以逗号分隔，框架自动转换为标准 JSON：
 
 ```m3u
 #KODIPROP:inputstream.adaptive.license_type=clearkey
@@ -307,7 +307,7 @@ http://example.com/clearkey.mpd
 http://example.com/clearkey.mpd
 ```
 
-**`stream_headers` 也支援 `drmScheme` / `drmLicense` 鍵名：**
+**`stream_headers` 也支持 `drmScheme` / `drmLicense` 键名：**
 
 ```m3u
 #KODIPROP:inputstream.adaptive.stream_headers=drmScheme=widevine&drmLicense=https://license.example.com/
@@ -315,13 +315,13 @@ http://example.com/clearkey.mpd
 
 ---
 
-## 追看/時移
+## 回看/时移
 
-在 `#EXTM3U`、`#EXTINF` 或 Live 配置的 `catchup` 欄位中設定，頻道層級設定覆蓋全域。
+在 `#EXTM3U`、`#EXTINF` 或 Live 配置的 `catchup` 字段中设置，频道层级设置覆盖全局。
 
-`type`、`source` 模板變數、`replace` 的完整說明見 [CONFIG.md — catchup 追看/時移](CONFIG.md#catchup--追看時移)。
+`type`、`source` 模板变量、`replace` 的完整说明见 [CONFIG.md — catchup 回看/时移](CONFIG.md#catchup--回看时移)。
 
-**範例（`append` 類型）：**
+**示例（`append` 类型）：**
 
 ```
 catchup="append" catchup-source="?playseek=${(b)yyyyMMddHHmmss}-${(e)yyyyMMddHHmmss}"
@@ -329,7 +329,7 @@ catchup="append" catchup-source="?playseek=${(b)yyyyMMddHHmmss}-${(e)yyyyMMddHHm
 
 **`catchup-replace` 用途**：
 
-組合時移 URL 前，先對原始 URL 執行字串替換。格式為 `原字串,新字串`（逗號分隔）：
+组合时移 URL 前，先对原始 URL 运行字符串替换。格式为 `原字符串,新字符串`（逗号分隔）：
 
 ```
 catchup-replace="/PLTV/,/TVOD/"
