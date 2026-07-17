@@ -1,219 +1,55 @@
-# 影視
+# 星光 TV
 
+星光 TV 是一个面向 Android 手机、平板和电视设备的视频播放客户端，支持点播、直播、搜索、收藏、播放记录及多种播放设置。
 
-### 點播欄位
+当前版本：`5.5.7`
 
-| 欄位名稱       | 預設值  | 說明   | 其他         |
-|------------|------|------|------------|
-| searchable | 1    | 是否搜索 | 0：關閉；1：啟用  |
-| changeable | 1    | 是否換源 | 0：關閉；1：啟用  |
-| quickserch | 1    | 是否快搜 | 0：關閉；1：啟用  |
-| indexs     | 0    | 是否聚搜 | 0：關閉；1：啟用  |
-| hide       | 0    | 是否隱藏 | 0：顯示；1：隱藏  |
-| timeout    | 15   | 播放超時 | 單位：秒       |
-| header     | none | 請求標頭 | 格式：json    |
-| click      | none | 點擊js | javascript |
+## 主要功能
 
-### 直播欄位
+- 支持手机端和 Android TV 端界面
+- 支持点播、直播、搜索与换源
+- 支持播放记录、收藏和多线路配置
+- 支持字幕、音轨、画面比例及播放器设置
+- 支持本地配置、网络配置和自定义数据源
 
-| 欄位名稱     | 預設值   | 說明    | 其他         |
-|----------|-------|-------|------------|
-| ua       | none  | 用戶代理  |            |
-| origin   | none  | 來源    |            |
-| referer  | none  | 參照地址  |            |
-| epg      | none  | 節目地址  |            |
-| logo     | none  | 台標地址  |            |
-| pass     | false | 是否免密碼 |            |
-| boot     | false | 是否自啟動 |            |
-| timeout  | 15    | 播放超時  | 單位：秒       |
-| header   | none  | 請求標頭  | 格式：json    |
-| click    | none  | 點擊js  | javascript |
-| catchup  | none  | 回看參數  |            |
-| timeZone | none  | 時區    |            |
+## 环境要求
 
-### 樣式
+- Android Studio
+- JDK 17
+- Android SDK
+- 最低 Android 版本：Android 8.0（API 26）
 
-| 欄位名稱  | 值    | 說明  |
-|-------|------|-----|
-| type  | rect | 矩形  |
-|       | oval | 橢圓  |
-|       | list | 列表  |
-| ratio | 0.75 | 3：4 |
-|       | 1.33 | 4：3 |
+首次构建前，请在项目根目录创建 `local.properties`，并配置本机 Android SDK 路径：
 
-直式
-
-```json
-{
-  "style": {
-    "type": "rect"
-  }
-}
+```properties
+sdk.dir=C:\\Android\\Sdk
 ```
 
-橫式
+## 构建项目
 
-```json
-{
-  "style": {
-    "type": "rect",
-    "ratio": 1.33
-  }
-}
+Windows 环境可使用 Gradle Wrapper 构建手机端 ARM64 调试包：
+
+```powershell
+.\gradlew.bat :app:assembleMobileArm64_v8aDebug
 ```
 
-正方
+更多构建和本地环境说明请查看：
 
-```json
-{
-  "style": {
-    "type": "rect",
-    "ratio": 1
-  }
-}
-```
+- [Android Studio 配置](docs/android-studio.md)
+- [星光 TV 构建说明](docs/xingguang-rebuild.md)
+- [版本管理说明](docs/release-version.md)
+- [配置说明](docs/CONFIG.md)
+- [直播配置说明](docs/LIVE.md)
 
-正圓
+## 项目说明
 
-```json
-{
-  "style": {
-    "type": "oval"
-  }
-}
-```
+本项目基于 CatVod 相关项目进行开发和维护：
 
-橢圓
+- [CatVodTVJarLoader](https://github.com/CatVodTVOfficial/CatVodTVJarLoader)
+- [FongMi/TV](https://github.com/FongMi/TV)
 
-```json
-{
-  "style": {
-    "type": "oval",
-    "ratio": 1.1
-  }
-}
-```
+本项目仅用于学习、研究和个人使用。使用者应确保所使用的数据源和内容符合所在地法律法规，并自行承担使用责任。
 
-### API
+## 开源许可
 
-播放控制
-
-type 包含 stop、prev、next、loop、play、pause、replay
-```
-http://127.0.0.1:9978/action?do=control&type=next
-```
-
-刷新詳情
-
-```
-http://127.0.0.1:9978/action?do=refresh&type=detail
-```
-
-刷新播放
-
-```
-http://127.0.0.1:9978/action?do=refresh&type=player
-```
-
-刷新直播
-
-```
-http://127.0.0.1:9978/action?do=refresh&type=live
-```
-
-推送字幕
-
-```
-http://127.0.0.1:9978/action?do=refresh&type=subtitle&path=http://xxx
-```
-
-推送彈幕
-
-```
-http://127.0.0.1:9978/action?do=refresh&type=danmaku&path=http://xxx
-```
-
-新增緩存字串
-
-```
-http://127.0.0.1:9978/cache?do=set&key=xxx&value=xxx
-```
-
-取得緩存字串
-
-```
-http://127.0.0.1:9978/cache?do=get&key=xxx
-```
-
-刪除緩存字串
-
-```
-http://127.0.0.1:9978/cache?do=del&key=xxx
-```
-
-### Proxy
-
-支持 http, https, socks4, socks5
-
-```
-scheme://username:password@host:port
-```
-
-配置新增 proxy 可指定代理
-靠前的 host 匹配到則使用該代理
-
-```json
-{
-  "spider": "",
-  "proxy": [
-    {
-      "name": "自訂",
-      "hosts": [
-        "googlevideo.com",
-        "raw.githubusercontent.com"
-      ],
-      "urls": [
-        "http://127.0.0.1:7890"
-      ]
-    },
-    {
-      "name": "全局",
-      "hosts": [
-        ".*."
-      ],
-      "urls": [
-        "socks5://127.0.0.1:7891"
-      ]
-    }
-  ]
-}
-```
-
-### Hosts
-
-```json
-{
-  "spider": "",
-  "hosts": [
-    "cache.ott.*.itv.cmvideo.cn=base-v4-free-mghy.e.cdn.chinamobile.com"
-  ]
-}
-```
-
-### Headers
-
-```json
-{
-  "spider": "",
-  "headers": [
-    {
-      "host": "gslbserv.itv.cmvideo.cn",
-      "header": {
-        "User-Agent": "okhttp/3.12.13",
-        "Referer": "test"
-      }
-    }
-  ]
-}
-```
-
+本项目采用 [GNU General Public License v3.0](LICENSE.md) 开源许可。

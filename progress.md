@@ -1941,3 +1941,19 @@
 - `docs/repository-management.md`: documented the tracked scope, local Android setup, and GitHub Releases usage.
 - `progress.md`: appended this repository initialization, publication verification, and rollback record.
 - Rollback point: the initial imported tree is commit `ba7dc8181cbaaa57558749b1e00132d393a83f1d`; disconnect the local checkout with `git remote remove origin`, and remove the GitHub repository from its Settings page if publication must be fully undone.
+
+## 2026-07-17 - Task: Rewrite the GitHub README in Chinese
+### What was done
+- Replaced the corrupted and overly detailed repository homepage with a concise Simplified Chinese introduction for XingGuang TV.
+- Added current project capabilities, environment requirements, a Windows build command, documentation links, upstream acknowledgements, a usage notice, and license information.
+- Moved the homepage focus away from low-level configuration tables while retaining access to the existing detailed documentation.
+
+### Testing
+- Passed: `README.md` decodes as UTF-8, starts with the Chinese title `星光 TV`, and contains no Unicode replacement characters.
+- Passed: the displayed version `5.5.7` matches `versionName` in `app/build.gradle`.
+- Passed: all six relative Markdown links in the README resolve to existing repository files.
+
+### Notes
+- `README.md`: replaced the previous homepage content with a concise Simplified Chinese project overview and setup entry points.
+- `progress.md`: appended this README update, verification evidence, and rollback record.
+- Rollback method: run `git revert <this-task-commit>` after the task commit is created, then push the generated revert commit to `main`.
