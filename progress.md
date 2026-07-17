@@ -1923,3 +1923,21 @@
 - `tmp/track-menu-557-video.xml`, `tmp/track-menu-557-subtitle.xml`, and `tmp/track-menu-557-logcat.txt`: retained menu hierarchy and app-scoped runtime-log evidence.
 - `progress.md`: appended this implementation, device verification, delivery artifact, and rollback record.
 - Rollback method: restore `@color/white` on the title in `dialog_track.xml` and track text in `adapter_track.xml`; set `app/build.gradle` and version docs back to `556 / 5.5.6`; remove the `5.5.7 Track Menu Readability` documentation, delete `output/XingGuang-5.5.7-arm64.apk` and the `tmp/track-menu-557*` evidence files, remove this progress entry, then rebuild with `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --stacktrace`.
+
+## 2026-07-17 - Task: Initialize and publish the project to GitHub
+### What was done
+- Initialized the workspace as a Git repository on the `main` branch and created the initial project import commit.
+- Created the private GitHub repository `aqgyvn/XingGuang-tv`, connected it as `origin`, and published `main`.
+- Excluded local SDKs, tool bundles, generated artifacts, APKs, and signing material from version control.
+- Added repository-management documentation for new checkouts and future release handling.
+
+### Testing
+- Passed: the staged-file audit found no paths under `android-sdk/`, `tools/`, `output/`, `tmp/`, `apkwork/`, or `archive/`, and no staged APK, AAB, P12, PFX, PEM, JKS, or KEY files.
+- Passed: the initial import contained 940 tracked files and 77,040 inserted lines without any file exceeding GitHub's 100 MB per-file limit.
+- Passed: `git ls-remote origin refs/heads/main` returned `ba7dc8181cbaaa57558749b1e00132d393a83f1d`, matching the local initial commit.
+
+### Notes
+- `.gitignore`: added exclusions for machine-local SDKs and tools, generated delivery and verification artifacts, backups, APK bundles, and signing material.
+- `docs/repository-management.md`: documented the tracked scope, local Android setup, and GitHub Releases usage.
+- `progress.md`: appended this repository initialization, publication verification, and rollback record.
+- Rollback point: the initial imported tree is commit `ba7dc8181cbaaa57558749b1e00132d393a83f1d`; disconnect the local checkout with `git remote remove origin`, and remove the GitHub repository from its Settings page if publication must be fully undone.
