@@ -1971,3 +1971,19 @@
 - `README.md`: simplified the project attribution to a single FongMi/TV reference.
 - `progress.md`: appended this README adjustment, verification evidence, and rollback record.
 - Rollback method: run `git revert <this-task-commit>` after the task commit is created, then push the generated revert commit to `main`.
+
+## 2026-07-17 - Task: Remove README build instructions and verify Simplified Chinese
+### What was done
+- Removed the README environment-requirement section, local SDK setup example, Gradle build command, and build-document links.
+- Kept the repository homepage focused on the project introduction, main capabilities, attribution, usage notice, and license.
+- Reviewed the remaining README text for Traditional Chinese characters; no conversion was required in the retained content.
+
+### Testing
+- Passed: `README.md` no longer contains the headings `环境要求` or `构建项目`, the `local.properties` example, or a Gradle build command.
+- Passed: the retained README contains no identified Traditional Chinese wording and remains valid UTF-8 Chinese text.
+- Passed: the FongMi/TV attribution and GPL license link remain present.
+
+### Notes
+- `README.md`: removed all homepage build and local-environment instructions.
+- `progress.md`: appended this focused README cleanup, verification evidence, and rollback record.
+- Rollback method: run `git revert <this-task-commit>` after the task commit is created, then push the generated revert commit to `main`.
