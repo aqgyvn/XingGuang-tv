@@ -1957,3 +1957,17 @@
 - `README.md`: replaced the previous homepage content with a concise Simplified Chinese project overview and setup entry points.
 - `progress.md`: appended this README update, verification evidence, and rollback record.
 - Rollback method: run `git revert <this-task-commit>` after the task commit is created, then push the generated revert commit to `main`.
+
+## 2026-07-17 - Task: Simplify README project attribution
+### What was done
+- Updated the README project-attribution paragraph to reference only `FongMi/TV`.
+- Removed the CatVod wording and link as requested.
+
+### Testing
+- Passed: `README.md` contains the `FongMi/TV` link and no longer contains `CatVod`.
+- Passed: the rest of the README content remains unchanged for this focused edit.
+
+### Notes
+- `README.md`: simplified the project attribution to a single FongMi/TV reference.
+- `progress.md`: appended this README adjustment, verification evidence, and rollback record.
+- Rollback method: run `git revert <this-task-commit>` after the task commit is created, then push the generated revert commit to `main`.

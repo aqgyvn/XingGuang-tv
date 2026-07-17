@@ -43,10 +43,7 @@ Windows 环境可使用 Gradle Wrapper 构建手机端 ARM64 调试包：
 
 ## 项目说明
 
-本项目基于 CatVod 相关项目进行开发和维护：
-
-- [CatVodTVJarLoader](https://github.com/CatVodTVOfficial/CatVodTVJarLoader)
-- [FongMi/TV](https://github.com/FongMi/TV)
+本项目基于 [FongMi/TV](https://github.com/FongMi/TV) 进行开发和维护。
 
 本项目仅用于学习、研究和个人使用。使用者应确保所使用的数据源和内容符合所在地法律法规，并自行承担使用责任。
 
