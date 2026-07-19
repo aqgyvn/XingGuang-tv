@@ -72,3 +72,13 @@ D:\xingkong\app\build\outputs\apk\mobileArm64_v8a\debug\mobile-arm64_v8a.apk
 
 - Subtitle, video-track, and audio-track bottom-sheet titles now use the cloud-white dark text color.
 - Track rows use the existing state-aware text selector, keeping normal rows dark and selected rows blue on the light menu surface.
+
+## 5.5.8 Search Result Play Badge
+
+- The dark playback badge in mobile search-result cards now uses white text instead of the dark state selector.
+- Source badges, card dimensions, poster content, and search behavior are unchanged.
+
+## 5.5.9 Blue Search Play Badge
+
+- Replaced the visually heavy black search-result playback badge with a dedicated cloud-white primary-blue badge and white text.
+- Kept the adjacent source badge light blue and preserved the compact card spacing and dimensions.

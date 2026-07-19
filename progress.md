@@ -1924,6 +1924,32 @@
 - `progress.md`: appended this implementation, device verification, delivery artifact, and rollback record.
 - Rollback method: restore `@color/white` on the title in `dialog_track.xml` and track text in `adapter_track.xml`; set `app/build.gradle` and version docs back to `556 / 5.5.6`; remove the `5.5.7 Track Menu Readability` documentation, delete `output/XingGuang-5.5.7-arm64.apk` and the `tmp/track-menu-557*` evidence files, remove this progress entry, then rebuild with `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --stacktrace`.
 
+## 2026-07-19 - Task: Fix the black playback badge in mobile search results
+### What was done
+- Corrected the dark playback badge in mobile search-result cards so its `播放` label uses white text instead of the dark state selector.
+- Preserved the dark badge background, adjacent light `来源` badge, card dimensions, poster layout, and search behavior.
+- Bumped the mobile APK version to `558 / 5.5.8`, documented the visual fix, and exported the verified ARM64 APK.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: MuMu `127.0.0.1:16384` installed the APK and reported `versionCode=558` and `versionName=5.5.8`.
+- Passed: searched for `Sherlock` through the real mobile search workflow and rendered multiple `adapter_search` cards using the same layout shown in the reported screenshot.
+- Passed: visual inspection confirmed each dark badge clearly displays white `播放` text and no longer appears as an empty black block; the adjacent `来源` badge remains readable and card content does not overlap.
+- Passed: app-scoped runtime logs contained no `FATAL EXCEPTION`, `AndroidRuntime: FATAL`, `InflateException`, or missing-resource match.
+- Passed: `aapt dump badging` reported package `com.xingguang.video`, `versionCode='558'`, and `versionName='5.5.8'`.
+- Passed: exported APK size is `82618125` bytes and SHA-256 is `E1A2809B200B392121E6EC84A8B161CCF7107A116672B95DF931AAC7D63BB911`.
+
+### Notes
+- `app/src/mobile/res/layout/adapter_search.xml`: changed only the dark playback badge text from the state-aware dark selector to white.
+- `app/build.gradle`: bumped the APK version to `558 / 5.5.8`.
+- `docs/release-version.md`: updated the current APK version and version-alignment example.
+- `docs/cloud-white-ui-20260708.md`: documented the readable search-result playback badge.
+- `output/XingGuang-5.5.8-arm64.apk`: added the verified versioned delivery APK.
+- `tmp/search-badge-558.png`, `tmp/search-badge-558.xml`, and `tmp/search-badge-558-logcat.txt`: retained final search-result visual, hierarchy, and app-scoped runtime-log evidence.
+- `tmp/search-badge-558-entry.xml`: retained the intermediate search-entry hierarchy because the local command policy blocked deletion after path verification.
+- `progress.md`: appended this implementation, device verification, delivery artifact, and rollback record.
+- Rollback method: restore `@color/control` on the `shape_vod_remark` playback label in `adapter_search.xml`; set `app/build.gradle` and version docs back to `557 / 5.5.7`; remove the `5.5.8 Search Result Play Badge` documentation, delete `output/XingGuang-5.5.8-arm64.apk` and the `tmp/search-badge-558*` evidence files, remove this progress entry, then rebuild with `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --stacktrace`.
+
 ## 2026-07-17 - Task: Initialize and publish the project to GitHub
 ### What was done
 - Initialized the workspace as a Git repository on the `main` branch and created the initial project import commit.
@@ -2035,3 +2061,31 @@
 - `README.md`: added the four active documentation links under `相关文档`.
 - `progress.md`: appended this README link restoration, verification evidence, and rollback record.
 - Rollback method: run `git revert <this-task-commit>` after the task commit is created, then push the generated revert commit to `main`.
+
+## 2026-07-20 - Task: Replace the black search playback badge with cloud-white blue
+### What was done
+- Replaced the visually heavy black playback badge in mobile search-result cards with a dedicated primary-blue rounded badge and white text.
+- Kept the adjacent source badge light blue and preserved card dimensions, spacing, poster layout, and search behavior.
+- Used a search-only drawable so existing dark poster-status labels and playback overlays remain unchanged.
+- Bumped the mobile APK version to `559 / 5.5.9`, documented the visual change, and exported the verified ARM64 APK.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: MuMu `127.0.0.1:16384` installed the APK and reported `versionCode=559` and `versionName=5.5.9`.
+- Passed: searched for `Sherlock` through the real mobile workflow and visually confirmed every visible search card uses a blue rounded `播放` badge with readable white text.
+- Passed: the adjacent light-blue `来源` badge remains distinct, and card text, posters, spacing, and dimensions do not overlap or shift.
+- Passed: static resource verification found `shape_vod_play` referenced only by `adapter_search.xml`, confirming existing dark status-label resources were not changed.
+- Passed: app-scoped runtime logs contained no `FATAL EXCEPTION`, `AndroidRuntime: FATAL`, `InflateException`, or missing-resource match.
+- Passed: `aapt dump badging` reported package `com.xingguang.video`, `versionCode='559'`, and `versionName='5.5.9'`.
+- Passed: exported APK size is `82618714` bytes and SHA-256 is `E0480DFA31803E5CD683683C3E8BFA978FA7F157746D1763FF5C27FDF882F5F8`.
+
+### Notes
+- `app/src/mobile/res/drawable/shape_vod_play.xml`: added the compact rounded primary-blue background used only by search playback badges.
+- `app/src/mobile/res/layout/adapter_search.xml`: replaced the black playback background with the new blue badge resource.
+- `app/build.gradle`: bumped the APK version to `559 / 5.5.9`.
+- `docs/release-version.md`: updated the current APK version and version-alignment example.
+- `docs/cloud-white-ui-20260708.md`: documented the blue search playback badge and unchanged source badge/card layout.
+- `output/XingGuang-5.5.9-arm64.apk`: added the verified versioned delivery APK.
+- `tmp/search-blue-559.png`, `tmp/search-blue-559.xml`, and `tmp/search-blue-559-logcat.txt`: retained final visual, hierarchy, and app-scoped runtime-log evidence.
+- `progress.md`: appended this implementation, device verification, delivery artifact, and rollback record.
+- Rollback method: change the playback badge background in `adapter_search.xml` back to `@drawable/shape_vod_remark`, delete `shape_vod_play.xml`, set `app/build.gradle` and version docs back to `558 / 5.5.8`, remove the `5.5.9 Blue Search Play Badge` documentation, delete `output/XingGuang-5.5.9-arm64.apk` and the `tmp/search-blue-559*` evidence files, remove this progress entry, then rebuild with `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --stacktrace`.
