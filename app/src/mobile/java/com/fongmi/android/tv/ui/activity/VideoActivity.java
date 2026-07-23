@@ -139,6 +139,7 @@ public class VideoActivity extends BaseActivity implements Clock.Callback, Custo
     private boolean rotate;
     private boolean stop;
     private boolean lock;
+    private boolean waitingConfig;
     private Runnable mR1;
     private Runnable mR2;
     private Runnable mR3;
@@ -421,12 +422,19 @@ public class VideoActivity extends BaseActivity implements Clock.Callback, Custo
     }
 
     private void checkId() {
+        waitingConfig = false;
         if (getId().startsWith("push://")) getIntent().putExtra("key", "push_agent").putExtra("id", getId().substring(7));
         if (getId().isEmpty() || getId().startsWith("msearch:")) setEmpty(false);
         else getDetail();
     }
 
     private void getDetail() {
+        if (!"push_agent".equals(getKey()) && VodConfig.get().getSite(getKey()).isEmpty()) {
+            if (VodConfig.get().getSites().isEmpty()) waitingConfig = true;
+            else setEmpty(false);
+            return;
+        }
+        waitingConfig = false;
         mViewModel.detailContent(getKey(), getId());
     }
 
@@ -1215,7 +1223,11 @@ public class VideoActivity extends BaseActivity implements Clock.Callback, Custo
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onRefreshEvent(RefreshEvent event) {
         if (isRedirect()) return;
-        if (event.getType() == RefreshEvent.Type.DETAIL) getDetail();
+        if (event.getType() == RefreshEvent.Type.CONFIG && waitingConfig) {
+            waitingConfig = false;
+            if (VodConfig.get().getSites().isEmpty()) setEmpty(false);
+            else getDetail();
+        } else if (event.getType() == RefreshEvent.Type.DETAIL) getDetail();
         else if (event.getType() == RefreshEvent.Type.PLAYER) onRefresh();
         else if (event.getType() == RefreshEvent.Type.VOD) updateVod(event.getVod());
         else if (event.getType() == RefreshEvent.Type.SUBTITLE) mPlayers.setSub(Sub.from(event.getPath()));

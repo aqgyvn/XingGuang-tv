@@ -2089,3 +2089,31 @@
 - `tmp/search-blue-559.png`, `tmp/search-blue-559.xml`, and `tmp/search-blue-559-logcat.txt`: retained final visual, hierarchy, and app-scoped runtime-log evidence.
 - `progress.md`: appended this implementation, device verification, delivery artifact, and rollback record.
 - Rollback method: change the playback badge background in `adapter_search.xml` back to `@drawable/shape_vod_remark`, delete `shape_vod_play.xml`, set `app/build.gradle` and version docs back to `558 / 5.5.8`, remove the `5.5.9 Blue Search Play Badge` documentation, delete `output/XingGuang-5.5.9-arm64.apk` and the `tmp/search-blue-559*` evidence files, remove this progress entry, then rebuild with `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --stacktrace`.
+
+## 2026-07-23 - Task: Fix recent playback loading before VOD configuration is ready
+### What was done
+- Prevented recent playback from sending a detail request with an empty source during a cold start.
+- Kept the detail page in its loading state until the VOD configuration finishes, then retried automatically without requiring the user to return and enter again.
+- Preserved the existing title-based source-search fallback when a historical source no longer exists.
+- Bumped the mobile APK version to `560 / 5.6.0`, updated version documentation, and exported the verified ARM64 APK.
+
+### Testing
+- Reproduced before the fix: a cold start followed by an immediate tap on `继续观看` sent `key=huaisang,id=68332` before source initialization and produced `ExecutionException` caused by a null URL in `OkHttp.buildUrl`; the page remained in the empty state.
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`; the single-worker retry was used after one incremental packaging attempt exhausted the Gradle heap.
+- Passed: MuMu installed the final APK and reported `versionCode=560` and `versionName=5.6.0`.
+- Passed: the final cold-start test immediately tapped `继续观看`; UI hierarchy checks reported detail and episode content present and no empty-state text.
+- Passed: the same run reached ExoPlayer `READY` and Android media-session `PLAYING` states.
+- Passed: the final app-scoped runtime log contained `0` `NullPointerException`, `0` `ExecutionException`, and `0` `FATAL EXCEPTION` matches.
+- Passed: returning to Home and entering the same recent item again rendered the detail page and resumed playback normally.
+- Passed: `aapt dump badging` reported package `com.xingguang.video`, `versionCode='560'`, and `versionName='5.6.0'`.
+- Passed: exported APK size is `82618718` bytes and SHA-256 is `0DEA34597C8B9B5192E5968BB42C6A555AB64189616BCBE81FDB1DFCAC0EFD05`.
+
+### Notes
+- `app/src/mobile/java/com/fongmi/android/tv/ui/activity/VideoActivity.java`: added the minimal VOD-configuration wait and automatic detail retry for recent playback.
+- `app/build.gradle`: bumped the APK version to `560 / 5.6.0`.
+- `README.md`: aligned the displayed current version with `5.6.0`.
+- `docs/release-version.md`: updated the current APK version and version-alignment example.
+- `docs/cloud-white-ui-20260708.md`: documented the recent-playback cold-start behavior and automatic retry.
+- `output/XingGuang-5.6.0-arm64.apk`: added the verified versioned delivery APK.
+- `progress.md`: appended this implementation, device verification, delivery artifact, and rollback record.
+- Rollback method: remove `waitingConfig` and its configuration-ready branches from `VideoActivity.java`; set `app/build.gradle`, `README.md`, and version documentation back to `559 / 5.5.9`; remove the `5.6.0 Recent Playback Cold-Start Loading` documentation, delete `output/XingGuang-5.6.0-arm64.apk`, remove this progress entry, then rebuild with `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace`.

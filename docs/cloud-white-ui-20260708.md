@@ -23,7 +23,7 @@ The mobile build has been moved from the paper-black playlist style to the `05` 
 - Playback settings expose separate `广告过滤` and `广告URL拦截` controls instead of the previous combined `智能去广` row.
 - The mobile app no longer checks or downloads updates from the upstream FongMi release channel; the Settings version row is informational only.
 - VOD and live playback surfaces remain black so video contrast is preserved.
-- The user-facing mobile APK version is now `550 / 5.5.0`.
+- The user-facing mobile APK version is now `560 / 5.6.0`.
 
 ## Verification
 
@@ -82,3 +82,9 @@ D:\xingkong\app\build\outputs\apk\mobileArm64_v8a\debug\mobile-arm64_v8a.apk
 
 - Replaced the visually heavy black search-result playback badge with a dedicated cloud-white primary-blue badge and white text.
 - Kept the adjacent source badge light blue and preserved the compact card spacing and dimensions.
+
+## 5.6.0 Recent Playback Cold-Start Loading
+
+- Recent playback now waits for the VOD source configuration before requesting historical detail data during a cold start.
+- When configuration finishes, the detail page retries automatically instead of requiring the user to return and enter again.
+- Historical entries whose source no longer exists continue through the existing title-based source-search fallback.
