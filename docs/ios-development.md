@@ -74,7 +74,7 @@ xcodebuild \
 
 `codex/ios-foundation` 已推送并触发 workflow。修复后的分支必须通过 iPhone/iPad 测试、设备构建、IPA 结构与签名检查，结果通过后才能开始 TrollStore 验收。
 
-第五次运行 `30082854165` 已确认此前的 URL 查询参数独占访问错误不再出现；新的编译阻断是 `AppDatabase` 的构造器委托、iOS 16 专属的 `AVPlayer.defaultRate`，以及错误调用 `AVPlayerViewController` 的画中画启动 API。现已改为 Swift 合法构造器委托、iOS 15 可用的保存倍速逻辑，并保留系统原生画中画入口，仍须重新运行完整 CI 链路。
+第六次运行 `30083532789` 已确认此前的 iOS 15 编译问题不再出现，并实际运行了数据库测试；配置替换失败的原因是 GRDB 写事务内重复开启 SQLite 事务。现已保留 `queue.write` 的原子事务并移除重复事务包装，仍须重新运行完整 CI 链路。
 
 ## TrollStore 第一阶段验收
 

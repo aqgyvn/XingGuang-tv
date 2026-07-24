@@ -2325,3 +2325,21 @@
 - `ios/Tests/XingGuangKitTests/AppDatabaseTests.swift`: covers the public path-backed database initializer.
 - `progress.md`: appends CI evidence, validation gap, changed-file list, and rollback point.
 - Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md ios/Sources/XingGuangKit/Persistence/AppDatabase.swift ios/Sources/XingGuangKit/Player/AVPlayerEngine.swift ios/Tests/XingGuangKitTests/AppDatabaseTests.swift progress.md`.
+
+## 2026-07-24 - Task: Repair configuration replacement transaction failure
+
+### What was done
+- Used GitHub Actions run `30083532789` to confirm all newly exposed iOS 15 compiler errors were resolved and to isolate the remaining failure to configuration replacement at runtime.
+- Removed the nested SQLite transaction inside GRDB's transactional `queue.write` block so site, live, and configuration replacement runs in the single writer transaction that GRDB already provides.
+- Updated the iOS development record with the runtime failure and the next full-pipeline rerun gate.
+
+### Testing
+- Failed evidence: GitHub Actions run `30083532789`, job `89450317341`, reached `AppDatabaseTests`. `testPathInitializerCreatesUsableDatabase` and `testKeepToggleAndHistoryRoundTrip` passed; `testConfigurationReplacementIsAtomicAndPersistsSites` failed with `SQLite error 1: cannot start a transaction within a transaction`.
+- Passed: source inspection finds no other `inTransaction` use in the iOS codebase. The repaired path retains `queue.write`, which GRDB executes as one atomic writer transaction; any statement error will roll back the preceding delete, insert, and upsert work.
+- Not run: the corrected database test, remaining iPhone/iPad Simulator tests, device build, IPA packaging, signing, and TrollStore installation require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `docs/ios-development.md`: records the sixth CI diagnosis and full-pipeline rerun gate.
+- `ios/Sources/XingGuangKit/Persistence/AppDatabase.swift`: removes only the redundant nested transaction while retaining atomic configuration replacement.
+- `progress.md`: appends CI evidence, validation gap, changed-file list, and rollback point.
+- Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md ios/Sources/XingGuangKit/Persistence/AppDatabase.swift progress.md`.

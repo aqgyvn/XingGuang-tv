@@ -44,36 +44,33 @@ public final class AppDatabase: PersistenceStore, @unchecked Sendable {
         let lives = try document.lives.map { ($0, try json($0)) }
         let documentJSON = try json(document)
         try queue.write { db in
-            try db.inTransaction {
-                try db.execute(sql: "DELETE FROM site")
-                try db.execute(sql: "DELETE FROM live")
-                for (site, payload) in sites {
-                    try db.execute(
-                        sql: "INSERT INTO site (key, searchable, changeable, json) VALUES (?, ?, ?, ?)",
-                        arguments: [site.key, site.searchable, site.changeable, payload]
-                    )
-                }
-                for (live, payload) in lives {
-                    try db.execute(
-                        sql: "INSERT INTO live (name, boot, pass, keep, json) VALUES (?, ?, ?, ?, ?)",
-                        arguments: [live.name, live.boot, live.pass, "", payload]
-                    )
-                }
+            try db.execute(sql: "DELETE FROM site")
+            try db.execute(sql: "DELETE FROM live")
+            for (site, payload) in sites {
                 try db.execute(
-                    sql: """
-                    INSERT INTO config (type, time, url, json, name, logo, home, parse)
-                    VALUES (0, ?, ?, ?, ?, ?, ?, '')
-                    ON CONFLICT(url, type) DO UPDATE SET
-                        time = excluded.time,
-                        json = excluded.json,
-                        name = excluded.name,
-                        logo = excluded.logo,
-                        home = excluded.home
-                    """,
-                    arguments: [Int64(Date().timeIntervalSince1970 * 1000), sourceURL, documentJSON, "点播", document.logo, document.sites.first?.key ?? ""]
+                    sql: "INSERT INTO site (key, searchable, changeable, json) VALUES (?, ?, ?, ?)",
+                    arguments: [site.key, site.searchable, site.changeable, payload]
                 )
-                return .commit
             }
+            for (live, payload) in lives {
+                try db.execute(
+                    sql: "INSERT INTO live (name, boot, pass, keep, json) VALUES (?, ?, ?, ?, ?)",
+                    arguments: [live.name, live.boot, live.pass, "", payload]
+                )
+            }
+            try db.execute(
+                sql: """
+                INSERT INTO config (type, time, url, json, name, logo, home, parse)
+                VALUES (0, ?, ?, ?, ?, ?, ?, '')
+                ON CONFLICT(url, type) DO UPDATE SET
+                    time = excluded.time,
+                    json = excluded.json,
+                    name = excluded.name,
+                    logo = excluded.logo,
+                    home = excluded.home
+                """,
+                arguments: [Int64(Date().timeIntervalSince1970 * 1000), sourceURL, documentJSON, "点播", document.logo, document.sites.first?.key ?? ""]
+            )
         }
     }
 
