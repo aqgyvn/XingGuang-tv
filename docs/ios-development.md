@@ -16,7 +16,7 @@
 
 尚未完成或尚未验收：
 
-- GitHub Actions 已在 macOS 上运行，但尚未通过完整的 iPhone/iPad 测试、设备构建和 IPA 打包链路；在全部 CI 步骤与 TrollStore 真机验收通过前，不能将当前分支视为可安装 IPA。
+- GitHub Actions 第八次运行 `30085938974` 已通过完整的 iPhone/iPad 测试、设备构建、IPA 打包、IPA 结构和 ad-hoc 签名检查，并上传了 `XingGuang-iOS-8` artifact。仍未完成 TrollStore 真机安装与功能验收，因此不能宣称媒体播放和设备兼容性已经在真实设备上验证。
 - JavaScript `type 3`、Android JAR、Python Spider、直播/EPG、WebView 嗅探、外置字幕、弹幕、备份恢复和高级网络能力仍在后续阶段，不能宣称已移植。
 - `playUrl` 解析链和网页嗅探尚未实现；需要该链路的 type 0/1 来源将在后续 WebView 阶段处理。
 - HLS AES 等由系统播放核心原生处理；传入 Widevine、PlayReady、ClearKey 或其他外置 DRM 描述时会给出 DRM 错误。当前没有 FairPlay 许可证代理实现。
@@ -72,9 +72,9 @@ xcodebuild \
 4. 先对嵌入框架执行 ad-hoc 签名，再签名 App，验证签名并打包 IPA。
 5. 校验 IPA 的 `Payload/XingGuang.app/Info.plist`，上传 IPA 与构建日志 14 天。
 
-`codex/ios-foundation` 已推送并触发 workflow。修复后的分支必须通过 iPhone/iPad 测试、设备构建、IPA 结构与签名检查，结果通过后才能开始 TrollStore 验收。
+`codex/ios-foundation` 已推送并触发 workflow。第八次运行 `30085938974` 已通过完整链路：iPhone Simulator 测试（5 分 48 秒）、iPad Simulator 测试（6 分 40 秒）、设备 Release 构建（1 分 50 秒）、IPA 打包、结构检查、ad-hoc 签名检查和 artifact 上传，总耗时 15 分 45 秒。产物为 `XingGuang-iOS-8`（18.3 MB，artifact SHA-256 `7fee4726fb44cf7faab98ea08192764d5a7482096b188cd6f6303aa26c644fb9`）。
 
-第七次运行 `30084153754` 已通过 iPhone 模拟器测试，确认配置替换修复生效；iPad 的应用启动和详情导航也通过，但其 `TabView` 未向 UI 自动化暴露与 iPhone 相同的文本 tab 按钮。测试现将文本 tab 和配置保存流程显式标记为仅 iPhone 验收，iPad 会记录该断言为跳过，同时继续验收启动与详情导航，仍须重新运行完整 CI 链路。
+第七次运行 `30084153754` 已定位 iPad 的文本 tab 自动化限制；第八次运行已确认其修复边界：iPhone 继续验收文本 tab 和配置保存，iPad 将该断言显式标记为跳过，同时验收应用启动与详情导航。下一道门槛是 TrollStore 真机验收。
 
 ## TrollStore 第一阶段验收
 

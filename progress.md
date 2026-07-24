@@ -2379,3 +2379,21 @@
 - `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: separates shared startup coverage from the iPhone-specific labeled-tab workflow.
 - `progress.md`: appends the verification distinction, changed-file list, and rollback point.
 - Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md ios/Tests/XingGuangUITests/XingGuangUITests.swift progress.md`.
+
+## 2026-07-24 - Task: Verify complete iOS CI and TrollStore IPA packaging
+
+### What was done
+- Verified GitHub Actions run `30085938974` for `codex/ios-foundation` completed successfully after the iPad tab-label test adjustment.
+- Confirmed the workflow completed iPhone and iPad Simulator testing, device Release build, TrollStore IPA packaging, IPA structure validation, ad-hoc signing validation, and artifact upload.
+- Updated the iOS development record to move the acceptance gate from CI completion to TrollStore device installation and functional validation.
+
+### Testing
+- Passed: GitHub Actions run `30085938974`, job `89458019919`, completed successfully in 15m45s. `Test on iPhone simulator` passed in 5m48s; `Test on iPad simulator` passed in 6m40s; `Build TrollStore app bundle`, `Package TrollStore IPA`, and `Upload IPA and logs` also passed.
+- Passed: the successful packaging step runs nested-framework signing, App ad-hoc signing, `/usr/bin/codesign -d --entitlements :-`, and an IPA `Payload/XingGuang.app/Info.plist` structure check. The uploaded artifact is `XingGuang-iOS-8`, 18.3 MB, with GitHub artifact SHA-256 `7fee4726fb44cf7faab98ea08192764d5a7482096b188cd6f6303aa26c644fb9`.
+- Warning only: GitHub reported an Actions Node.js 20 deprecation notice and Homebrew's unrelated `aws/tap` trust notice. Neither warning failed the job or changed the iOS build output.
+- Not run: TrollStore installation, real configuration loading, real playback, orientation, background recovery, picture-in-picture, AirPlay, and VLC fallback require user device acceptance.
+
+### Notes
+- `docs/ios-development.md`: records the successful CI run, artifact identity, and remaining physical-device gate.
+- `progress.md`: appends the CI evidence, warnings, validation boundary, and rollback point.
+- Rollback method: after this documentation-only commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md progress.md`.
