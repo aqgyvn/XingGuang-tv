@@ -2,6 +2,16 @@ import XCTest
 @testable import XingGuangKit
 
 final class AppDatabaseTests: XCTestCase {
+    func testPathInitializerCreatesUsableDatabase() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let database = try AppDatabase(path: directory.appendingPathComponent("xingguang.sqlite").path)
+
+        XCTAssertFalse(try database.containsKeep(key: "missing"))
+    }
+
     func testKeepToggleAndHistoryRoundTrip() throws {
         let database = try AppDatabase.inMemory()
         let keep = Keep(key: "site@@@1", siteName: "站点", vodName: "影片", createTime: 10)

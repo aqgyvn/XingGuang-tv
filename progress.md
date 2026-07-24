@@ -2304,3 +2304,24 @@
 - `ios/Sources/XingGuangKit/Services/ApiVodRepository.swift`: avoids Swift overlapping access while preserving GET query assembly.
 - `progress.md`: appends the CI evidence, validation gap, changed-file list, and rollback point.
 - Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md ios/Sources/XingGuangKit/Services/ApiVodRepository.swift progress.md`.
+
+## 2026-07-24 - Task: Repair iOS 15 database and player compilation failures
+
+### What was done
+- Used GitHub Actions run `30082854165` to confirm the URL query-assembly repair compiled, then isolated four newly exposed iPhone simulator compiler errors to the database initializer and AVPlayer's iOS 15 compatibility surface.
+- Marked the path-based database initializer as a convenience initializer, retaining the existing migration owner, and added direct coverage that opens a disposable path-backed database.
+- Replaced the iOS 16-only `defaultRate` use with a retained playback rate that is applied when loading or resuming playback.
+- Removed the nonfunctional custom picture-in-picture capability and invalid `AVPlayerViewController` API calls. The supported system player controls and inline automatic picture-in-picture behavior remain enabled.
+
+### Testing
+- Failed evidence: GitHub Actions run `30082854165`, job `89448183095`, exited with code `65` during `Test on iPhone simulator`. It reported `AppDatabase.swift:33` as an invalid designated-initializer delegation, `AVPlayerEngine.swift:61` as an iOS 16-only `defaultRate` use, and two unavailable `AVPlayerViewController` picture-in-picture members at lines 89-90.
+- Passed: source inspection confirms the database initializer delegates legally, no `defaultRate`, `isPictureInPicturePossible`, or `startPictureInPicture()` member calls remain, and the existing SwiftUI control is gated by the removed picture-in-picture capability.
+- Not run: Swift/Xcode compilation, the new path-backed database test, iPhone/iPad Simulator tests, device build, IPA packaging, signing, and TrollStore installation require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `docs/ios-development.md`: records the iOS 15 player behavior and fifth CI diagnosis.
+- `ios/Sources/XingGuangKit/Persistence/AppDatabase.swift`: corrects initializer delegation.
+- `ios/Sources/XingGuangKit/Player/AVPlayerEngine.swift`: preserves selected playback speed without iOS 16 APIs and removes invalid manual PiP calls.
+- `ios/Tests/XingGuangKitTests/AppDatabaseTests.swift`: covers the public path-backed database initializer.
+- `progress.md`: appends CI evidence, validation gap, changed-file list, and rollback point.
+- Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md ios/Sources/XingGuangKit/Persistence/AppDatabase.swift ios/Sources/XingGuangKit/Player/AVPlayerEngine.swift ios/Tests/XingGuangKitTests/AppDatabaseTests.swift progress.md`.

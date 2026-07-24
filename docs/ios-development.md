@@ -11,7 +11,7 @@
 - Android 字段语义兼容的配置、站点、影片、筛选、播放线路、收藏、历史、进度和轨道模型；数字型 ID、URL 对数组及 type 4 的字幕/DRM/请求头结果均可解码。
 - GRDB/SQLite 持久化：`config`、`site`、`live`、`keep`、`history`、`track` 表；支持配置替换、收藏、历史、继续观看、线路、进度和倍速保存。
 - `Automatic`、`AVPlayer`、`VLC` 三种播放内核模式。自动模式对 RTSP/RTMP/RTP、MKV、FLV、WebM、AVI、DASH/MPD 先选 VLC；其他地址先选 AVPlayer，格式或解码失败时仅回退一次。认证、网络和 DRM 错误不会回退。
-- AVPlayer 支持系统可播放的 HLS、MP4/MOV、内嵌音视频/字幕轨道、倍速、后台音频、AirPlay 与系统画中画；MobileVLCKit 负责 RTSP、RTMP 和非系统封装/编码的回退播放。
+- AVPlayer 支持系统可播放的 HLS、MP4/MOV、内嵌音视频/字幕轨道、倍速、后台音频、AirPlay 与系统画中画；画中画由系统播放器控件或内联自动启动。MobileVLCKit 负责 RTSP、RTMP 和非系统封装/编码的回退播放。
 - 配置切换会取消旧配置与片库请求，UI 状态只在主线程更新。
 
 尚未完成或尚未验收：
@@ -74,7 +74,7 @@ xcodebuild \
 
 `codex/ios-foundation` 已推送并触发 workflow。修复后的分支必须通过 iPhone/iPad 测试、设备构建、IPA 结构与签名检查，结果通过后才能开始 TrollStore 验收。
 
-第四次运行 `30082211921` 已确认此前的 `VodResult`、播放器清理、根视图隔离和多地址播放 URL 解析错误不再出现；新的唯一编译阻断是 `ApiVodRepository.swift` 对可选 `URLComponents` 的查询参数同时读取和写入，触发 Swift 独占访问检查。该路径现先解包后写入，仍须重新运行完整 CI 链路。
+第五次运行 `30082854165` 已确认此前的 URL 查询参数独占访问错误不再出现；新的编译阻断是 `AppDatabase` 的构造器委托、iOS 16 专属的 `AVPlayer.defaultRate`，以及错误调用 `AVPlayerViewController` 的画中画启动 API。现已改为 Swift 合法构造器委托、iOS 15 可用的保存倍速逻辑，并保留系统原生画中画入口，仍须重新运行完整 CI 链路。
 
 ## TrollStore 第一阶段验收
 

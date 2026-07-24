@@ -30,7 +30,7 @@ public final class AppDatabase: PersistenceStore, @unchecked Sendable {
         try AppDatabase(queue: DatabaseQueue())
     }
 
-    public init(path: String) throws {
+    public convenience init(path: String) throws {
         try self.init(queue: DatabaseQueue(path: path))
     }
 

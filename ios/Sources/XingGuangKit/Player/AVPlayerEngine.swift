@@ -5,7 +5,7 @@ import Foundation
 
 public final class AVPlayerEngine: NSObject, PlayerEngine {
     public let kind: PlayerEngineKind = .avPlayer
-    public let capabilities: Set<PlayerCapability> = [.airPlay, .pictureInPicture, .backgroundAudio, .trackSelection]
+    public let capabilities: Set<PlayerCapability> = [.airPlay, .backgroundAudio, .trackSelection]
     public var state: PlayerState { stateSubject.value }
     public var tracks: [PlayerTrack] { tracksSubject.value }
     public var time: PlayerTime { timeSubject.value }
@@ -22,6 +22,7 @@ public final class AVPlayerEngine: NSObject, PlayerEngine {
     private var itemObservation: NSKeyValueObservation?
     private var timeObserver: Any?
     private var selectionOptions: [String: AVMediaSelectionOption] = [:]
+    private var preferredRate: Float = 1
 
     public override init() {
         super.init()
@@ -51,15 +52,22 @@ public final class AVPlayerEngine: NSObject, PlayerEngine {
         let item = AVPlayerItem(asset: asset)
         observe(item)
         player.replaceCurrentItem(with: item)
-        player.play()
+        player.playImmediately(atRate: preferredRate)
     }
 
-    public func play() { player.play() }
+    public func play() { player.playImmediately(atRate: preferredRate) }
     public func pause() { player.pause() }
     public func seek(to position: TimeInterval) { player.seek(to: CMTime(seconds: max(position, 0), preferredTimescale: 600)) }
     public func setRate(_ rate: Float) {
-        player.defaultRate = rate
-        if player.timeControlStatus == .playing { player.rate = rate }
+        preferredRate = rate
+        switch player.timeControlStatus {
+        case .playing, .waitingToPlayAtSpecifiedRate:
+            player.playImmediately(atRate: preferredRate)
+        case .paused:
+            break
+        @unknown default:
+            break
+        }
     }
 
     public func select(track: PlayerTrack?) {
@@ -85,11 +93,7 @@ public final class AVPlayerEngine: NSObject, PlayerEngine {
     }
 
     public func makePlayerViewController() -> UIViewController { controller }
-    public func startPictureInPicture() -> Bool {
-        guard controller.isPictureInPicturePossible else { return false }
-        controller.startPictureInPicture()
-        return true
-    }
+    public func startPictureInPicture() -> Bool { false }
 
     public func dispose() {
         stop()
