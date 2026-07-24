@@ -29,7 +29,7 @@ public final class PreviewPlayerEngine: PlayerEngine {
     public func stop() { stateSubject.send(.idle) }
     public func makePlayerViewController() -> UIViewController { PreviewPlayerViewController() }
     public func startPictureInPicture() -> Bool { false }
-    public func release() {}
+    public func dispose() {}
 }
 
 private final class PreviewPlayerViewController: UIViewController {

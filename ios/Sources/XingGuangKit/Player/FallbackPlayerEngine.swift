@@ -69,10 +69,10 @@ public final class FallbackPlayerEngine: PlayerEngine {
     }
     public func startPictureInPicture() -> Bool { active.startPictureInPicture() }
 
-    public func release() {
+    public func dispose() {
         subscriptions.removeAll()
-        avPlayer.release()
-        vlc.release()
+        avPlayer.dispose()
+        vlc.dispose()
     }
 
     private func selectEngine(for request: PlaybackRequest) -> PlayerEngine {

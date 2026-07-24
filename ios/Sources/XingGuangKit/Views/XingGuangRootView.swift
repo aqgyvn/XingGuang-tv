@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 public struct XingGuangRootView: View {
     @StateObject private var model: XingGuangAppModel
 

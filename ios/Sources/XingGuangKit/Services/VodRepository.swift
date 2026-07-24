@@ -106,7 +106,7 @@ public protocol PlayerEngine: AnyObject {
     func stop()
     func makePlayerViewController() -> UIViewController
     @discardableResult func startPictureInPicture() -> Bool
-    func release()
+    func dispose()
 }
 
 public protocol PlayerEngineFactory: Sendable {

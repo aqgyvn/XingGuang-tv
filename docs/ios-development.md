@@ -16,7 +16,7 @@
 
 尚未完成或尚未验收：
 
-- 代码尚未在 macOS/Xcode、iPhone/iPad Simulator、GitHub Actions 或 TrollStore 真机上编译运行；因此不能把当前工作区视为可安装 IPA。
+- 首轮 GitHub Actions 已在 macOS 的 iPhone Simulator 上运行，但在 Swift 编译阶段失败，尚未进入 iPad、设备构建或 TrollStore 安装。已修复首轮发现的 Codable、播放器清理方法命名和主线程隔离问题，仍需下一轮 CI 通过后才能视为可安装 IPA。
 - JavaScript `type 3`、Android JAR、Python Spider、直播/EPG、WebView 嗅探、外置字幕、弹幕、备份恢复和高级网络能力仍在后续阶段，不能宣称已移植。
 - `playUrl` 解析链和网页嗅探尚未实现；需要该链路的 type 0/1 来源将在后续 WebView 阶段处理。
 - HLS AES 等由系统播放核心原生处理；传入 Widevine、PlayReady、ClearKey 或其他外置 DRM 描述时会给出 DRM 错误。当前没有 FairPlay 许可证代理实现。
@@ -72,7 +72,7 @@ xcodebuild \
 4. 先对嵌入框架执行 ad-hoc 签名，再签名 App，验证签名并打包 IPA。
 5. 校验 IPA 的 `Payload/XingGuang.app/Info.plist`，上传 IPA 与构建日志 14 天。
 
-当前未获推送授权，工作区不会自动推送远端；因此 workflow 尚未运行。
+`codex/ios-foundation` 已推送并触发首轮 workflow。首轮在 iPhone Simulator 的 Swift 编译阶段失败，尚未进入 iPad 测试或 IPA 打包；修复后的分支必须通过重新触发的 workflow，结果通过后才能开始 TrollStore 验收。
 
 ## TrollStore 第一阶段验收
 

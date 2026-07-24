@@ -204,10 +204,11 @@ public struct VodResult: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case classes = "class"
-        case list, filters, url, header, flag, format, parse, artwork, subs, drm
+        case list, filters, url, header, flag, format, parse, artwork, drm
         case message = "msg"
         case playURL = "playUrl"
         case pageCount = "pagecount"
+        case subtitles = "subs"
     }
 
     public init(
@@ -260,7 +261,7 @@ public struct VodResult: Codable, Equatable {
         message = container.string(.message)
         playURL = container.string(.playURL)
         artwork = container.string(.artwork)
-        subtitles = container.array(SubtitleResource.self, .subs)
+        subtitles = container.array(SubtitleResource.self, .subtitles)
         drm = try? container.decodeIfPresent(PlaybackDRM.self, forKey: .drm)
         flag = container.string(.flag)
         format = container.string(.format)

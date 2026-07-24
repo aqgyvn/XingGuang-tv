@@ -2224,3 +2224,26 @@
 - `ios/Tests/XingGuangKitTests/ApiVodRepositoryTests.swift`, `AppDatabaseTests.swift`, `DomainModelsTests.swift`, `FallbackPlayerEngineTests.swift`, `HTTPClientTests.swift`, and `XingGuangAppModelTests.swift`: add focused phase-one regression coverage.
 - `progress.md`: appends this implementation, evidence, known validation gap, and rollback record.
 - Rollback method: after the local phase-one commit is created, run `git revert HEAD` while it remains the branch tip; do not push the revert unless remote push is explicitly approved.
+
+## 2026-07-24 - Task: Repair first iOS CI Swift compilation failures
+
+### What was done
+- Used GitHub Actions run `30078840408` to identify and repair the three Swift compilation blockers before the iPhone simulator test could start: the `VodResult` subtitle coding key, the Objective-C `release()` method collision in the player interface, and the root view's main-actor isolation.
+- Renamed the iOS-internal player cleanup operation from `release()` to `dispose()` across the player contract, AVPlayer, VLC adapter, fallback engine, session, preview engine, and test stub without changing playback routing or Android code.
+- Added regression coverage that verifies subtitle data encodes as the Android-compatible `subs` field and updated the iOS development record with the first CI result and the required rerun gate.
+
+### Testing
+- Failed evidence: GitHub Actions run `30078840408`, `Test on iPhone simulator`, exited with code `65` during Swift compilation. The log reported only three source errors: `VodResult` Encodable synthesis, `PlayerEngine.release()` ambiguity with `NSObject.release`, and the `XingGuangRootView` actor-isolated model initializer.
+- Passed: static repair check confirmed there are no remaining `release()` references or stale `subs` coding-key references, all cleanup implementations expose `dispose()`, and `git diff --check` reports no whitespace errors.
+- Not run: Swift/Xcode compilation, iPhone/iPad Simulator tests, IPA packaging, signing, and TrollStore installation require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `docs/ios-development.md`: records the first CI failure and the requirement for a successful rerun before TrollStore acceptance.
+- `ios/App/VLCPlayerEngineAdapter.swift`: renames both MobileVLCKit and fallback cleanup implementations to avoid the Objective-C selector collision.
+- `ios/Sources/XingGuangKit/Models/CatalogModels.swift`: maps the stored `subtitles` property to the Android `subs` field so Codable can synthesize encoding.
+- `ios/Sources/XingGuangKit/Player/AVPlayerEngine.swift`, `FallbackPlayerEngine.swift`, `PlayerSession.swift`, and `PreviewPlayerEngine.swift`: use the renamed cleanup operation consistently.
+- `ios/Sources/XingGuangKit/Services/VodRepository.swift`: updates the internal player contract cleanup requirement.
+- `ios/Sources/XingGuangKit/Views/XingGuangRootView.swift`: isolates root view initialization on the main actor.
+- `ios/Tests/XingGuangKitTests/DomainModelsTests.swift` and `FallbackPlayerEngineTests.swift`: cover the corrected subtitle encoding and conform to the renamed player contract.
+- `progress.md`: appends this CI diagnosis, repair scope, validation evidence, and rollback point.
+- Rollback method: after this repair commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md progress.md ios/App/VLCPlayerEngineAdapter.swift ios/Sources/XingGuangKit/Models/CatalogModels.swift ios/Sources/XingGuangKit/Player/AVPlayerEngine.swift ios/Sources/XingGuangKit/Player/FallbackPlayerEngine.swift ios/Sources/XingGuangKit/Player/PlayerSession.swift ios/Sources/XingGuangKit/Player/PreviewPlayerEngine.swift ios/Sources/XingGuangKit/Services/VodRepository.swift ios/Sources/XingGuangKit/Views/XingGuangRootView.swift ios/Tests/XingGuangKitTests/DomainModelsTests.swift ios/Tests/XingGuangKitTests/FallbackPlayerEngineTests.swift`.

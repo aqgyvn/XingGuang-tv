@@ -89,7 +89,7 @@ private final class PlayerEngineStub: PlayerEngine {
     func stop() {}
     func makePlayerViewController() -> UIViewController { UIViewController() }
     func startPictureInPicture() -> Bool { false }
-    func release() {}
+    func dispose() {}
     func fail(category: PlayerFailureCategory) {
         stateSubject.send(.failed(PlayerFailure(category: category, message: "failed")))
     }

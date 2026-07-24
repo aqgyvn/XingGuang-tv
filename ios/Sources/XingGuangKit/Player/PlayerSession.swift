@@ -41,5 +41,5 @@ public final class PlayerSession: ObservableObject {
 
     public func stop() { engine.stop() }
 
-    deinit { engine.release() }
+    deinit { engine.dispose() }
 }

@@ -67,7 +67,7 @@ final class VLCPlayerEngineAdapter: NSObject, PlayerEngine, VLCMediaPlayerDelega
     }
     func makePlayerViewController() -> UIViewController { controller }
     func startPictureInPicture() -> Bool { false }
-    func release() {
+    func dispose() {
         mediaPlayer.stop()
         mediaPlayer.delegate = nil
         mediaPlayer.drawable = nil
@@ -128,7 +128,7 @@ final class VLCPlayerEngineAdapter: PlayerEngine {
     func stop() { stateSubject.send(.idle) }
     func makePlayerViewController() -> UIViewController { VLCPlayerViewController() }
     func startPictureInPicture() -> Bool { false }
-    func release() {}
+    func dispose() {}
 }
 
 #endif

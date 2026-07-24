@@ -91,7 +91,7 @@ public final class AVPlayerEngine: NSObject, PlayerEngine {
         return true
     }
 
-    public func release() {
+    public func dispose() {
         stop()
         playerObservation?.invalidate()
         itemObservation?.invalidate()

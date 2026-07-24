@@ -84,4 +84,13 @@ final class DomainModelsTests: XCTestCase {
 
         XCTAssertEqual(result.url, "https://a.example/video")
     }
+
+    func testVodResultEncodesSubtitlesWithAndroidFieldName() throws {
+        let result = VodResult(subtitles: [SubtitleResource(url: "https://a.example/subtitle.vtt", name: "中文")])
+        let object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(result)) as? [String: Any]
+        let subtitles = object?["subs"] as? [[String: String]]
+
+        XCTAssertEqual(subtitles?.first?["url"], "https://a.example/subtitle.vtt")
+        XCTAssertNil(object?["subtitles"])
+    }
 }
