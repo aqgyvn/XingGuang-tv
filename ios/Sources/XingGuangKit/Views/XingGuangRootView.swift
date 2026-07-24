@@ -4,7 +4,11 @@ import SwiftUI
 public struct XingGuangRootView: View {
     @StateObject private var model: XingGuangAppModel
 
-    public init(model: XingGuangAppModel = XingGuangAppModel()) {
+    public init() {
+        _model = StateObject(wrappedValue: XingGuangAppModel())
+    }
+
+    public init(model: XingGuangAppModel) {
         _model = StateObject(wrappedValue: model)
     }
 

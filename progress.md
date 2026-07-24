@@ -2247,3 +2247,22 @@
 - `ios/Tests/XingGuangKitTests/DomainModelsTests.swift` and `FallbackPlayerEngineTests.swift`: cover the corrected subtitle encoding and conform to the renamed player contract.
 - `progress.md`: appends this CI diagnosis, repair scope, validation evidence, and rollback point.
 - Rollback method: after this repair commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md progress.md ios/App/VLCPlayerEngineAdapter.swift ios/Sources/XingGuangKit/Models/CatalogModels.swift ios/Sources/XingGuangKit/Player/AVPlayerEngine.swift ios/Sources/XingGuangKit/Player/FallbackPlayerEngine.swift ios/Sources/XingGuangKit/Player/PlayerSession.swift ios/Sources/XingGuangKit/Player/PreviewPlayerEngine.swift ios/Sources/XingGuangKit/Services/VodRepository.swift ios/Sources/XingGuangKit/Views/XingGuangRootView.swift ios/Tests/XingGuangKitTests/DomainModelsTests.swift ios/Tests/XingGuangKitTests/FallbackPlayerEngineTests.swift`.
+
+## 2026-07-24 - Task: Repair remaining iOS root-view actor isolation failure
+
+### What was done
+- Used the second GitHub Actions run `30080896502` to confirm the Codable and player cleanup repairs passed Swift compilation, then isolated the remaining root-view failure to Swift's nonisolated default-argument evaluation.
+- Replaced the root view's `XingGuangAppModel` default parameter with separate parameterless and injected-model initializers so preview callers retain their simple API while the model construction occurs in the main-actor initializer body.
+- Simplified the iOS development document to retain the stable release gate: the branch is not installable until the full iPhone/iPad, device-build, IPA, and TrollStore validation chain passes.
+
+### Testing
+- Failed evidence: GitHub Actions run `30080896502`, `Test on iPhone simulator`, exited with code `65` and reported only `XingGuangRootView.swift:7` calling the main-actor `XingGuangAppModel` initializer from a nonisolated default parameter.
+- Passed: the same CI log no longer reports the prior `VodResult` Encodable or `PlayerEngine.release()` compilation errors.
+- Passed: source inspection confirms `XingGuangRootView` no longer contains a default `XingGuangAppModel` parameter; `git diff --check` and the existing cleanup-method consistency check remain required before commit.
+- Not run: the corrected root view requires a new macOS CI run for Swift/Xcode compilation, iPhone/iPad Simulator tests, IPA packaging, signing, and TrollStore installation.
+
+### Notes
+- `docs/ios-development.md`: replaces transient CI wording with the enduring full-pipeline acceptance gate.
+- `ios/Sources/XingGuangKit/Views/XingGuangRootView.swift`: separates preview construction from dependency-injected model initialization to satisfy actor isolation.
+- `progress.md`: appends the second CI diagnosis, correction, validation gap, and rollback point.
+- Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md progress.md ios/Sources/XingGuangKit/Views/XingGuangRootView.swift`.
