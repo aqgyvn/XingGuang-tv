@@ -106,9 +106,11 @@ public final class ApiVodRepository: VodRepository, @unchecked Sendable {
         if !ext.isEmpty { requestParams["extend"] = ext }
         if !requestParams.isEmpty {
             if ext.count <= 1000 {
-                var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)
-                components?.queryItems = (components?.queryItems ?? []) + requestParams.map { URLQueryItem(name: $0.key, value: $0.value) }
-                guard let url = components?.url else { throw VodRepositoryError.invalidSite }
+                guard var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false) else {
+                    throw VodRepositoryError.invalidSite
+                }
+                components.queryItems = (components.queryItems ?? []) + requestParams.map { URLQueryItem(name: $0.key, value: $0.value) }
+                guard let url = components.url else { throw VodRepositoryError.invalidSite }
                 requestURL = url
             } else {
                 body = requestParams.map { "\(urlEncode($0.key))=\(urlEncode($0.value))" }.joined(separator: "&").data(using: .utf8)

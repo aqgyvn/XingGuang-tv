@@ -2285,3 +2285,22 @@
 - `ios/Tests/XingGuangKitTests/ApiVodRepositoryTests.swift`: covers selection of the first `$$$`-separated playback URL.
 - `progress.md`: appends CI evidence, validation gap, changed-file list, and rollback point.
 - Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md ios/Sources/XingGuangKit/Services/ApiVodRepository.swift ios/Tests/XingGuangKitTests/ApiVodRepositoryTests.swift progress.md`.
+
+## 2026-07-24 - Task: Repair URL query assembly compilation failure
+
+### What was done
+- Used GitHub Actions run `30082211921` to isolate the only remaining iPhone simulator compiler error to URL query assembly in `ApiVodRepository`.
+- Replaced the optional `URLComponents` read/write expression with a local mutable value before appending query items, preserving the existing URL encoding, base query items, and request parameter behavior.
+- Updated the iOS development record with the fourth CI diagnosis and the next full-pipeline rerun gate.
+
+### Testing
+- Failed evidence: GitHub Actions run `30082211921`, job `89446155533`, exited with code `65`; its only source error is `ApiVodRepository.swift:110:27`, reporting overlapping accesses to `components` during query-item assignment.
+- Passed: source inspection confirms query assembly now reads and writes a non-optional local `URLComponents` value. The existing `testRemoteShortExtensionKeepsAPIRequestAsGET` covers this GET query-assembly path and verifies that the resolved extension is present in the generated URL.
+- Passed: `git diff --check` remains required before commit.
+- Not run: Swift/Xcode compilation, iPhone/iPad Simulator tests, device build, IPA packaging, signing, and TrollStore installation require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `docs/ios-development.md`: records the fourth CI diagnosis and full-pipeline rerun gate.
+- `ios/Sources/XingGuangKit/Services/ApiVodRepository.swift`: avoids Swift overlapping access while preserving GET query assembly.
+- `progress.md`: appends the CI evidence, validation gap, changed-file list, and rollback point.
+- Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md ios/Sources/XingGuangKit/Services/ApiVodRepository.swift progress.md`.
