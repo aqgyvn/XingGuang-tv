@@ -1,0 +1,137 @@
+import Foundation
+
+public enum HTTPMethod: String, Codable, Equatable {
+    case get = "GET"
+    case post = "POST"
+}
+
+public struct HTTPRequest: Equatable {
+    public var method: HTTPMethod
+    public var url: URL
+    public var headers: [String: String]
+    public var cookies: [String: String]
+    public var body: Data?
+    public var timeout: TimeInterval
+
+    public init(
+        method: HTTPMethod = .get,
+        url: URL,
+        headers: [String: String] = [:],
+        cookies: [String: String] = [:],
+        body: Data? = nil,
+        timeout: TimeInterval = 15
+    ) {
+        self.method = method
+        self.url = url
+        self.headers = headers
+        self.cookies = cookies
+        self.body = body
+        self.timeout = timeout
+    }
+}
+
+public struct HTTPResponse {
+    public let statusCode: Int
+    public let url: URL?
+    public let headers: [String: String]
+    public let cookies: [String: String]
+    public let data: Data
+
+    public init(statusCode: Int, url: URL?, headers: [String: String], cookies: [String: String] = [:], data: Data) {
+        self.statusCode = statusCode
+        self.url = url
+        self.headers = headers
+        self.cookies = cookies
+        self.data = data
+    }
+}
+
+public enum HTTPClientError: Error, Equatable, LocalizedError {
+    case invalidURL
+    case invalidResponse
+    case status(Int)
+    case emptyResponse
+    case timedOut
+    case cancelled
+    case transport(Int)
+
+    public var errorDescription: String? {
+        switch self {
+        case .invalidURL: return "请求地址无效"
+        case .invalidResponse: return "网络响应无效"
+        case .status(let code): return "网络请求失败（HTTP \(code)）"
+        case .emptyResponse: return "网络响应为空"
+        case .timedOut: return "网络请求超时"
+        case .cancelled: return "网络请求已取消"
+        case .transport: return "网络连接失败"
+        }
+    }
+}
+
+public protocol HTTPClient: Sendable {
+    func send(_ request: HTTPRequest) async throws -> HTTPResponse
+}
+
+public final class URLSessionHTTPClient: HTTPClient, @unchecked Sendable {
+    private let session: URLSession
+
+    public init(configuration: URLSessionConfiguration = .default) {
+        let sessionConfiguration = configuration
+        sessionConfiguration.httpCookieStorage = HTTPCookieStorage.shared
+        sessionConfiguration.httpShouldSetCookies = true
+        sessionConfiguration.httpCookieAcceptPolicy = .always
+        self.session = URLSession(configuration: sessionConfiguration)
+    }
+
+    public func send(_ request: HTTPRequest) async throws -> HTTPResponse {
+        var urlRequest = URLRequest(url: request.url, timeoutInterval: request.timeout)
+        urlRequest.httpMethod = request.method.rawValue
+        urlRequest.httpBody = request.body
+        for (key, value) in request.headers {
+            urlRequest.setValue(value, forHTTPHeaderField: key)
+        }
+        if !request.cookies.isEmpty {
+            let cookie = request.cookies.map { "\($0.key)=\($0.value)" }.joined(separator: "; ")
+            urlRequest.setValue(cookie, forHTTPHeaderField: "Cookie")
+        }
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: urlRequest)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let error as URLError {
+            switch error.code {
+            case .timedOut: throw HTTPClientError.timedOut
+            case .cancelled: throw CancellationError()
+            default: throw HTTPClientError.transport(error.code.rawValue)
+            }
+        }
+        try Task.checkCancellation()
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw HTTPClientError.invalidResponse
+        }
+        let responseHeaders = httpResponse.allHeaderFields.reduce(into: [String: String]()) { result, item in
+            result[String(describing: item.key)] = String(describing: item.value)
+        }
+        let headers = responseHeaders.reduce(into: [String: String]()) { result, item in
+            result[item.key.lowercased()] = item.value
+        }
+        guard (200..<400).contains(httpResponse.statusCode) else {
+            throw HTTPClientError.status(httpResponse.statusCode)
+        }
+        let cookies = HTTPCookie.cookies(withResponseHeaderFields: responseHeaders, for: httpResponse.url ?? request.url)
+            .reduce(into: [String: String]()) { result, cookie in result[cookie.name] = cookie.value }
+        return HTTPResponse(statusCode: httpResponse.statusCode, url: httpResponse.url, headers: headers, cookies: cookies, data: data)
+    }
+}
+
+public extension URLRequest {
+    func withCookieHeader(_ cookies: [String: String]) -> URLRequest {
+        guard !cookies.isEmpty else { return self }
+        var request = self
+        request.setValue(cookies.map { "\($0.key)=\($0.value)" }.joined(separator: "; "), forHTTPHeaderField: "Cookie")
+        return request
+    }
+}

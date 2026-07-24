@@ -2117,3 +2117,110 @@
 - `output/XingGuang-5.6.0-arm64.apk`: added the verified versioned delivery APK.
 - `progress.md`: appended this implementation, device verification, delivery artifact, and rollback record.
 - Rollback method: remove `waitingConfig` and its configuration-ready branches from `VideoActivity.java`; set `app/build.gradle`, `README.md`, and version documentation back to `559 / 5.5.9`; remove the `5.6.0 Recent Playback Cold-Start Loading` documentation, delete `output/XingGuang-5.6.0-arm64.apk`, remove this progress entry, then rebuild with `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace`.
+
+## 2026-07-23 - Task: Create isolated iPhone/iPad development directory
+### What was done
+- Created the repository-level `ios/` directory for future iPhone and iPad client development.
+- Added a minimal purpose marker without generating an Xcode project or adding platform dependencies.
+
+### Testing
+- Passed: `Test-Path -LiteralPath 'ios'` confirmed the directory exists at `D:\xingkong\ios`.
+- Passed: read `ios/README.md` and confirmed it identifies the directory as the iPhone/iPad client workspace and keeps the existing Android modules separate.
+
+### Notes
+- `ios/README.md`: keeps the new platform directory tracked and documents its exclusive iPhone/iPad purpose.
+- `progress.md`: appended this directory-creation and verification record.
+- Rollback method: run `Remove-Item -LiteralPath .\ios\README.md` followed by `Remove-Item -LiteralPath .\ios`, then remove this final progress entry.
+
+## 2026-07-23 - Task: Build the iPhone/iPad SwiftUI and CI foundation
+### What was done
+- Established an iOS/iPadOS 15 SwiftUI application foundation on the isolated `ios/` branch workspace without changing Android source code or resources.
+- Added the cloud-white three-tab application shell and offline point-on-demand, live, settings, search, collection, history, detail, route, episode, EPG, configuration, loading, empty, and error states for iPhone and iPad.
+- Added Android-compatible Codable foundation models, repository and player interfaces, fixture resources, focused unit/UI tests, XcodeGen project generation, and TrollStore IPA packaging.
+- Added a GitHub Actions macOS workflow that generates the project, tests on both iPhone and iPad simulators, builds the unsigned device app, applies ad-hoc signing, validates the IPA, and uploads artifacts and logs.
+
+### Testing
+- Passed: all iOS text, source, JSON, plist, project, workflow, script, and documentation files decode as UTF-8 without replacement errors.
+- Passed: `preview-config.json`, asset catalog JSON files, and `Info.plist` parse successfully with structured parsers.
+- Passed: the iOS app icon is RGB without alpha and has the required `1024 x 1024` dimensions; visual inspection confirmed it reuses the Android application identity.
+- Passed: `C:\Program Files\Git\bin\bash.exe -n ios/scripts/package-trollstore.sh` reported valid shell syntax.
+- Passed: source-level checks found no iOS 16/17-only navigation, observation, or presentation APIs in the iOS 15 SwiftUI views.
+- Passed: `git diff --check` reported no whitespace errors, and no tracked changes exist under Android application paths.
+- Not run: Swift compilation, XcodeGen generation, iPhone/iPad Simulator execution, device codesigning, IPA installation, and TrollStore validation require macOS/Xcode or a pushed GitHub Actions run; the current Windows host has no `swift`, `xcodegen`, or `xcrun` executable.
+- Not run: formal workflow-schema linting because `actionlint` and a local YAML parser are unavailable; the workflow was inspected structurally and remains subject to the first GitHub Actions run.
+
+### Notes
+- `.gitignore`: excludes generated Xcode projects, SwiftPM state, and user-specific Xcode state.
+- `.github/workflows/ios.yml`: defines iPhone/iPad tests, device build, ad-hoc signing, IPA validation, and artifact upload.
+- `docs/ios-development.md`: documents current scope, build and preview routes, CI behavior, TrollStore acceptance, and later migration stages.
+- `ios/Package.swift`: defines the iOS 15 `XingGuangKit` Swift Package and processed preview resources.
+- `ios/project.yml`: defines the universal app, unit-test, UI-test, and shared scheme targets for XcodeGen.
+- `ios/README.md`: identifies the isolated iPhone/iPad workspace and its platform baseline.
+- `ios/App/XingGuangApp.swift`: provides the minimal SwiftUI application lifecycle entry point.
+- `ios/App/Info.plist`: defines the visible app identity, versions, launch color, supported devices, and orientations.
+- `ios/App/Assets.xcassets/Contents.json`: declares the root application asset catalog.
+- `ios/App/Assets.xcassets/AppIcon.appiconset/Contents.json`: declares the universal 1024-point iOS marketing icon.
+- `ios/App/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png`: provides the opaque iOS application icon derived from the Android identity.
+- `ios/App/Assets.xcassets/LaunchBackground.colorset/Contents.json`: defines the cloud-white launch background color.
+- `ios/Sources/XingGuangKit/Design/XingGuangTheme.swift`: defines the shared cloud-white SwiftUI palette and panel treatment.
+- `ios/Sources/XingGuangKit/Fixtures/PreviewFixtures.swift`: provides deterministic offline catalog, history, collection, and configuration fixtures.
+- `ios/Sources/XingGuangKit/Models/CodableDefaults.swift`: provides tolerant Android-style Codable defaults for missing fields.
+- `ios/Sources/XingGuangKit/Models/CatalogModels.swift`: defines configuration, site, catalog, filter, VOD, and playback request models.
+- `ios/Sources/XingGuangKit/Models/LiveModels.swift`: defines live source, group, channel, EPG, and EPG item models.
+- `ios/Sources/XingGuangKit/Models/PersistenceModels.swift`: defines JSON values plus configuration, history, collection, and backup models.
+- `ios/Sources/XingGuangKit/Resources/preview-config.json`: supplies the offline Android-compatible preview configuration.
+- `ios/Sources/XingGuangKit/Resources/PreviewLogo.png`: supplies the in-app preview source logo.
+- `ios/Sources/XingGuangKit/Services/VodRepository.swift`: defines the staged VOD repository and player engine interfaces.
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: owns iOS 15 observable navigation, fixture, and configuration state.
+- `ios/Sources/XingGuangKit/Views/XingGuangRootView.swift`: defines the point-on-demand, live, and settings tab shell.
+- `ios/Sources/XingGuangKit/Views/VodHomeView.swift`: defines the offline VOD home, state variants, shortcuts, categories, and adaptive grid.
+- `ios/Sources/XingGuangKit/Views/LiveHomeView.swift`: defines the live player placeholder, group, channel, and EPG interactions.
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: defines configuration persistence, status feedback, toggles, and player settings.
+- `ios/Sources/XingGuangKit/Views/SearchPreviewView.swift`: defines the offline searchable VOD sheet.
+- `ios/Sources/XingGuangKit/Views/CollectionPreviewView.swift`: defines reusable collection and history grids.
+- `ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift`: defines the player placeholder, metadata, routes, episodes, and description.
+- `ios/Sources/XingGuangKit/Views/Components/ActionIcon.swift`: defines compact accessible header actions.
+- `ios/Sources/XingGuangKit/Views/Components/SectionTitle.swift`: defines consistent section headings.
+- `ios/Sources/XingGuangKit/Views/Components/VodPosterCard.swift`: defines stable adaptive VOD poster cards.
+- `ios/Tests/XingGuangKitTests/DomainModelsTests.swift`: covers fixture decoding and Android-compatible model defaults.
+- `ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift`: covers configuration validation, persistence, and category selection.
+- `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: covers primary-tab launch, configuration save feedback, and VOD detail navigation.
+- `ios/scripts/package-trollstore.sh`: applies ad-hoc signing and creates and validates a TrollStore IPA payload.
+- `progress.md`: appends this implementation, verification evidence, known macOS validation gap, and rollback record.
+- Rollback method: before committing, run `git restore -- .gitignore progress.md`, remove `.github/workflows/ios.yml` and `docs/ios-development.md`, and remove the `ios/` directory; after committing, use `git revert <ios-foundation-commit>` to preserve repository history.
+
+## 2026-07-24 - Task: Complete iOS phase-one API VOD, persistence, and dual-player implementation
+
+### What was done
+- Upgraded the iPhone/iPad client from an offline fixture shell to a first-phase API VOD client with Android-compatible type 0 XML, type 1 JSON, and type 4 extension requests for configuration, home, category, search, detail, and playback resolution.
+- Added GRDB/SQLite persistence for configuration, sites, live records, favorites, history, playback progress, speed, and track selections; connected real configuration loading, source switching, favorites, history, and continue-watching UI state.
+- Added AVPlayer and MobileVLCKit routing with automatic/forced core selection, one-time format fallback, playback progress and resume handling, AVPlayer track selection, AirPlay, background audio, and system picture-in-picture entry.
+- Added structured URLSession request handling for headers, cookies, redirects, timeout, cancellation, response cookies, and HTTP errors; preserved cancellation when switching sources.
+- Added CocoaPods integration and locked MobileVLCKit `3.6.0b10`; updated the CI workflow and IPA packager to build the CocoaPods workspace and sign embedded frameworks before the App.
+- Documented first-phase capability boundaries, LGPL notice, Mac build workflow, CI behavior, TrollStore acceptance gates, and remaining JavaScript/live/advanced work.
+
+### Testing
+- Passed: strict UTF-8 decoding for 64 iOS, workflow, and documentation text files; preview JSON, asset catalog JSON, and `ios/App/Info.plist` parsed successfully.
+- Passed: `C:\Program Files\Git\bin\bash.exe -n ios/scripts/package-trollstore.sh`, Podfile SHA-1 versus `ios/Podfile.lock`, `git diff --check`, and Android-path scope checks.
+- Passed: static test coverage was added for XML/JSON/type 4 decoding, filters, numeric IDs, remote extensions, URL pairs, cookies, HTTP status, cancellation, GRDB records, core selection, one-time fallback, resume seeking, and rapid source switching.
+- Passed: MobileVLCKit `3.6.0b10` public headers were checked against the adapter; its notification delegate, buffering/ended states, time API, media options, and drawable API match the implemented calls.
+- Not run: Swift compilation, SwiftPM resolution, CocoaPods installation, XcodeGen generation, iPhone/iPad Simulator tests, device codesigning, IPA creation, GitHub Actions, and TrollStore installation. This Windows host has no `swift`, `xcodebuild`, `xcodegen`, `pod`, or `xcrun`; static checks do not prove the app is installable.
+
+### Notes
+- `.gitignore`: excludes generated Pods and Xcode workspace state.
+- `.github/workflows/ios.yml`: builds and tests the CocoaPods workspace before IPA packaging.
+- `docs/ios-development.md`: records phase-one behavior, dependencies, validation gap, licensing, and acceptance gate.
+- `ios/Package.swift`: adds the GRDB SwiftPM dependency.
+- `ios/Podfile` and `ios/Podfile.lock`: pin the MobileVLCKit app dependency and its resolved pod metadata.
+- `ios/project.yml`: keeps the iOS 15 universal targets on Swift 5.9 for workspace generation.
+- `ios/App/XingGuangApp.swift`, `ios/App/Info.plist`, and `ios/App/VLCPlayerEngineAdapter.swift`: wire formal dependencies, audio/PiP configuration, and the MobileVLCKit core.
+- `ios/scripts/package-trollstore.sh`: signs nested frameworks before signing and validating the App payload.
+- `ios/Sources/XingGuangKit/Models/CodableDefaults.swift`, `CatalogModels.swift`, and `PersistenceModels.swift`: add Android-tolerant decoding plus playback, subtitle, DRM, and track models.
+- `ios/Sources/XingGuangKit/Persistence/AppDatabase.swift`: adds the GRDB schema and persistence repository implementation.
+- `ios/Sources/XingGuangKit/Services/HTTPClient.swift`, `ApiVodRepository.swift`, `VodRepository.swift`, and `VodXMLParser.swift`: add the real network/API/repository/player contracts and XML parsing.
+- `ios/Sources/XingGuangKit/Player/AVPlayerEngine.swift`, `FallbackPlayerEngine.swift`, `PlayerHostViewController.swift`, `PlayerSession.swift`, and `PreviewPlayerEngine.swift`: implement AVPlayer, automatic VLC fallback, player hosting, resume, and Preview injection.
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: connects real configuration/catalog tasks and prevents stale source results from winning.
+- `ios/Sources/XingGuangKit/Views/VodHomeView.swift`, `SearchPreviewView.swift`, `CollectionPreviewView.swift`, `SettingsView.swift`, `VodDetailPreviewView.swift`, `XingGuangRootView.swift`, `Components/PlayerSurfaceView.swift`, and `Components/VodPosterCard.swift`: connect the phase-one UI to real state, API results, persistence, and player controls.
+- `ios/Tests/XingGuangKitTests/ApiVodRepositoryTests.swift`, `AppDatabaseTests.swift`, `DomainModelsTests.swift`, `FallbackPlayerEngineTests.swift`, `HTTPClientTests.swift`, and `XingGuangAppModelTests.swift`: add focused phase-one regression coverage.
+- `progress.md`: appends this implementation, evidence, known validation gap, and rollback record.
+- Rollback method: after the local phase-one commit is created, run `git revert HEAD` while it remains the branch tip; do not push the revert unless remote push is explicitly approved.

@@ -1,0 +1,116 @@
+name: iOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - "codex/**"
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test-package:
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: brew install xcodegen cocoapods
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Install iOS dependencies
+        working-directory: ios
+        run: pod install --repo-update
+
+      - name: Prepare build directory
+        run: mkdir -p ios/build
+
+      - name: Select simulators
+        id: simulators
+        shell: bash
+        run: |
+          set -euo pipefail
+          IPHONE_ID="$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.isAvailable == true and (.name | startswith("iPhone")))] | first | .udid')"
+          IPAD_ID="$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.isAvailable == true and (.name | startswith("iPad")))] | first | .udid')"
+          test -n "$IPHONE_ID" && test "$IPHONE_ID" != "null"
+          test -n "$IPAD_ID" && test "$IPAD_ID" != "null"
+          echo "iphone_id=$IPHONE_ID" >> "$GITHUB_OUTPUT"
+          echo "ipad_id=$IPAD_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Test on iPhone simulator
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace ios/XingGuang.xcworkspace \
+            -scheme XingGuang \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=${{ steps.simulators.outputs.iphone_id }}" \
+            -derivedDataPath ios/build/iphone \
+            CODE_SIGNING_ALLOWED=NO \
+            test | tee ios/build/iphone-test.log
+
+      - name: Test on iPad simulator
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace ios/XingGuang.xcworkspace \
+            -scheme XingGuang \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=${{ steps.simulators.outputs.ipad_id }}" \
+            -derivedDataPath ios/build/ipad \
+            CODE_SIGNING_ALLOWED=NO \
+            test | tee ios/build/ipad-test.log
+
+      - name: Build TrollStore app bundle
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace ios/XingGuang.xcworkspace \
+            -scheme XingGuang \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath ios/build/device \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build | tee ios/build/device-build.log
+
+      - name: Package TrollStore IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_PATH="ios/build/device/Build/Products/Release-iphoneos/XingGuang.app"
+          bash ios/scripts/package-trollstore.sh "$APP_PATH" "artifacts/XingGuang-0.1.0-trollstore.ipa"
+          /usr/bin/codesign -d --entitlements :- "$APP_PATH"
+          /usr/bin/unzip -l artifacts/XingGuang-0.1.0-trollstore.ipa | grep "Payload/XingGuang.app/Info.plist"
+
+      - name: Upload IPA and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: XingGuang-iOS-${{ github.run_number }}
+          path: |
+            artifacts/*.ipa
+            ios/build/*-test.log
+            ios/build/*-build.log
+          if-no-files-found: warn
+          retention-days: 14
