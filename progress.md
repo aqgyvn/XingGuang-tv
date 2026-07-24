@@ -2266,3 +2266,22 @@
 - `ios/Sources/XingGuangKit/Views/XingGuangRootView.swift`: separates preview construction from dependency-injected model initialization to satisfy actor isolation.
 - `progress.md`: appends the second CI diagnosis, correction, validation gap, and rollback point.
 - Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md progress.md ios/Sources/XingGuangKit/Views/XingGuangRootView.swift`.
+
+## 2026-07-24 - Task: Repair type-four playback compilation failure
+
+### What was done
+- Used GitHub Actions run `30081507484` to isolate the only remaining iPhone simulator compiler error to the type 4 playback URL parser.
+- Replaced the invalid `String.split` use with Foundation's multi-character delimiter API so a type 4 `vodPlayURL` containing `$$$` keeps resolving to its first address.
+- Extended the existing type 4 playback test fixture to exercise the multi-address response path rather than only the top-level URL fallback.
+
+### Testing
+- Failed evidence: GitHub Actions run `30081507484`, job `89443927332`, exited with code `65`; its only source error is `ApiVodRepository.swift:83:67`, which reports a missing `separator:` label for `split("$$$")`.
+- Passed: repository-wide source scan found that this is the sole `split(` invocation in `ios/`; the corrected path uses `components(separatedBy:)`, which accepts the required multi-character `$$$` delimiter.
+- Not run: Swift/Xcode compilation, iPhone/iPad Simulator tests, device build, IPA packaging, signing, and TrollStore installation require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `docs/ios-development.md`: records the third CI diagnosis while retaining the full-pipeline release gate.
+- `ios/Sources/XingGuangKit/Services/ApiVodRepository.swift`: resolves type 4 multi-address playback URLs with the correct Foundation API.
+- `ios/Tests/XingGuangKitTests/ApiVodRepositoryTests.swift`: covers selection of the first `$$$`-separated playback URL.
+- `progress.md`: appends CI evidence, validation gap, changed-file list, and rollback point.
+- Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md ios/Sources/XingGuangKit/Services/ApiVodRepository.swift ios/Tests/XingGuangKitTests/ApiVodRepositoryTests.swift progress.md`.

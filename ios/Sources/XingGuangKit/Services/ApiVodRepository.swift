@@ -80,7 +80,7 @@ public final class ApiVodRepository: VodRepository, @unchecked Sendable {
             let result = try await request(site: site, params: ["play": episodeURL, "flag": flag], xmlAllowed: false)
             var headers = site.header
             headers.merge(result.header) { _, new in new }
-            if let resolved = result.list.first?.vodPlayURL.split("$$$").first, !resolved.isEmpty {
+            if let resolved = result.list.first?.vodPlayURL.components(separatedBy: "$$$").first, !resolved.isEmpty {
                 return playbackRequest(url: resolved, headers: headers, result: result, site: site)
             }
             if !result.url.isEmpty { return playbackRequest(url: result.url, headers: headers, result: result, site: site) }

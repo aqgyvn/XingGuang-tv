@@ -74,6 +74,8 @@ xcodebuild \
 
 `codex/ios-foundation` 已推送并触发 workflow。修复后的分支必须通过 iPhone/iPad 测试、设备构建、IPA 结构与签名检查，结果通过后才能开始 TrollStore 验收。
 
+第三次运行 `30081507484` 已确认此前的 `VodResult`、播放器清理和根视图隔离错误不再出现；当前唯一编译阻断是 `ApiVodRepository.swift` 对多字符播放地址分隔符的错误调用。修复后仍须重新运行完整 CI 链路。
+
 ## TrollStore 第一阶段验收
 
 从成功的 GitHub Actions artifact 下载 IPA 后，在支持 TrollStore 的 iPhone/iPad 上验证：
