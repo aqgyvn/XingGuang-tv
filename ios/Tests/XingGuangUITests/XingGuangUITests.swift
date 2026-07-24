@@ -12,9 +12,12 @@ final class XingGuangUITests: XCTestCase {
         app.launch()
     }
 
-    func testPrimaryTabsAndConfigurationSave() {
+    func testVodHomeStartsOnSupportedDevices() {
         XCTAssertTrue(app.descendants(matching: .any)["vod.home"].waitForExistence(timeout: 10))
-        if UIDevice.current.userInterfaceIdiom == .pad { return }
+    }
+
+    func testPrimaryTabsAndConfigurationSaveOnIPhone() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "The iPad TabView does not expose labeled tab buttons to this XCTest runtime")
 
         XCTAssertTrue(app.tabBars.buttons["点播"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.tabBars.buttons["直播"].exists)

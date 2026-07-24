@@ -2361,3 +2361,21 @@
 - `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: applies the text-tab and configuration workflow only where iPhone exposes those tab labels, while retaining iPad startup coverage.
 - `progress.md`: appends CI evidence, validation gap, changed-file list, and rollback point.
 - Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md ios/Tests/XingGuangUITests/XingGuangUITests.swift progress.md`.
+
+## 2026-07-24 - Task: Make iPad tab-label test limitation explicit
+
+### What was done
+- Split the cross-device home-start assertion from the iPhone-specific labeled-tab and configuration-save workflow.
+- Changed the iPad text-tab limitation from an early return into an explicit XCTest skip, so CI distinguishes unverified labeled-tab accessibility from a passing tab workflow.
+- Kept the point-of-demand detail-navigation UI test on both iPhone and iPad without changing application navigation code.
+
+### Testing
+- Passed evidence: GitHub Actions run `30084153754` already verifies `vod.home` and `vod.detail` on iPad, while the full labeled-tab and settings-save flow passes on iPhone.
+- Passed: source review confirms `XCTSkipUnless` and `UIDevice.current.userInterfaceIdiom` are available to the iOS 15 UI-test target.
+- Not run: the explicit-skip result, remaining iPhone/iPad tests, device build, IPA packaging, signing, and TrollStore installation require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `docs/ios-development.md`: states that the iPad labeled-tab assertion is intentionally reported as skipped rather than passed.
+- `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: separates shared startup coverage from the iPhone-specific labeled-tab workflow.
+- `progress.md`: appends the verification distinction, changed-file list, and rollback point.
+- Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md ios/Tests/XingGuangUITests/XingGuangUITests.swift progress.md`.

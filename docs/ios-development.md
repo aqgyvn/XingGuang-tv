@@ -74,7 +74,7 @@ xcodebuild \
 
 `codex/ios-foundation` 已推送并触发 workflow。修复后的分支必须通过 iPhone/iPad 测试、设备构建、IPA 结构与签名检查，结果通过后才能开始 TrollStore 验收。
 
-第七次运行 `30084153754` 已通过 iPhone 模拟器测试，确认配置替换修复生效；iPad 的应用启动和详情导航也通过，但其 `TabView` 未向 UI 自动化暴露与 iPhone 相同的文本 tab 按钮。测试现将文本 tab 和配置保存流程限定为 iPhone，iPad 继续验收启动与详情导航，仍须重新运行完整 CI 链路。
+第七次运行 `30084153754` 已通过 iPhone 模拟器测试，确认配置替换修复生效；iPad 的应用启动和详情导航也通过，但其 `TabView` 未向 UI 自动化暴露与 iPhone 相同的文本 tab 按钮。测试现将文本 tab 和配置保存流程显式标记为仅 iPhone 验收，iPad 会记录该断言为跳过，同时继续验收启动与详情导航，仍须重新运行完整 CI 链路。
 
 ## TrollStore 第一阶段验收
 
