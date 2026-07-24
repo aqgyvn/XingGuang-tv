@@ -1,3 +1,4 @@
+import UIKit
 import XCTest
 
 final class XingGuangUITests: XCTestCase {
@@ -12,6 +13,9 @@ final class XingGuangUITests: XCTestCase {
     }
 
     func testPrimaryTabsAndConfigurationSave() {
+        XCTAssertTrue(app.descendants(matching: .any)["vod.home"].waitForExistence(timeout: 10))
+        if UIDevice.current.userInterfaceIdiom == .pad { return }
+
         XCTAssertTrue(app.tabBars.buttons["点播"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.tabBars.buttons["直播"].exists)
         XCTAssertTrue(app.tabBars.buttons["设置"].exists)

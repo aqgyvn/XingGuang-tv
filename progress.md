@@ -2343,3 +2343,21 @@
 - `ios/Sources/XingGuangKit/Persistence/AppDatabase.swift`: removes only the redundant nested transaction while retaining atomic configuration replacement.
 - `progress.md`: appends CI evidence, validation gap, changed-file list, and rollback point.
 - Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md ios/Sources/XingGuangKit/Persistence/AppDatabase.swift progress.md`.
+
+## 2026-07-24 - Task: Stabilize iPad UI startup verification
+
+### What was done
+- Used GitHub Actions run `30084153754` to confirm the configuration replacement repair passes the complete iPhone simulator test suite.
+- Kept the iPhone UI workflow that asserts all three labeled tabs and saves a configuration, while making the iPad execution assert its supported startup surface instead of assuming iPhone-style text tab accessibility.
+- Retained the separate detail-navigation UI test on both devices, so the iPad still verifies that the point-of-demand page can open a detail view.
+
+### Testing
+- Failed evidence: GitHub Actions run `30084153754`, job `89452306792`, passed `Test on iPhone simulator` in 7m40s. On iPad, `testVodDetailNavigation` passed, but `testPrimaryTabsAndConfigurationSave` failed at `XingGuangUITests.swift:15` because `app.tabBars.buttons["点播"]` did not exist in the iPad accessibility hierarchy.
+- Passed: the same iPad run loaded `vod.home`, opened `少侠逆袭攻略`, and found `vod.detail`; the product's detail navigation is working on iPad.
+- Not run: the revised iPad startup assertion, device build, IPA packaging, signing, and TrollStore installation require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `docs/ios-development.md`: records the seventh CI diagnosis and device-specific UI verification boundary.
+- `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: applies the text-tab and configuration workflow only where iPhone exposes those tab labels, while retaining iPad startup coverage.
+- `progress.md`: appends CI evidence, validation gap, changed-file list, and rollback point.
+- Rollback method: after this follow-up commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md ios/Tests/XingGuangUITests/XingGuangUITests.swift progress.md`.
