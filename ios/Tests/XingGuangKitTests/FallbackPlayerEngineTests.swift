@@ -54,14 +54,19 @@ final class FallbackPlayerEngineTests: XCTestCase {
         XCTAssertEqual(engine.kind, .avPlayer)
     }
 
-    func testSessionSeeksAfterPlayerBecomesReady() {
+    func testSessionSeeksAfterPlayerBecomesReady() async {
         let player = PlayerEngineStub(kind: .avPlayer)
         let session = PlayerSession(engine: player)
+        let resumed = expectation(description: "resume seek forwarded")
+        player.onSeek = { position in
+            if position == 42 { resumed.fulfill() }
+        }
 
         session.load(PlaybackRequest(url: "https://example.com/video.mp4"), resumeAt: 42)
         XCTAssertTrue(player.seekPositions.isEmpty)
 
         player.ready()
+        await fulfillment(of: [resumed], timeout: 1)
         XCTAssertEqual(player.seekPositions, [42])
     }
 }
@@ -78,12 +83,16 @@ private final class PlayerEngineStub: PlayerEngine {
     private let stateSubject = CurrentValueSubject<PlayerState, Never>(.idle)
     private(set) var loadCount = 0
     private(set) var seekPositions: [TimeInterval] = []
+    var onSeek: ((TimeInterval) -> Void)?
 
     init(kind: PlayerEngineKind) { self.kind = kind }
     func load(_ request: PlaybackRequest) { loadCount += 1 }
     func play() {}
     func pause() {}
-    func seek(to position: TimeInterval) { seekPositions.append(position) }
+    func seek(to position: TimeInterval) {
+        seekPositions.append(position)
+        onSeek?(position)
+    }
     func setRate(_ rate: Float) {}
     func select(track: PlayerTrack?) {}
     func stop() {}

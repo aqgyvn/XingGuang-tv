@@ -66,7 +66,7 @@ final class QuickJSHostBox: @unchecked Sendable {
         if moduleName.hasPrefix("xg-lib://") {
             let relative = String(moduleName.dropFirst("xg-lib://".count)).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
             let fileName = relative.hasPrefix("lib/") ? String(relative.dropFirst(4)) : relative
-            guard let url = Bundle.module.url(forResource: fileName, withExtension: nil, subdirectory: "JavaScript/lib") else {
+            guard let url = bundledResourceURL(fileName) else {
                 throw JavaScriptRuntimeError.invalidScript("找不到内置模块 \(relative)")
             }
             data = try Data(contentsOf: url)
@@ -311,7 +311,12 @@ final class QuickJSHostBox: @unchecked Sendable {
     }
 
     private func resourceExists(_ fileName: String) -> Bool {
-        Bundle.module.url(forResource: fileName, withExtension: nil, subdirectory: "JavaScript/lib") != nil
+        bundledResourceURL(fileName) != nil
+    }
+
+    private func bundledResourceURL(_ fileName: String) -> URL? {
+        Bundle.module.url(forResource: fileName, withExtension: nil, subdirectory: "JavaScript/lib")
+            ?? Bundle.module.url(forResource: fileName, withExtension: nil)
     }
 }
 

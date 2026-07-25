@@ -2544,3 +2544,23 @@
 - `docs/ios-development.md`: records CI run `30178184218`, its exact failure boundary and required rerun.
 - `progress.md`: appends failure evidence, validation scope, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/JavaScriptBridgeCompatibility.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Repair bundled JavaScript resources and asynchronous resume test
+
+### What was done
+- Used GitHub Actions run `30178314318` to confirm Swift compilation and all three iPhone UI tests, then separated the remaining 14 unit-test failures into bundled-resource lookup and asynchronous test timing causes.
+- Added a SwiftPM-compatible root fallback for bundled JavaScript modules while retaining the existing `JavaScript/lib` lookup as the first choice.
+- Updated the legacy resume test to wait for the main-queue player callback instead of asserting before the production subscription delivered it.
+
+### Testing
+- Failed evidence: GitHub Actions run `30178314318`, job `89730628980`, compiled successfully and passed 3 iPhone UI tests, but failed 13 JavaScript tests after `lib/http.js` could not be found under the processed resource subdirectory and failed `FallbackPlayerEngineTests.testSessionSeeksAfterPlayerBecomesReady` before the asynchronous seek arrived; iPad tests, Release build, IPA packaging and signing were skipped.
+- Passed: source inspection confirms bundled modules retain their original subdirectory lookup and add only the SwiftPM root fallback; the player production code is unchanged and the test now observes the actual callback.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after the repair.
+- Not run: the corrected JavaScript tests, iPhone/iPad suites, device build, IPA packaging and signing require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `ios/Sources/XingGuangJavaScript/QuickJSHost.swift`: finds processed SwiftPM JavaScript resources in either preserved subdirectories or the bundle root.
+- `ios/Tests/XingGuangKitTests/FallbackPlayerEngineTests.swift`: waits for asynchronous resume delivery before asserting.
+- `docs/ios-development.md`: records CI run `30178314318`, its test boundary and the resource packaging behavior.
+- `progress.md`: appends failure evidence, verification scope, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/QuickJSHost.swift ios/Tests/XingGuangKitTests/FallbackPlayerEngineTests.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
