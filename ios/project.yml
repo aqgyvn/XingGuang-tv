@@ -27,6 +27,8 @@ targets:
     dependencies:
       - package: XingGuangKit
         product: XingGuangKit
+      - package: XingGuangKit
+        product: XingGuangJavaScript
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.xingguang.video.ios
@@ -48,6 +50,8 @@ targets:
     dependencies:
       - package: XingGuangKit
         product: XingGuangKit
+      - package: XingGuangKit
+        product: XingGuangJavaScript
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.xingguang.video.ios.tests

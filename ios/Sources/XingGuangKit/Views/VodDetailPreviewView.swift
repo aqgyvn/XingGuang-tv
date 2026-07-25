@@ -12,11 +12,20 @@ struct VodDetailPreviewView: View {
     @State private var seekPosition = 0.0
     @State private var seeking = false
     @State private var speed = 1.0
+    @State private var playbackTask: Task<Void, Never>?
+    @State private var playingEpisodeURL = ""
+    @State private var expectedResumePosition = 0.0
+    @State private var lastPersistedPosition = 0.0
+    @State private var lastPersistedEpisodeURL = ""
+    @State private var selectedAudioTrackID = ""
+    @State private var selectedVideoTrackID = ""
+    @State private var selectedSubtitleTrackID = ""
 
     init(vod: Vod, model: XingGuangAppModel) {
         self.model = model
         _vod = State(initialValue: vod)
         _session = StateObject(wrappedValue: model.makePlayerSession())
+        _speed = State(initialValue: model.defaultPlaybackSpeed)
     }
 
     private var routes: [PlaybackRoute] { vod.playbackRoutes }
@@ -54,9 +63,31 @@ struct VodDetailPreviewView: View {
         }
         .task { await loadDetail() }
         .onReceive(session.$time) { time in
-            if !seeking { seekPosition = time.position }
+            if !seeking, time.position.isFinite { seekPosition = max(time.position, 0) }
+            guard let episode = currentEpisode else { return }
+            guard playingEpisodeURL == episode.url else { return }
+            if expectedResumePosition > 0 {
+                if time.position >= max(expectedResumePosition - 5, 0) {
+                    expectedResumePosition = 0
+                    lastPersistedPosition = time.position
+                }
+                return
+            }
+            if lastPersistedEpisodeURL != episode.url {
+                lastPersistedEpisodeURL = episode.url
+                lastPersistedPosition = 0
+            }
+            if time.position.isFinite, abs(time.position - lastPersistedPosition) >= 15 {
+                persistPlayback()
+            }
+        }
+        .onReceive(session.$tracks) { tracks in
+            selectedAudioTrackID = retainedTrackID(selectedAudioTrackID, in: tracks)
+            selectedVideoTrackID = retainedTrackID(selectedVideoTrackID, in: tracks)
+            selectedSubtitleTrackID = retainedTrackID(selectedSubtitleTrackID, in: tracks)
         }
         .onDisappear {
+            playbackTask?.cancel()
             persistPlayback()
             session.stop()
         }
@@ -118,10 +149,10 @@ struct VodDetailPreviewView: View {
         VStack(spacing: 8) {
             Slider(
                 value: $seekPosition,
-                in: 0...max(session.time.duration, 1),
+                in: 0...playbackDuration,
                 onEditingChanged: { editing in
                     seeking = editing
-                    if !editing { session.engine.seek(to: seekPosition) }
+                    if !editing { session.seek(to: seekPosition) }
                 }
             )
             HStack {
@@ -131,11 +162,14 @@ struct VodDetailPreviewView: View {
                 Text("\(formatTime(seekPosition)) / \(formatTime(session.time.duration))")
                     .font(.caption.monospacedDigit())
                 Spacer()
-                Text(session.engine.kind == .avPlayer ? "AVPlayer" : "VLC")
-                    .font(.caption)
-                if session.engine.capabilities.contains(.pictureInPicture) {
+                if session.capabilities.contains(.trackSelection), !session.tracks.isEmpty {
+                    trackMenu
+                }
+                if session.capabilities.contains(.pictureInPicture), canRequestPictureInPicture {
                     Button {
-                        _ = session.engine.startPictureInPicture()
+                        if !session.startPictureInPicture() {
+                            detailError = "画中画暂不可用，请先开始播放"
+                        }
                     } label: {
                         Image(systemName: "pip")
                     }
@@ -145,7 +179,8 @@ struct VodDetailPreviewView: View {
                     ForEach([0.5, 0.75, 1, 1.25, 1.5, 2], id: \.self) { value in
                         Button("\(value, specifier: "%g")x") {
                             speed = value
-                            session.engine.setRate(Float(value))
+                            session.setRate(Float(value))
+                            persistPlayback()
                         }
                     }
                 } label: {
@@ -161,6 +196,92 @@ struct VodDetailPreviewView: View {
     private var isPlaying: Bool {
         if case .playing = session.state { return true }
         return false
+    }
+
+    private var canRequestPictureInPicture: Bool {
+        switch session.state {
+        case .loading, .ready, .playing, .paused: return true
+        case .idle, .ended, .failed: return false
+        }
+    }
+
+    private var playbackDuration: TimeInterval {
+        session.time.duration.isFinite ? max(session.time.duration, 1) : 1
+    }
+
+    private var audioTracks: [PlayerTrack] { session.tracks.filter { $0.kind == .audio } }
+    private var videoTracks: [PlayerTrack] { session.tracks.filter { $0.kind == .video } }
+    private var subtitleTracks: [PlayerTrack] { session.tracks.filter { $0.kind == .subtitle } }
+
+    private var trackMenu: some View {
+        Menu {
+            if !videoTracks.isEmpty {
+                Section(header: Text("视频")) {
+                    trackButtons(videoTracks)
+                }
+            }
+            if !audioTracks.isEmpty {
+                Section(header: Text("音频")) {
+                    trackButtons(audioTracks)
+                }
+            }
+            if !subtitleTracks.isEmpty {
+                Section(header: Text("字幕")) {
+                    Button {
+                        selectedSubtitleTrackID = ""
+                        session.select(track: nil)
+                    } label: {
+                        Label("关闭字幕", systemImage: selectedSubtitleTrackID.isEmpty ? "checkmark" : "captions.bubble")
+                    }
+                    trackButtons(subtitleTracks)
+                }
+            }
+        } label: {
+            Image(systemName: "captions.bubble")
+        }
+        .accessibilityLabel("音轨与字幕")
+    }
+
+    @ViewBuilder
+    private func trackButtons(_ tracks: [PlayerTrack]) -> some View {
+        ForEach(tracks) { track in
+            Button {
+                select(track: track)
+            } label: {
+                Label(
+                    trackDisplayName(track),
+                    systemImage: selectedTrackID(for: track.kind) == track.id ? "checkmark" : "circle"
+                )
+            }
+        }
+    }
+
+    private func select(track: PlayerTrack) {
+        switch track.kind {
+        case .audio: selectedAudioTrackID = track.id
+        case .video: selectedVideoTrackID = track.id
+        case .subtitle: selectedSubtitleTrackID = track.id
+        }
+        session.select(track: track)
+    }
+
+    private func selectedTrackID(for kind: PlayerTrack.Kind) -> String {
+        switch kind {
+        case .audio: return selectedAudioTrackID
+        case .video: return selectedVideoTrackID
+        case .subtitle: return selectedSubtitleTrackID
+        }
+    }
+
+    private func retainedTrackID(_ id: String, in tracks: [PlayerTrack]) -> String {
+        tracks.contains(where: { $0.id == id }) ? id : ""
+    }
+
+    private func trackDisplayName(_ track: PlayerTrack) -> String {
+        guard !track.language.isEmpty, !track.name.localizedCaseInsensitiveContains(track.language) else {
+            return track.name
+        }
+        return "\(track.name) (\(track.language))"
     }
 
     private var summary: some View {
@@ -184,11 +305,13 @@ struct VodDetailPreviewView: View {
                 SectionTitle(title: "线路")
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
-                        ForEach(Array(routes.enumerated()), id: \.element.id) { index, route in
+                        ForEach(Array(routes.enumerated()), id: \.offset) { index, route in
                             Button {
+                                guard index != selectedRoute else { return }
                                 persistPlayback()
                                 selectedRoute = index
                                 selectedEpisode = 0
+                                resetPersistenceCheckpoint()
                             } label: {
                                 routeLabel(route.name, selected: index == selectedRoute)
                             }
@@ -207,10 +330,11 @@ struct VodDetailPreviewView: View {
             VStack(alignment: .leading, spacing: 12) {
                 SectionTitle(title: "选集", trailing: "正序")
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 54, maximum: 88), spacing: 10)], spacing: 10) {
-                    ForEach(Array(route.episodes.enumerated()), id: \.element.id) { index, episode in
+                    ForEach(Array(route.episodes.enumerated()), id: \.offset) { index, episode in
                         Button {
                             persistPlayback()
                             selectedEpisode = index
+                            resetPersistenceCheckpoint()
                             play(route: route, episode: episode)
                         } label: {
                             Text(episode.name)
@@ -256,14 +380,24 @@ struct VodDetailPreviewView: View {
     }
 
     private func restoreSelection() {
-        guard let history = model.history(for: vod) else { return }
+        selectedRoute = 0
+        selectedEpisode = 0
+        playingEpisodeURL = ""
+        expectedResumePosition = 0
+        guard let history = model.history(for: vod) else {
+            speed = model.defaultPlaybackSpeed
+            resetPersistenceCheckpoint()
+            return
+        }
         if let routeIndex = routes.firstIndex(where: { $0.name == history.vodFlag }) {
             selectedRoute = routeIndex
             if let episodeIndex = routes[routeIndex].episodes.firstIndex(where: { $0.url == history.episodeURL }) {
                 selectedEpisode = episodeIndex
             }
         }
-        speed = history.speed
+        speed = history.speed.isFinite ? min(max(history.speed, 0.5), 2) : model.defaultPlaybackSpeed
+        lastPersistedPosition = Double(max(history.position, 0)) / 1000
+        lastPersistedEpisodeURL = history.episodeURL
     }
 
     private func playSelectedEpisode() {
@@ -272,22 +406,51 @@ struct VodDetailPreviewView: View {
     }
 
     private func play(route: PlaybackRoute, episode: PlaybackEpisode) {
-        Task {
+        playbackTask?.cancel()
+        detailError = ""
+        playbackTask = Task { @MainActor in
             do {
                 let request = try await model.resolvePlayback(route: route, episode: episode)
+                try Task.checkCancellation()
                 let history = model.history(for: vod)
-                let resume = history?.episodeURL == episode.url ? Double(max(history?.position ?? 0, 0)) / 1000 : 0
+                let storedPosition = history?.episodeURL == episode.url ? Double(max(history?.position ?? 0, 0)) / 1000 : 0
+                let storedDuration = history?.episodeURL == episode.url ? Double(max(history?.duration ?? 0, 0)) / 1000 : 0
+                let resume = storedDuration > 0 ? min(storedPosition, storedDuration) : storedPosition
+                expectedResumePosition = resume
                 session.load(request, resumeAt: resume)
-                session.engine.setRate(Float(speed))
+                session.setRate(Float(speed))
+                playingEpisodeURL = episode.url
+                lastPersistedPosition = resume
+                lastPersistedEpisodeURL = episode.url
+            } catch is CancellationError {
             } catch {
+                guard !Task.isCancelled else { return }
                 detailError = error.localizedDescription
             }
         }
     }
 
     private func persistPlayback() {
-        guard let route = currentRoute, let episode = currentEpisode, session.time.position > 0 else { return }
-        model.savePlayback(vod: vod, route: route, episode: episode, time: session.time, speed: speed)
+        guard let route = currentRoute, let episode = currentEpisode,
+              playingEpisodeURL == episode.url,
+              expectedResumePosition == 0,
+              session.time.position.isFinite, session.time.position > 0 else { return }
+        let position = max(session.time.position, 0)
+        let duration = session.time.duration.isFinite ? max(session.time.duration, 0) : 0
+        let buffered = session.time.buffered.isFinite ? max(session.time.buffered, 0) : position
+        let safeTime = PlayerTime(position: position, duration: duration, buffered: buffered)
+        model.savePlayback(vod: vod, route: route, episode: episode, time: safeTime, speed: speed.isFinite ? speed : 1)
+        lastPersistedPosition = position
+        lastPersistedEpisodeURL = episode.url
+    }
+
+    private func resetPersistenceCheckpoint() {
+        playbackTask?.cancel()
+        session.stop()
+        lastPersistedPosition = 0
+        lastPersistedEpisodeURL = currentEpisode?.url ?? ""
+        playingEpisodeURL = ""
+        expectedResumePosition = 0
     }
 
     private func badge(_ text: String) -> some View {
@@ -312,6 +475,7 @@ struct VodDetailPreviewView: View {
     }
 
     private func formatTime(_ value: TimeInterval) -> String {
+        guard value.isFinite else { return "00:00" }
         let total = max(Int(value), 0)
         return String(format: "%02d:%02d", total / 60, total % 60)
     }

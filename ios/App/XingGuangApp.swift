@@ -1,5 +1,6 @@
 import SwiftUI
 import XingGuangKit
+import XingGuangJavaScript
 
 @main
 struct XingGuangApp: App {
@@ -15,8 +16,22 @@ struct XingGuangApp: App {
             avPlayer: { AVPlayerEngine() },
             vlc: { VLCPlayerEngineAdapter() }
         )
+        let javascript = JavaScriptVodRepository()
+        let repository = RoutingVodRepository(
+            api: ApiVodRepository(),
+            javascript: javascript
+        )
+        let liveRepository = DefaultLiveRepository(dynamicContentLoader: { live in
+            var site = Site(key: live.name, name: live.name, api: live.api, type: 3)
+            site.ext = live.ext
+            site.jar = live.jar
+            site.header = live.header
+            site.timeout = live.timeout
+            return try await javascript.liveContent(site: site, url: live.url)
+        })
         _model = StateObject(wrappedValue: XingGuangAppModel(
-            repository: ApiVodRepository(),
+            repository: repository,
+            liveRepository: liveRepository,
             persistence: store,
             playerFactory: factory,
             usePreviewData: false

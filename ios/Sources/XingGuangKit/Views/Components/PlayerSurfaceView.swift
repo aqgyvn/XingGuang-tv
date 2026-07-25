@@ -9,8 +9,20 @@ public struct PlayerSurfaceView: UIViewControllerRepresentable {
     }
 
     public func makeUIViewController(context: Context) -> UIViewController {
-        engine.makePlayerViewController()
+        let controller = engine.makePlayerViewController()
+        configure(controller)
+        return controller
     }
 
-    public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        configure(uiViewController)
+        uiViewController.view.setNeedsLayout()
+    }
+
+    private func configure(_ controller: UIViewController) {
+        controller.view.backgroundColor = .black
+        controller.view.isOpaque = true
+        controller.view.clipsToBounds = true
+        controller.view.accessibilityIdentifier = "player.surface"
+    }
 }

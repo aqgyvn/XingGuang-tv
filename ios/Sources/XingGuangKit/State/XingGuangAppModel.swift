@@ -16,32 +16,55 @@ public enum ConfigurationSaveState: Equatable {
     case failed(String)
 }
 
+public enum LiveLoadState: Equatable {
+    case idle
+    case loading
+    case loaded
+    case empty
+    case failed(String)
+}
+
 @MainActor
 public final class XingGuangAppModel: ObservableObject {
     @Published public var selectedSite: Site
     @Published public var selectedCategory: VodClass
     @Published public private(set) var categories: [VodClass]
+    @Published public private(set) var filters: [String: [VodFilter]]
+    @Published public var selectedFilters: [String: String]
     @Published public private(set) var catalogState: CatalogState
     @Published public var vodConfigURL: String
     @Published public var liveConfigURL: String
     @Published public private(set) var configurationSaveState: ConfigurationSaveState = .idle
     @Published public private(set) var liveSources: [Live]
+    @Published public private(set) var liveState: LiveLoadState
     @Published public private(set) var keeps: [Keep]
     @Published public private(set) var histories: [History]
+    @Published public var incognito: Bool {
+        didSet { defaults.set(incognito, forKey: "ios.incognito") }
+    }
+    @Published public var automaticLineChange: Bool {
+        didSet { defaults.set(automaticLineChange, forKey: "ios.automaticLineChange") }
+    }
+    @Published public var defaultPlaybackSpeed: Double {
+        didSet { defaults.set(defaultPlaybackSpeed, forKey: "ios.defaultPlaybackSpeed") }
+    }
     @Published public var playerPreference: PlayerEnginePreference {
         didSet { defaults.set(playerPreference.rawValue, forKey: "ios.playerEngine") }
     }
 
     public var continueWatching: History? { histories.first }
     public var repositoryAvailable: Bool { repository != nil }
+    public var activeFilters: [VodFilter] { filters[selectedCategory.typeID] ?? [] }
     public private(set) var configuration: VodConfigDocument
 
     private let repository: VodRepository?
+    private let liveRepository: LiveRepository?
     private let persistence: PersistenceStore?
     private let playerFactory: PlayerEngineFactory
     private let defaults: UserDefaults
     private var configurationTask: Task<Void, Never>?
     private var catalogTask: Task<Void, Never>?
+    private var liveTask: Task<Void, Never>?
 
     public init(
         selectedSite: Site = PreviewFixtures.site,
@@ -52,25 +75,34 @@ public final class XingGuangAppModel: ObservableObject {
         keeps: [Keep] = PreviewFixtures.keeps,
         defaults: UserDefaults = .standard,
         repository: VodRepository? = nil,
+        liveRepository: LiveRepository? = nil,
         persistence: PersistenceStore? = nil,
         playerFactory: PlayerEngineFactory = PreviewPlayerEngineFactory(),
         usePreviewData: Bool = true
     ) {
         self.repository = repository
+        self.liveRepository = liveRepository
         self.persistence = persistence
         self.playerFactory = playerFactory
         self.defaults = defaults
         self.vodConfigURL = defaults.string(forKey: "ios.vodConfigURL") ?? ""
         self.liveConfigURL = defaults.string(forKey: "ios.liveConfigURL") ?? ""
+        self.incognito = defaults.object(forKey: "ios.incognito") as? Bool ?? false
+        self.automaticLineChange = defaults.object(forKey: "ios.automaticLineChange") as? Bool ?? true
+        let storedSpeed = defaults.object(forKey: "ios.defaultPlaybackSpeed") as? Double ?? 1
+        self.defaultPlaybackSpeed = min(max(storedSpeed, 0.5), 2)
         self.playerPreference = PlayerEnginePreference(rawValue: defaults.string(forKey: "ios.playerEngine") ?? "") ?? .automatic
 
         if usePreviewData {
             self.configuration = PreviewFixtures.config
             self.selectedSite = selectedSite
             self.categories = categories
+            self.filters = [:]
+            self.selectedFilters = [:]
             self.selectedCategory = categories.first ?? VodClass(typeID: "all", typeName: "全部")
             self.catalogState = catalogState
             self.liveSources = liveSources
+            self.liveState = liveSources.isEmpty ? .empty : .loaded
             self.keeps = keeps
             self.histories = continueWatching.map { [$0] } ?? []
         } else {
@@ -78,9 +110,12 @@ public final class XingGuangAppModel: ObservableObject {
             self.configuration = VodConfigDocument()
             self.selectedSite = Site()
             self.categories = []
+            self.filters = [:]
+            self.selectedFilters = [:]
             self.selectedCategory = emptyCategory
             self.catalogState = .empty
             self.liveSources = []
+            self.liveState = .idle
             self.keeps = []
             self.histories = []
         }
@@ -90,12 +125,23 @@ public final class XingGuangAppModel: ObservableObject {
         reloadPersistence()
         if !vodConfigURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             loadConfiguration()
+        } else if !liveConfigURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            loadLiveConfiguration()
+        } else if !liveSources.isEmpty {
+            loadLiveSources(liveSources)
         }
     }
 
     public func selectCategory(_ category: VodClass) {
         selectedCategory = category
+        selectedFilters = defaultFilterValues(filters[category.typeID] ?? [])
         loadCategory(category)
+    }
+
+    /// Applies the currently selected Android-compatible filter values to the
+    /// active category request.
+    public func applyFilters() {
+        loadCategory(selectedCategory)
     }
 
     public func selectSite(_ site: Site) {
@@ -113,11 +159,14 @@ public final class XingGuangAppModel: ObservableObject {
         liveConfigURL = liveConfigURL.trimmingCharacters(in: .whitespacesAndNewlines)
         defaults.set(vodConfigURL, forKey: "ios.vodConfigURL")
         defaults.set(liveConfigURL, forKey: "ios.liveConfigURL")
-        guard repository != nil, !vodConfigURL.isEmpty else {
+        if repository != nil, !vodConfigURL.isEmpty {
+            loadConfiguration()
+        } else if liveRepository != nil, !liveConfigURL.isEmpty {
+            configurationSaveState = .loading
+            loadLiveConfiguration(updateConfigurationState: true)
+        } else {
             configurationSaveState = .saved
-            return
         }
-        loadConfiguration()
     }
 
     public func resetConfigurationSaveState() {
@@ -145,12 +194,134 @@ public final class XingGuangAppModel: ObservableObject {
         PlayerSession(engine: playerFactory.makePlayer(preference: playerPreference))
     }
 
+    public func makeBackupDocument() throws -> BackupDocument {
+        let encoder = JSONEncoder()
+        let now = Int64(Date().timeIntervalSince1970 * 1000)
+        var configs: [ConfigRecord] = []
+        let vodURL = vodConfigURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !vodURL.isEmpty {
+            let data = try encoder.encode(configuration)
+            configs.append(ConfigRecord(
+                type: 0,
+                time: now,
+                url: vodURL,
+                json: String(data: data, encoding: .utf8) ?? "",
+                name: "点播",
+                logo: configuration.logo,
+                home: selectedSite.key
+            ))
+        }
+        let liveURL = liveConfigURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !liveURL.isEmpty {
+            let data = try encoder.encode(liveSources)
+            configs.append(ConfigRecord(
+                type: 1,
+                time: now,
+                url: liveURL,
+                json: String(data: data, encoding: .utf8) ?? "",
+                name: "直播"
+            ))
+        }
+        return BackupDocument(
+            sites: configuration.sites,
+            lives: liveSources,
+            keeps: keeps,
+            configs: configs,
+            histories: histories,
+            preferences: [
+                "ios.playerEngine": .string(playerPreference.rawValue),
+                "ios.incognito": .bool(incognito),
+                "ios.automaticLineChange": .bool(automaticLineChange),
+                "ios.defaultPlaybackSpeed": .number(defaultPlaybackSpeed),
+                "player_engine": .number(playerPreference == .vlc ? 2 : 0),
+                "incognito": .bool(incognito),
+                "change": .bool(automaticLineChange)
+            ]
+        )
+    }
+
+    public func reloadLiveSources() {
+        if !liveConfigURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            loadLiveConfiguration()
+        } else {
+            loadLiveSources(configuration.lives)
+        }
+    }
+
+    public func loadEPG(for live: Live, channel: Channel) async throws -> [Epg] {
+        guard let liveRepository else { return [] }
+        return try await liveRepository.loadEPG(for: live, channel: channel)
+    }
+
+    public func livePlaybackRequest(
+        live: Live,
+        channel: Channel,
+        line: Int = 0,
+        programme: EpgData? = nil
+    ) throws -> PlaybackRequest {
+        guard channel.urls.indices.contains(line) else {
+            throw LiveRepositoryError.invalidURL(channel.urls.first ?? "")
+        }
+        let rawValue = channel.urls[line]
+        var value = rawValue.split(separator: "$", maxSplits: 1, omittingEmptySubsequences: false).first.map(String.init) ?? rawValue
+        let catchup = channel.catchup ?? live.catchup
+        if let programme,
+           let catchup,
+           let replay = catchup.replayURL(
+               baseURL: value,
+               programme: programme,
+               timeZone: TimeZone(identifier: live.timeZone) ?? .current
+           ) {
+            value = replay
+        }
+        guard let url = URL(string: value), url.scheme != nil else {
+            throw LiveRepositoryError.invalidURL(value)
+        }
+        var headers = live.header.merging(channel.header) { _, channelValue in channelValue }
+        let userAgent = channel.userAgent.isEmpty ? live.userAgent : channel.userAgent
+        let origin = channel.origin.isEmpty ? live.origin : channel.origin
+        let referer = channel.referer.isEmpty ? live.referer : channel.referer
+        if !userAgent.isEmpty { headers["User-Agent"] = userAgent }
+        if !origin.isEmpty { headers["Origin"] = origin }
+        if !referer.isEmpty { headers["Referer"] = referer }
+        return PlaybackRequest(
+            url: value,
+            headers: headers,
+            format: channel.format,
+            artwork: channel.logo,
+            mediaType: "live",
+            drm: channel.drm,
+            timeout: TimeInterval(live.timeout > 0 ? live.timeout : 15),
+            enginePreference: playerPreference
+        )
+    }
+
+    @discardableResult
+    public func toggleLiveKeep(live: Live, channel: Channel) -> Bool {
+        guard let persistence else { return false }
+        let keep = Keep(
+            key: liveKeepKey(live: live, channel: channel),
+            siteName: live.name,
+            vodName: channel.name,
+            vodPic: channel.logo,
+            createTime: Int64(Date().timeIntervalSince1970 * 1000),
+            type: 1
+        )
+        let selected = (try? persistence.toggleKeep(keep)) ?? false
+        reloadPersistence()
+        return selected
+    }
+
+    public func isLiveKept(live: Live, channel: Channel) -> Bool {
+        keeps.contains { $0.type == 1 && $0.key == liveKeepKey(live: live, channel: channel) }
+    }
+
     public func history(for vod: Vod) -> History? {
         histories.first { $0.key == historyKey(for: vod) }
     }
 
     public func savePlayback(vod: Vod, route: PlaybackRoute, episode: PlaybackEpisode, time: PlayerTime, speed: Double = 1) {
-        guard let persistence else { return }
+        guard !incognito, let persistence else { return }
         var history = History(key: historyKey(for: vod), vodName: vod.vodName, vodPic: vod.vodPic)
         history.vodFlag = route.name
         history.vodRemarks = episode.name
@@ -214,6 +385,11 @@ public final class XingGuangAppModel: ObservableObject {
                 configurationSaveState = .saved
                 reloadPersistence()
                 loadHome()
+                if !liveConfigURL.isEmpty {
+                    loadLiveConfiguration(updateConfigurationState: true)
+                } else {
+                    loadLiveSources(document.lives)
+                }
             } catch is CancellationError {
             } catch {
                 configurationSaveState = .failed(error.localizedDescription)
@@ -232,11 +408,73 @@ public final class XingGuangAppModel: ObservableObject {
                 let result = try await repository.home(site: selectedSite, includeFilters: true)
                 try Task.checkCancellation()
                 categories = filteredCategories(result.classes)
+                filters = result.filters
                 selectedCategory = categories.first ?? VodClass()
+                selectedFilters = defaultFilterValues(result.filters[selectedCategory.typeID] ?? [])
                 catalogState = result.list.isEmpty ? .empty : .loaded(result.list)
             } catch is CancellationError {
             } catch {
                 catalogState = .failed(error.localizedDescription)
+            }
+        }
+    }
+
+    private func loadLiveConfiguration(updateConfigurationState: Bool = false) {
+        guard let liveRepository else {
+            liveState = .failed("直播服务尚未初始化")
+            return
+        }
+        let value = liveConfigURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else {
+            loadLiveSources(configuration.lives)
+            return
+        }
+        liveTask?.cancel()
+        liveState = .loading
+        liveTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let name = URL(string: value)?.deletingPathExtension().lastPathComponent ?? "直播"
+                let loaded = try await liveRepository.load(Live(name: name.isEmpty ? "直播" : name, url: value))
+                try Task.checkCancellation()
+                liveSources = [loaded]
+                liveState = loaded.groups.flatMap(\.channels).isEmpty ? .empty : .loaded
+                if updateConfigurationState { configurationSaveState = .saved }
+            } catch is CancellationError {
+            } catch {
+                liveState = .failed(error.localizedDescription)
+                if updateConfigurationState { configurationSaveState = .failed(error.localizedDescription) }
+            }
+        }
+    }
+
+    private func loadLiveSources(_ sources: [Live]) {
+        guard let liveRepository else {
+            liveSources = sources
+            liveState = sources.flatMap(\.groups).flatMap(\.channels).isEmpty ? .empty : .loaded
+            return
+        }
+        liveTask?.cancel()
+        guard !sources.isEmpty else {
+            liveSources = []
+            liveState = .empty
+            return
+        }
+        liveState = .loading
+        liveTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                var loaded: [Live] = []
+                for source in sources {
+                    loaded.append(try await liveRepository.load(source))
+                    try Task.checkCancellation()
+                }
+                liveSources = loaded
+                liveState = loaded.flatMap(\.groups).flatMap(\.channels).isEmpty ? .empty : .loaded
+            } catch is CancellationError {
+            } catch {
+                liveSources = sources
+                liveState = .failed(error.localizedDescription)
             }
         }
     }
@@ -248,8 +486,9 @@ public final class XingGuangAppModel: ObservableObject {
         catalogTask = Task { [weak self] in
             guard let self else { return }
             do {
-                let result = try await repository.category(site: selectedSite, typeID: category.typeID, page: 1, filters: [:])
+                let result = try await repository.category(site: selectedSite, typeID: category.typeID, page: 1, filters: selectedFilters)
                 try Task.checkCancellation()
+                if !result.filters.isEmpty { filters = result.filters }
                 catalogState = result.list.isEmpty ? .empty : .loaded(result.list)
             } catch is CancellationError {
             } catch {
@@ -264,6 +503,13 @@ public final class XingGuangAppModel: ObservableObject {
         return values.filter { selected.contains($0.typeName) }
     }
 
+    private func defaultFilterValues(_ values: [VodFilter]) -> [String: String] {
+        values.reduce(into: [String: String]()) { result, filter in
+            guard !filter.initialValue.isEmpty else { return }
+            result[filter.key] = filter.initialValue
+        }
+    }
+
     private func reloadPersistence() {
         guard let persistence else { return }
         keeps = (try? persistence.loadKeeps()) ?? []
@@ -272,6 +518,10 @@ public final class XingGuangAppModel: ObservableObject {
 
     private func historyKey(for vod: Vod) -> String {
         "\(selectedSite.key)@@@\(vod.vodID)"
+    }
+
+    private func liveKeepKey(live: Live, channel: Channel) -> String {
+        "\(live.name)@@@\(channel.id)"
     }
 
     private func isValidOptionalURL(_ value: String) -> Bool {

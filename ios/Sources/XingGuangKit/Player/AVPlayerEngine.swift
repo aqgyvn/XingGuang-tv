@@ -5,7 +5,13 @@ import Foundation
 
 public final class AVPlayerEngine: NSObject, PlayerEngine {
     public let kind: PlayerEngineKind = .avPlayer
-    public let capabilities: Set<PlayerCapability> = [.airPlay, .backgroundAudio, .trackSelection]
+    public var capabilities: Set<PlayerCapability> {
+        var result: Set<PlayerCapability> = [.airPlay, .backgroundAudio, .trackSelection]
+        if AVPictureInPictureController.isPictureInPictureSupported() {
+            result.insert(.pictureInPicture)
+        }
+        return result
+    }
     public var state: PlayerState { stateSubject.value }
     public var tracks: [PlayerTrack] { tracksSubject.value }
     public var time: PlayerTime { timeSubject.value }
@@ -14,21 +20,18 @@ public final class AVPlayerEngine: NSObject, PlayerEngine {
     public var timePublisher: AnyPublisher<PlayerTime, Never> { timeSubject.eraseToAnyPublisher() }
 
     public let player = AVPlayer()
-    private let controller = AVPlayerViewController()
+    private lazy var surfaceController = AVPlayerSurfaceController(player: player)
     private let stateSubject = CurrentValueSubject<PlayerState, Never>(.idle)
     private let tracksSubject = CurrentValueSubject<[PlayerTrack], Never>([])
     private let timeSubject = CurrentValueSubject<PlayerTime, Never>(PlayerTime())
     private var playerObservation: NSKeyValueObservation?
     private var itemObservation: NSKeyValueObservation?
     private var timeObserver: Any?
-    private var selectionOptions: [String: AVMediaSelectionOption] = [:]
+    private var selectionOptions: [String: (option: AVMediaSelectionOption, characteristic: AVMediaCharacteristic)] = [:]
     private var preferredRate: Float = 1
 
     public override init() {
         super.init()
-        controller.player = player
-        controller.allowsPictureInPicturePlayback = true
-        controller.canStartPictureInPictureAutomaticallyFromInline = true
         player.allowsExternalPlayback = true
         configureAudioSession()
         observePlayer()
@@ -44,6 +47,8 @@ public final class AVPlayerEngine: NSObject, PlayerEngine {
             return
         }
         stateSubject.send(.loading)
+        tracksSubject.send([])
+        selectionOptions.removeAll()
         var headers = request.headers
         if !request.cookies.isEmpty {
             headers["Cookie"] = request.cookies.map { "\($0.key)=\($0.value)" }.joined(separator: "; ")
@@ -57,9 +62,12 @@ public final class AVPlayerEngine: NSObject, PlayerEngine {
 
     public func play() { player.playImmediately(atRate: preferredRate) }
     public func pause() { player.pause() }
-    public func seek(to position: TimeInterval) { player.seek(to: CMTime(seconds: max(position, 0), preferredTimescale: 600)) }
+    public func seek(to position: TimeInterval) {
+        let value = position.isFinite ? max(position, 0) : 0
+        player.seek(to: CMTime(seconds: value, preferredTimescale: 600))
+    }
     public func setRate(_ rate: Float) {
-        preferredRate = rate
+        preferredRate = rate.isFinite ? max(rate, 0.1) : 1
         switch player.timeControlStatus {
         case .playing, .waitingToPlayAtSpecifiedRate:
             player.playImmediately(atRate: preferredRate)
@@ -78,27 +86,42 @@ public final class AVPlayerEngine: NSObject, PlayerEngine {
             }
             return
         }
-        guard let option = selectionOptions[track.id] else { return }
-        let characteristic: AVMediaCharacteristic = track.kind == .subtitle ? .legible : .audible
+        guard let selection = selectionOptions[track.id] else { return }
+        let characteristic = selection.characteristic
         if let group = item.asset.mediaSelectionGroup(forMediaCharacteristic: characteristic) {
-            item.select(option, in: group)
+            item.select(selection.option, in: group)
         }
     }
 
     public func stop() {
+        surfaceController.pictureInPictureController?.stopPictureInPicture()
         player.pause()
         player.replaceCurrentItem(with: nil)
+        itemObservation?.invalidate()
+        itemObservation = nil
+        selectionOptions.removeAll()
+        tracksSubject.send([])
         stateSubject.send(.idle)
         timeSubject.send(PlayerTime())
     }
 
-    public func makePlayerViewController() -> UIViewController { controller }
-    public func startPictureInPicture() -> Bool { false }
+    public func makePlayerViewController() -> UIViewController { surfaceController }
+
+    @discardableResult
+    public func startPictureInPicture() -> Bool {
+        guard capabilities.contains(.pictureInPicture) else { return false }
+        surfaceController.loadViewIfNeeded()
+        guard let pictureInPictureController = surfaceController.pictureInPictureController,
+              pictureInPictureController.isPictureInPicturePossible else { return false }
+        pictureInPictureController.startPictureInPicture()
+        return true
+    }
 
     public func dispose() {
         stop()
         playerObservation?.invalidate()
         itemObservation?.invalidate()
+        surfaceController.pictureInPictureController?.stopPictureInPicture()
         if let observer = timeObserver {
             player.removeTimeObserver(observer)
             timeObserver = nil
@@ -128,7 +151,7 @@ public final class AVPlayerEngine: NSObject, PlayerEngine {
         timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.5, preferredTimescale: 600), queue: .main) { [weak self] _ in
             self?.publishTime()
         }
-        NotificationCenter.default.addObserver(self, selector: #selector(didPlayToEnd), name: .AVPlayerItemDidPlayToEndTime, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(didPlayToEnd(_:)), name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
 
     private func observe(_ item: AVPlayerItem) {
@@ -153,12 +176,19 @@ public final class AVPlayerEngine: NSObject, PlayerEngine {
     private func loadTracks(from item: AVPlayerItem) {
         selectionOptions.removeAll()
         var result: [PlayerTrack] = []
-        for (kind, characteristic) in [(PlayerTrack.Kind.audio, AVMediaCharacteristic.audible), (.subtitle, .legible)] {
+        // External SubtitleResource files need a separate timed-text renderer; these are embedded tracks only.
+        let groups: [(PlayerTrack.Kind, AVMediaCharacteristic)] = [
+            (.video, .visual),
+            (.audio, .audible),
+            (.subtitle, .legible)
+        ]
+        for (kind, characteristic) in groups {
             guard let group = item.asset.mediaSelectionGroup(forMediaCharacteristic: characteristic) else { continue }
             for (index, option) in group.options.enumerated() {
-                let id = "\(kind.rawValue):\(index):\(option.displayName)"
-                selectionOptions[id] = option
-                result.append(PlayerTrack(id: id, kind: kind, name: option.displayName, language: option.extendedLanguageTag ?? option.locale?.identifier ?? ""))
+                let displayName = option.displayName.isEmpty ? "\(kind.rawValue) \(index + 1)" : option.displayName
+                let id = "\(kind.rawValue):\(index):\(displayName)"
+                selectionOptions[id] = (option, characteristic)
+                result.append(PlayerTrack(id: id, kind: kind, name: displayName, language: option.extendedLanguageTag ?? option.locale?.identifier ?? ""))
             }
         }
         tracksSubject.send(result)
@@ -199,8 +229,53 @@ public final class AVPlayerEngine: NSObject, PlayerEngine {
         stateSubject.send(.failed(PlayerFailure(category: category, message: message)))
     }
 
-    @objc private func didPlayToEnd() {
+    @objc private func didPlayToEnd(_ notification: Notification) {
+        guard let item = notification.object as? AVPlayerItem, item === player.currentItem else { return }
         stateSubject.send(.ended)
+    }
+}
+
+private final class AVPlayerSurfaceController: UIViewController {
+    private let playerLayer: AVPlayerLayer
+    private let routePicker = AVRoutePickerView()
+    private(set) var pictureInPictureController: AVPictureInPictureController?
+
+    init(player: AVPlayer) {
+        self.playerLayer = AVPlayerLayer(player: player)
+        super.init(nibName: nil, bundle: nil)
+        playerLayer.videoGravity = .resizeAspect
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .black
+
+        playerLayer.frame = view.bounds
+        view.layer.addSublayer(playerLayer)
+        routePicker.translatesAutoresizingMaskIntoConstraints = false
+        routePicker.prioritizesVideoDevices = true
+        routePicker.tintColor = .white
+        routePicker.accessibilityLabel = "AirPlay"
+        view.addSubview(routePicker)
+        NSLayoutConstraint.activate([
+            routePicker.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            routePicker.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
+            routePicker.widthAnchor.constraint(equalToConstant: 44),
+            routePicker.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        if AVPictureInPictureController.isPictureInPictureSupported() {
+            pictureInPictureController = AVPictureInPictureController(playerLayer: playerLayer)
+        }
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        playerLayer.frame = view.bounds
     }
 }
 

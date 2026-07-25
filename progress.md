@@ -2397,3 +2397,94 @@
 - `docs/ios-development.md`: records the successful CI run, artifact identity, and remaining physical-device gate.
 - `progress.md`: appends the CI evidence, warnings, validation boundary, and rollback point.
 - Rollback method: after this documentation-only commit is the branch tip, run `git revert HEAD`; before committing, run `git restore -- docs/ios-development.md progress.md`.
+
+## 2026-07-24 - Task: Start JavaScript type 3 data-source phase
+
+### What was done
+- Compared the Android Spider contract with the iOS repository and confirmed that type 3 was the highest-priority parity gap; the existing API repository still rejected all JavaScript sources.
+- Vendored the official QuickJS C runtime at upstream commit `04be246001599f5995fa2f2d8c91a0f198d3f34c` and added an iOS SwiftPM C target with a small context, module-loader, Promise, timeout, and bridge surface.
+- Added the Swift JavaScript runtime and repository route for `init`, `home`, `homeVod`, `category`, `detail`, `search`, and `play`, including bundled Android-compatible helper modules, synchronous/asynchronous HTTP bridge behavior, local storage, console, URL joining, and MD5.
+- Connected the formal App target to a routing repository so type 0/1/4 keep the existing API implementation while type 3 JavaScript sources use the new runtime; JAR and Python sources return explicit compatibility errors.
+- Added fixed JavaScript fixtures covering home merging, category/detail/play, local storage, MD5, and unsupported JAR/Python dependencies.
+- Updated the iOS development document with the new phase boundary and QuickJS license/commit information.
+
+### Testing
+- Passed: repository source inspection against `docs/SPIDER.md`, Android `quickjs` Java implementation, and the existing iOS repository confirmed the method and bridge contracts used by this phase.
+- Passed: the vendored QuickJS source matches upstream commit `04be246001599f5995fa2f2d8c91a0f198d3f34c`; Android helper resources were copied without modifying Android source files.
+- Passed: static whitespace/scope checks and `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` for project-owned edits. The vendored QuickJS files retain upstream whitespace unchanged.
+- Not run: Swift/Xcode compilation, QuickJS C compilation on iOS, Simulator tests, IPA packaging, and TrollStore installation require the next macOS GitHub Actions run; this Windows host has no Swift/Xcode toolchain.
+- Known boundary: proxy/live/action/sniffer/isVideo, full AES/RSA compatibility, JAR/Python Spider, WebView sniffing, and real-device behavior remain intentionally unsupported in this phase.
+
+### Notes
+- `ios/Package.swift`: adds the CQuickJS and XingGuangJavaScript products/targets with the pinned QuickJS version.
+- `ios/Sources/CQuickJS/`: contains the upstream QuickJS C runtime, license, commit marker, and iOS bridge shim.
+- `ios/Sources/XingGuangJavaScript/`: implements the serial runtime, module and HTTP/local bridges, and type 3 repository routing.
+- `ios/Sources/XingGuangKit/Services/ApiVodRepository.swift`: adds explicit unsupported-dependency errors for Android-only JAR/Python sources.
+- `ios/App/XingGuangApp.swift` and `ios/project.yml`: inject and link the routing repository in the formal App/test targets.
+- `ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift`: adds fixed protocol and compatibility tests.
+- `ios/Sources/XingGuangJavaScript/Resources/JavaScript/lib/`: carries the existing Android helper modules used by JavaScript sources.
+- `docs/ios-development.md`: records the phase transition, dependency license, and remaining limitations.
+- Rollback method: before committing, run `git restore -- ios/Package.swift ios/App/XingGuangApp.swift ios/project.yml ios/Sources/CQuickJS ios/Sources/XingGuangJavaScript ios/Sources/XingGuangKit/Services/ApiVodRepository.swift ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift docs/ios-development.md progress.md`; after the phase commit is the branch tip, use `git revert HEAD`.
+
+## 2026-07-24 - Task: Complete live parity, Android backup exchange, and JavaScript bridge compatibility
+
+### What was done
+- Added Android-compatible live playlist handling for JSON, M3U and TXT sources, inherited headers and channel metadata, backup lines, JSON/XMLTV/XMLTV.gz EPG, date selection, current-program matching, and catch-up/time-shift URL templates including the default `/PLTV/` rule.
+- Added live channel favorites, automatic line fallback, AVPlayer track selection/PiP controls, and playback resume/rate behavior for both VOD and live screens.
+- Added validated Android backup JSON/`.bk.gz` import and export with atomic SQLite replacement, preference alias mapping, and Settings file importer/exporter integration.
+- Completed the JavaScript bridge crypto/text compatibility layer for AES, RSA, GBK/GB18030, and simplified/traditional Chinese conversion, and exposed the Android `liveContent(url)` protocol method.
+
+### Testing
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` and static source review of the new parser, persistence, player, QuickJS wrapper, and bridge paths. The vendored QuickJS runtime retains upstream whitespace unchanged.
+- Passed: fixed XCTest fixtures were added for catch-up/EPG, playlist formats, backup round-trip/validation, player session behavior, JavaScript protocol methods, and crypto/text bridges.
+- Not run: Swift/Xcode compilation, QuickJS/CommonCrypto/Security linking, iPhone/iPad Simulator tests, Release IPA packaging, signing, and TrollStore device verification require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+- Known limitations: WebView sniffing, external subtitle files, danmaku rendering, QR scanning, DoH/ad-rule proxying, Android JAR/Python Spider dependencies, and physical-device playback remain outside this batch.
+
+### Notes
+- `ios/Package.swift`: links the CGzip/CQuickJS targets and the JavaScript product.
+- `ios/project.yml`: links XingGuangJavaScript into App and test targets.
+- `ios/App/XingGuangApp.swift`: injects the routing VOD repository, live repository, database, and dual-engine factory.
+- `ios/Sources/CGzip/XGGzip.c`: provides bounded zlib gzip compression/decompression.
+- `ios/Sources/CGzip/include/XGGzip.h`: declares the gzip C bridge.
+- `ios/Sources/CQuickJS/XGQuickJS.c`: embeds QuickJS context, module, Promise, timeout, and bridge execution.
+- `ios/Sources/CQuickJS/include/XGQuickJS.h`: declares the QuickJS C bridge.
+- `ios/Sources/CQuickJS/quickjs/*`: vendors the pinned QuickJS runtime and license files.
+- `ios/Sources/XingGuangJavaScript/QuickJSHost.swift`: implements module, HTTP, local, proxy, crypto, charset, and text bridges.
+- `ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift`: serializes context execution and cancellation/disposal.
+- `ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift`: provides redirect-aware synchronous transport.
+- `ios/Sources/XingGuangJavaScript/JavaScriptRuntimeError.swift`: defines explicit runtime error categories.
+- `ios/Sources/XingGuangJavaScript/JavaScriptSpiderProtocol.swift`: decodes Spider protocol and proxy responses.
+- `ios/Sources/XingGuangJavaScript/JavaScriptBridgeCompatibility.swift`: implements AES/RSA and response charset compatibility.
+- `ios/Sources/XingGuangJavaScript/ChineseTextConverter.swift`: matches Android's character-table based simplified/traditional conversion.
+- `ios/Sources/XingGuangJavaScript/JavaScriptVodRepository.swift`: routes type 3 VOD and exposes `liveContent`.
+- `ios/Sources/XingGuangJavaScript/Resources/JavaScript/lib/*`: carries Android-compatible helper scripts.
+- `ios/Sources/XingGuangKit/Models/LiveModels.swift`: adds catch-up, DRM, and EPG timestamps.
+- `ios/Sources/XingGuangKit/Persistence/AppDatabase.swift`: adds validated backup replacement and preference aliases.
+- `ios/Sources/XingGuangKit/Player/AVPlayerEngine.swift`: adds AVPlayer tracks, AirPlay/PiP surface, and error classification.
+- `ios/Sources/XingGuangKit/Player/PlayerSession.swift`: forwards rate, seek, track, and PiP controls with resume handling.
+- `ios/Sources/XingGuangKit/Services/ApiVodRepository.swift`: keeps API playback and explicit unsupported-dependency errors.
+- `ios/Sources/XingGuangKit/Services/BackupExportService.swift`: encodes Android backup JSON and gzip artifacts.
+- `ios/Sources/XingGuangKit/Services/BackupImportService.swift`: decodes, validates, and gates restore operations.
+- `ios/Sources/XingGuangKit/Services/EpgParser.swift`: parses JSON, XMLTV, and gzip EPG feeds.
+- `ios/Sources/XingGuangKit/Services/LivePlaylistParser.swift`: parses JSON/M3U/TXT live formats and inherited settings.
+- `ios/Sources/XingGuangKit/Services/LiveRepository.swift`: routes live entries with an `api` field through an injected JavaScript `liveContent` loader.
+- `ios/Sources/XingGuangKit/Services/SystemGzipCompressor.swift`: wraps the iOS zlib compressor.
+- `ios/Sources/XingGuangKit/Services/SystemGzipDecompressor.swift`: wraps the iOS zlib decompressor.
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: connects live loading, filters, favorites, backup fields, and player preferences.
+- `ios/Sources/XingGuangKit/Views/LiveHomeView.swift`: adds live groups, EPG/catch-up, fallback, track, and PiP controls.
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: adds backup import/export and persistent player/live settings.
+- `ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift`: adds VOD track, PiP, rate, episode, and resume controls.
+- `ios/Sources/XingGuangKit/Views/Components/PlayerSurfaceView.swift`: stabilizes the player surface accessibility/layout wrapper.
+- `ios/Sources/XingGuangKit/Views/VodHomeView.swift`: adds filter menus and collection/history entry points.
+- `ios/Tests/XingGuangKitTests/AVPlayerEngineTests.swift`: covers AVPlayer capability and surface behavior.
+- `ios/Tests/XingGuangKitTests/BackupExportServiceTests.swift`: covers JSON/gzip export and validation gates.
+- `ios/Tests/XingGuangKitTests/BackupImportServiceTests.swift`: covers decode, validation, and atomic restore boundary.
+- `ios/Tests/XingGuangKitTests/JavaScriptCryptoBridgeTests.swift`: covers AES/RSA/charset/text fixtures.
+- `ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift`: covers type 3 VOD/live/proxy protocol behavior.
+- `ios/Tests/XingGuangKitTests/LiveRepositoryTests.swift`: covers playlist, EPG, catch-up, and source loading.
+- `ios/Tests/XingGuangKitTests/PlayerSessionTests.swift`: covers resume, rate, track, and PiP forwarding.
+- `ios/Tests/XingGuangKitTests/AppDatabaseTests.swift`: covers backup replacement and path initialization.
+- `ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift`: covers live/config/filter/player preference state.
+- `docs/ios-development.md`: records the completed batch and remaining platform limits.
+- `progress.md`: records this verification boundary and rollback point.
+- Rollback method: before commit, run `git restore -- ios docs/ios-development.md progress.md`; after the batch commit is the branch tip, run `git revert HEAD`.

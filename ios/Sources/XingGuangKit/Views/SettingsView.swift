@@ -1,12 +1,30 @@
+import Foundation
 import SwiftUI
+import UniformTypeIdentifiers
 
 public struct SettingsView: View {
     @ObservedObject var model: XingGuangAppModel
-    @State private var incognito = false
-    @State private var automaticDanmaku = true
+    @State private var isImportingBackup = false
+    @State private var isExportingBackup = false
+    @State private var exportDocument: BackupFileDocument?
+    @State private var exportFileName = "tv-backup.bk.gz"
+    @State private var backupImportState: BackupImportState = .idle
+    @State private var backupExportState: BackupExportState = .idle
 
-    public init(model: XingGuangAppModel) {
+    private let backupDestination: (any BackupDocumentApplying)?
+    private let backupImportService: BackupImportService
+    private let backupExportService: BackupExportService
+
+    public init(
+        model: XingGuangAppModel,
+        backupDestination: (any BackupDocumentApplying)? = nil,
+        backupImportService: BackupImportService = BackupImportService(),
+        backupExportService: BackupExportService = BackupExportService()
+    ) {
         self.model = model
+        self.backupDestination = backupDestination
+        self.backupImportService = backupImportService
+        self.backupExportService = backupExportService
     }
 
     public var body: some View {
@@ -54,14 +72,14 @@ public struct SettingsView: View {
                 .xingGuangPanel()
 
                 VStack(spacing: 0) {
-                    NavigationLink(destination: PlayerSettingsPreviewView()) {
+                    NavigationLink(destination: PlayerSettingsPreviewView(model: model)) {
                         settingsRow(title: "播放器设置", value: "进入", systemName: "slider.horizontal.3")
                     }
                     .buttonStyle(.plain)
 
                     Divider().padding(.leading, 48)
 
-                    Toggle(isOn: $incognito) {
+                    Toggle(isOn: $model.incognito) {
                         settingsLabel(title: "隐身模式", systemName: "eye.slash")
                     }
                     .tint(XingGuangTheme.primary)
@@ -70,8 +88,8 @@ public struct SettingsView: View {
 
                     Divider().padding(.leading, 48)
 
-                    Toggle(isOn: $automaticDanmaku) {
-                        settingsLabel(title: "自动加载弹幕", systemName: "text.bubble")
+                    Toggle(isOn: $model.automaticLineChange) {
+                        settingsLabel(title: "直播自动换线", systemName: "arrow.triangle.2.circlepath")
                     }
                     .tint(XingGuangTheme.primary)
                     .padding(.horizontal, 14)
@@ -79,7 +97,32 @@ public struct SettingsView: View {
 
                     Divider().padding(.leading, 48)
 
-                    settingsRow(title: "备份与恢复", value: "管理", systemName: "externaldrive")
+                    HStack(spacing: 0) {
+                        Button {
+                            isImportingBackup = true
+                        } label: {
+                            settingsCommand(title: "导入备份", systemName: "square.and.arrow.down")
+                        }
+                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity)
+                        .accessibilityIdentifier("settings.backupRestore.import")
+
+                        Divider().frame(height: 30)
+
+                        Button {
+                            startBackupExport()
+                        } label: {
+                            settingsCommand(title: "导出备份", systemName: "square.and.arrow.up")
+                        }
+                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity)
+                        .accessibilityIdentifier("settings.backupRestore.export")
+                    }
+                    .frame(minHeight: 52)
+                    .accessibilityIdentifier("settings.backupRestore")
+
+                    backupImportStatus
+                    backupExportStatus
                 }
                 .xingGuangPanel()
             }
@@ -90,7 +133,152 @@ public struct SettingsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: model.vodConfigURL) { _ in model.resetConfigurationSaveState() }
         .onChange(of: model.liveConfigURL) { _ in model.resetConfigurationSaveState() }
+        .fileImporter(
+            isPresented: $isImportingBackup,
+            allowedContentTypes: backupContentTypes,
+            allowsMultipleSelection: false,
+            onCompletion: handleBackupSelection
+        )
+        .fileExporter(
+            isPresented: $isExportingBackup,
+            document: exportDocument,
+            contentType: backupGzipType,
+            defaultFilename: exportFileName,
+            onCompletion: handleBackupExport
+        )
         .accessibilityIdentifier("settings.home")
+    }
+
+    private var backupContentTypes: [UTType] {
+        var types: [UTType] = [.json, .data]
+        if let gzip = UTType(filenameExtension: "gz") {
+            types.insert(gzip, at: 0)
+        }
+        return types
+    }
+
+    private var backupGzipType: UTType {
+        UTType(filenameExtension: "gz") ?? .data
+    }
+
+    @ViewBuilder
+    private var backupImportStatus: some View {
+        switch backupImportState {
+        case .idle:
+            EmptyView()
+        case .loading:
+            Label("正在导入备份", systemImage: "arrow.triangle.2.circlepath")
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(XingGuangTheme.secondaryText)
+                .padding(.horizontal, 14)
+        case .success:
+            Label("备份已导入", systemImage: "checkmark.circle.fill")
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(.green)
+                .padding(.horizontal, 14)
+                .accessibilityIdentifier("settings.backupRestore.success")
+        case .failed(let message):
+            Label(message, systemImage: "xmark.octagon.fill")
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(.red)
+                .padding(.horizontal, 14)
+                .accessibilityIdentifier("settings.backupRestore.failed")
+        }
+    }
+
+    @ViewBuilder
+    private var backupExportStatus: some View {
+        switch backupExportState {
+        case .idle:
+            EmptyView()
+        case .loading:
+            Label("正在准备备份", systemImage: "arrow.triangle.2.circlepath")
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(XingGuangTheme.secondaryText)
+                .padding(.horizontal, 14)
+        case .success:
+            Label("备份已导出", systemImage: "checkmark.circle.fill")
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(.green)
+                .padding(.horizontal, 14)
+                .accessibilityIdentifier("settings.backupExport.success")
+        case .failed(let message):
+            Label(message, systemImage: "xmark.octagon.fill")
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(.red)
+                .padding(.horizontal, 14)
+                .accessibilityIdentifier("settings.backupExport.failed")
+        }
+    }
+
+    private func handleBackupSelection(_ result: Result<[URL], Error>) {
+        guard case .success(let urls) = result, let url = urls.first else {
+            if case .failure(let error) = result {
+                backupImportState = .failed(error.localizedDescription)
+            }
+            return
+        }
+
+        backupImportState = .loading
+        let accessed = url.startAccessingSecurityScopedResource()
+        defer {
+            if accessed { url.stopAccessingSecurityScopedResource() }
+        }
+
+        do {
+            let data = try Data(contentsOf: url)
+            // Decode before opening the live database so malformed input
+            // cannot even create or migrate the persistence store.
+            let backup = try backupImportService.decode(data)
+            let destination: any BackupDocumentApplying
+            if let backupDestination {
+                destination = backupDestination
+            } else {
+                destination = try AppDatabase.live()
+            }
+            try destination.replaceAll(with: backup)
+            refreshModel(using: backup.document)
+            backupImportState = .success
+        } catch {
+            backupImportState = .failed(error.localizedDescription)
+        }
+    }
+
+    private func startBackupExport() {
+        backupExportState = .loading
+        do {
+            let artifact = try backupExportService.artifact(for: model.makeBackupDocument())
+            exportDocument = BackupFileDocument(data: artifact.data)
+            exportFileName = artifact.suggestedFileName
+            isExportingBackup = true
+        } catch {
+            backupExportState = .failed(error.localizedDescription)
+        }
+    }
+
+    private func handleBackupExport(_ result: Result<URL, Error>) {
+        switch result {
+        case .success:
+            backupExportState = .success
+        case .failure(let error):
+            backupExportState = .failed(error.localizedDescription)
+        }
+    }
+
+    private func refreshModel(using document: BackupDocument) {
+        let vodURL = latestConfiguration(in: document, type: 0)?.url ?? ""
+        let liveURL = latestConfiguration(in: document, type: 1)?.url ?? ""
+        model.vodConfigURL = vodURL
+        model.liveConfigURL = liveURL
+        UserDefaults.standard.set(vodURL, forKey: "ios.vodConfigURL")
+        UserDefaults.standard.set(liveURL, forKey: "ios.liveConfigURL")
+        model.bootstrap()
+    }
+
+    private func latestConfiguration(in document: BackupDocument, type: Int) -> ConfigRecord? {
+        document.configs
+            .filter { $0.type == type }
+            .max { $0.time < $1.time }
     }
 
     private func configurationPanel(
@@ -169,13 +357,50 @@ public struct SettingsView: View {
         .frame(minHeight: 52)
         .contentShape(Rectangle())
     }
+
+    private func settingsCommand(title: String, systemName: String) -> some View {
+        Label(title, systemImage: systemName)
+            .font(.subheadline.weight(.medium))
+            .foregroundColor(XingGuangTheme.text)
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .contentShape(Rectangle())
+    }
+}
+
+private enum BackupImportState: Equatable {
+    case idle
+    case loading
+    case success
+    case failed(String)
+}
+
+private enum BackupExportState: Equatable {
+    case idle
+    case loading
+    case success
+    case failed(String)
+}
+
+private struct BackupFileDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [UTType(filenameExtension: "gz") ?? .data, .json, .data] }
+
+    var data: Data
+
+    init(data: Data = Data()) {
+        self.data = data
+    }
+
+    init(configuration: ReadConfiguration) throws {
+        data = configuration.file.regularFileContents ?? Data()
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: data)
+    }
 }
 
 private struct PlayerSettingsPreviewView: View {
-    @State private var automaticLineChange = true
-    @State private var subtitles = true
-    @State private var backgroundPlayback = false
-    @State private var speed = 1.0
+    @ObservedObject var model: XingGuangAppModel
 
     var body: some View {
         Form {
@@ -186,14 +411,12 @@ private struct PlayerSettingsPreviewView: View {
                     Text("AVPlayer")
                         .foregroundColor(.secondary)
                 }
-                Toggle("自动换线", isOn: $automaticLineChange)
-                Toggle("字幕", isOn: $subtitles)
-                Toggle("后台播放", isOn: $backgroundPlayback)
+                Toggle("直播自动换线", isOn: $model.automaticLineChange)
             }
 
             Section("速度") {
-                Slider(value: $speed, in: 0.5...2.0, step: 0.25)
-                Text("\(speed, specifier: "%.2g")x")
+                Slider(value: $model.defaultPlaybackSpeed, in: 0.5...2.0, step: 0.25)
+                Text("\(model.defaultPlaybackSpeed, specifier: "%.2g")x")
                     .foregroundColor(XingGuangTheme.primary)
             }
         }

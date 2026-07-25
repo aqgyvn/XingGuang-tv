@@ -66,14 +66,16 @@ public struct VodHomeView: View {
 
             Spacer(minLength: 8)
 
-            Button {
-                searchPresented = true
-            } label: {
-                ActionIcon(systemName: "magnifyingglass", label: "搜索")
+            if model.selectedSite.searchable != 0 {
+                Button {
+                    searchPresented = true
+                } label: {
+                    ActionIcon(systemName: "magnifyingglass", label: "搜索")
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
 
-            NavigationLink(destination: CollectionPreviewView(title: "收藏", items: model.keeps.map { model.vod(from: $0) }, model: model)) {
+            NavigationLink(destination: CollectionPreviewView(title: "收藏", items: model.keeps.filter { $0.type == 0 }.map { model.vod(from: $0) }, model: model)) {
                 ActionIcon(systemName: "star.fill", label: "收藏")
             }
             .buttonStyle(.plain)
@@ -156,7 +158,42 @@ public struct VodHomeView: View {
                             }
                             .buttonStyle(.plain)
                         }
+                        filterMenus
                     }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var filterMenus: some View {
+        ForEach(model.activeFilters) { filter in
+            if !filter.values.isEmpty {
+                Menu {
+                    ForEach(filter.values) { value in
+                        Button {
+                            model.selectedFilters[filter.key] = value.value
+                            model.applyFilters()
+                        } label: {
+                            Label(
+                                value.name,
+                                systemImage: model.selectedFilters[filter.key] == value.value ? "checkmark" : "line.3.horizontal"
+                            )
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 5) {
+                        Text(filter.name.isEmpty ? filter.key : filter.name)
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.caption)
+                    }
+                    .font(.body.weight(.medium))
+                    .foregroundColor(XingGuangTheme.text)
+                    .padding(.horizontal, 14)
+                    .frame(height: 42)
+                    .background(XingGuangTheme.panel)
+                    .overlay(Capsule().stroke(XingGuangTheme.border, lineWidth: 1))
+                    .clipShape(Capsule())
                 }
             }
         }

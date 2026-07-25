@@ -13,7 +13,7 @@ public protocol PersistenceStore: Sendable {
     func saveTrack(_ track: TrackRecord) throws
 }
 
-public final class AppDatabase: PersistenceStore, @unchecked Sendable {
+public final class AppDatabase: PersistenceStore, BackupDocumentApplying, @unchecked Sendable {
     private let queue: DatabaseQueue
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
@@ -72,6 +72,88 @@ public final class AppDatabase: PersistenceStore, @unchecked Sendable {
                 arguments: [Int64(Date().timeIntervalSince1970 * 1000), sourceURL, documentJSON, "点播", document.logo, document.sites.first?.key ?? ""]
             )
         }
+    }
+
+    /// Replaces every collection represented by an Android backup in one
+    /// SQLite transaction. Track selections are intentionally left untouched:
+    /// Android Backup does not contain the track table.
+    public func replaceAll(with backup: ValidatedBackupDocument) throws {
+        let document = backup.document
+        let sites = try document.sites.map { ($0, try json($0)) }
+        let lives = try document.lives.map { ($0, try json($0)) }
+
+        try queue.write { db in
+            try db.execute(sql: "DELETE FROM config")
+            try db.execute(sql: "DELETE FROM site")
+            try db.execute(sql: "DELETE FROM live")
+            try db.execute(sql: "DELETE FROM keep")
+            try db.execute(sql: "DELETE FROM history")
+
+            for (site, payload) in sites {
+                try db.execute(
+                    sql: "INSERT INTO site (key, searchable, changeable, json) VALUES (?, ?, ?, ?)",
+                    arguments: [site.key, site.searchable, site.changeable, payload]
+                )
+            }
+            for (live, payload) in lives {
+                try db.execute(
+                    sql: "INSERT INTO live (name, boot, pass, keep, json) VALUES (?, ?, ?, ?, ?)",
+                    arguments: [live.name, live.boot, live.pass, "", payload]
+                )
+            }
+            for keep in document.keeps {
+                try db.execute(
+                    sql: "INSERT INTO keep (key, siteName, vodName, vodPic, createTime, type, cid) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    arguments: [keep.key, keep.siteName, keep.vodName, keep.vodPic, keep.createTime, keep.type, keep.configID]
+                )
+            }
+            for history in document.histories {
+                try db.execute(
+                    sql: """
+                    INSERT INTO history
+                        (key, vodPic, vodName, vodFlag, vodRemarks, episodeUrl, revSort, revPlay, createTime, opening, ending, position, duration, speed, scale, cid)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    arguments: [
+                        history.key, history.vodPic, history.vodName, history.vodFlag, history.vodRemarks,
+                        history.episodeURL, history.reverseSort, history.reversePlay, history.createTime,
+                        history.opening, history.ending, history.position, history.duration, history.speed,
+                        history.scale, history.configID
+                    ]
+                )
+            }
+            for config in document.configs {
+                if config.id == 0 {
+                    try db.execute(
+                        sql: "INSERT INTO config (type, time, url, json, name, logo, home, parse) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                        arguments: [
+                            config.type, config.time, config.url, config.json,
+                            config.name, config.logo, config.home, config.parse
+                        ]
+                    )
+                } else {
+                    try db.execute(
+                        sql: "INSERT INTO config (id, type, time, url, json, name, logo, home, parse) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        arguments: [
+                            config.id, config.type, config.time, config.url, config.json,
+                            config.name, config.logo, config.home, config.parse
+                        ]
+                    )
+                }
+            }
+        }
+
+        // UserDefaults has no transaction primitive. Apply preferences only
+        // after the database transaction has committed, matching Android's
+        // restore order and ensuring a failed DB write changes no preferences.
+        for (key, value) in document.preferences {
+            if let value = propertyListValue(value) {
+                UserDefaults.standard.set(value, forKey: key)
+            } else {
+                UserDefaults.standard.removeObject(forKey: key)
+            }
+        }
+        applyAndroidPreferenceAliases(document.preferences)
     }
 
     public func loadKeeps() throws -> [Keep] {
@@ -175,6 +257,66 @@ public final class AppDatabase: PersistenceStore, @unchecked Sendable {
 
     private func json<T: Encodable>(_ value: T) throws -> String {
         String(data: try encoder.encode(value), encoding: .utf8) ?? "{}"
+    }
+
+    private func propertyListValue(_ value: JSONValue) -> Any? {
+        switch value {
+        case .string(let value):
+            return value
+        case .number(let value):
+            return NSNumber(value: value)
+        case .bool(let value):
+            return NSNumber(value: value)
+        case .object(let values):
+            var result: [String: Any] = [:]
+            for (key, value) in values {
+                guard let converted = propertyListValue(value) else { return nil }
+                result[key] = converted
+            }
+            return result
+        case .array(let values):
+            var result: [Any] = []
+            for value in values {
+                guard let converted = propertyListValue(value) else { return nil }
+                result.append(converted)
+            }
+            return result
+        case .null:
+            return nil
+        }
+    }
+
+    private func applyAndroidPreferenceAliases(_ preferences: [String: JSONValue]) {
+        if preferences["ios.incognito"] == nil, let value = boolValue(preferences["incognito"]) {
+            UserDefaults.standard.set(value, forKey: "ios.incognito")
+        }
+        if preferences["ios.automaticLineChange"] == nil, let value = boolValue(preferences["change"]) {
+            UserDefaults.standard.set(value, forKey: "ios.automaticLineChange")
+        }
+        if preferences["ios.playerEngine"] == nil, let value = numberValue(preferences["player_engine"]) {
+            let preference = value == 0 ? PlayerEnginePreference.avPlayer : PlayerEnginePreference.vlc
+            UserDefaults.standard.set(preference.rawValue, forKey: "ios.playerEngine")
+        }
+    }
+
+    private func boolValue(_ value: JSONValue?) -> Bool? {
+        guard let value else { return nil }
+        switch value {
+        case .bool(let value): return value
+        case .number(let value): return value != 0
+        case .string(let value): return value == "1" || value.lowercased() == "true"
+        default: return nil
+        }
+    }
+
+    private func numberValue(_ value: JSONValue?) -> Int? {
+        guard let value else { return nil }
+        switch value {
+        case .number(let value): return Int(value)
+        case .string(let value): return Int(value)
+        case .bool(let value): return value ? 1 : 0
+        default: return nil
+        }
     }
 
     private static func keep(from row: Row) -> Keep {

@@ -2,7 +2,7 @@
 
 ## 当前阶段
 
-当前实现处于“第一阶段：API 点播、持久化与双播放核心”。目标平台为 iOS/iPadOS 15.0 及以上，分发方式为 TrollStore 私人安装。
+当前实现处于“第二阶段：JavaScript 数据源接入（进行中）”。第一阶段的 API 点播、持久化与双播放核心已经通过 CI；目标平台为 iOS/iPadOS 15.0 及以上，分发方式为 TrollStore 私人安装。
 
 已实现的代码能力：
 
@@ -11,22 +11,26 @@
 - Android 字段语义兼容的配置、站点、影片、筛选、播放线路、收藏、历史、进度和轨道模型；数字型 ID、URL 对数组及 type 4 的字幕/DRM/请求头结果均可解码。
 - GRDB/SQLite 持久化：`config`、`site`、`live`、`keep`、`history`、`track` 表；支持配置替换、收藏、历史、继续观看、线路、进度和倍速保存。
 - `Automatic`、`AVPlayer`、`VLC` 三种播放内核模式。自动模式对 RTSP/RTMP/RTP、MKV、FLV、WebM、AVI、DASH/MPD 先选 VLC；其他地址先选 AVPlayer，格式或解码失败时仅回退一次。认证、网络和 DRM 错误不会回退。
-- AVPlayer 支持系统可播放的 HLS、MP4/MOV、内嵌音视频/字幕轨道、倍速、后台音频、AirPlay 与系统画中画；画中画由系统播放器控件或内联自动启动。MobileVLCKit 负责 RTSP、RTMP 和非系统封装/编码的回退播放。
+- AVPlayer 支持系统可播放的 HLS、MP4/MOV、内嵌音视频/字幕轨道、倍速、后台音频、AirPlay 与系统画中画；画中画通过单层 `AVPlayerLayer` 的显式入口启动，是否可用仍需真机验收。MobileVLCKit 负责 RTSP、RTMP 和非系统封装/编码的回退播放。
 - 配置切换会取消旧配置与片库请求，UI 状态只在主线程更新。
+- JavaScript `type 3` 已接入官方 QuickJS C runtime、按来源串行 context、模块加载、`init/home/homeVod/category/detail/search/play`、`proxy/live/action/sniffer/isVideo`、`req/http`、`local`、console、URL 合并、MD5、AES/RSA、GBK 和繁简转换桥；正式 App 已按来源类型路由 API 与 JavaScript 实现。
+- 直播已支持 JSON/M3U/TXT、分组、频道备用线路、请求头继承、JavaScript `liveContent(url)` 动态源、JSON/XMLTV/XMLTV.gz EPG、日期切换、当前节目和 Android 兼容回看/时移模板；备份已支持 Android 字段 JSON 与 `.bk.gz` 导入/导出，并在校验后事务替换本地数据。
 
 尚未完成或尚未验收：
 
 - GitHub Actions 第八次运行 `30085938974` 已通过完整的 iPhone/iPad 测试、设备构建、IPA 打包、IPA 结构和 ad-hoc 签名检查，并上传了 `XingGuang-iOS-8` artifact。仍未完成 TrollStore 真机安装与功能验收，因此不能宣称媒体播放和设备兼容性已经在真实设备上验证。
-- JavaScript `type 3`、Android JAR、Python Spider、直播/EPG、WebView 嗅探、外置字幕、弹幕、备份恢复和高级网络能力仍在后续阶段，不能宣称已移植。
-- `playUrl` 解析链和网页嗅探尚未实现；需要该链路的 type 0/1 来源将在后续 WebView 阶段处理。
+- JavaScript 仍不能运行依赖 Android JAR 的扩展函数；Android JAR、Python Spider 和部分来源专用 `playUrl` 解析链会返回明确的不兼容错误。
+- WebView 媒体嗅探、外置字幕文件、弹幕显示、二维码扫描、DoH/广告规则代理和完整文件打开流程仍在后续阶段，当前不能宣称已移植。
 - HLS AES 等由系统播放核心原生处理；传入 Widevine、PlayReady、ClearKey 或其他外置 DRM 描述时会给出 DRM 错误。当前没有 FairPlay 许可证代理实现。
-- VLC 路径不承诺 AirPlay、系统画中画、任意自定义 Header 或外置字幕行为与 Android 完全一致。
+- VLC 路径不承诺 AirPlay、系统画中画、任意自定义 Header 或外置字幕行为与 Android 完全一致；AVPlayer 的外置字幕资源也尚未接入播放器。
 
-后续阶段必须在第一阶段 CI 与真机验收通过后开始，不能跳过该门槛。
+本阶段是在用户明确要求下提前启动的；第一阶段真机验收仍是发布门槛，第二阶段完成后必须重新通过完整 CI，再进行真机验收，不能把模拟器通过当作设备功能通过。
 
 ## 工程结构
 
 - `ios/Package.swift`：可预览、可测试的 `XingGuangKit` Swift Package，并通过 SwiftPM 引入 GRDB。
+- `ios/Sources/CQuickJS/`：固定 QuickJS `2026-06-04` 上游提交的 C runtime 与 iOS 薄桥接层。
+- `ios/Sources/XingGuangJavaScript/`：JavaScript context、模块/网络/local 桥、type 3 Repository 和内置兼容库资源。
 - `ios/project.yml`：XcodeGen 工程定义；生成通用 iPhone/iPad App、单元测试和 UI 测试 target。
 - `ios/Podfile` 与 `ios/Podfile.lock`：App 层引入固定版本 `MobileVLCKit 3.6.0b10`。
 - `ios/App/`：SwiftUI 启动壳、Info.plist、应用图标和 MobileVLCKit 适配器。
@@ -40,6 +44,7 @@ Android Gradle 模块继续位于仓库根目录。iOS 工程不引用或修改 
 
 - [GRDB.swift](https://github.com/groue/GRDB.swift)：SwiftPM 依赖，用于 SQLite 持久化；遵循其 MIT 许可证。
 - [MobileVLCKit](https://code.videolan.org/videolan/VLCKit)：CocoaPods 依赖，用于 VLC 回退播放；版本 `3.6.0b10` 的 podspec 标示为 LGPL v2.1。分发 IPA 前必须按该许可证保留相应告知与合规义务。
+- [QuickJS](https://github.com/bellard/quickjs)：固定提交 `04be246001599f5995fa2f2d8c91a0f198d3f34c`，遵循仓库内 `ios/Sources/CQuickJS/quickjs/LICENSE` 的 MIT 许可文本。
 
 MobileVLCKit 会增加 IPA 体积。`Podfile.lock` 固定 pod 版本与规格校验；SwiftPM 的 GRDB 解析结果需由首次 macOS/Xcode 构建确认。
 
@@ -72,7 +77,7 @@ xcodebuild \
 4. 先对嵌入框架执行 ad-hoc 签名，再签名 App，验证签名并打包 IPA。
 5. 校验 IPA 的 `Payload/XingGuang.app/Info.plist`，上传 IPA 与构建日志 14 天。
 
-`codex/ios-foundation` 已推送并触发 workflow。第八次运行 `30085938974` 已通过完整链路：iPhone Simulator 测试（5 分 48 秒）、iPad Simulator 测试（6 分 40 秒）、设备 Release 构建（1 分 50 秒）、IPA 打包、结构检查、ad-hoc 签名检查和 artifact 上传，总耗时 15 分 45 秒。产物为 `XingGuang-iOS-8`（18.3 MB，artifact SHA-256 `7fee4726fb44cf7faab98ea08192764d5a7482096b188cd6f6303aa26c644fb9`）。
+`codex/ios-foundation` 的第八次运行 `30085938974` 已通过完整第一阶段链路：iPhone Simulator 测试（5 分 48 秒）、iPad Simulator 测试（6 分 40 秒）、设备 Release 构建（1 分 50 秒）、IPA 打包、结构检查、ad-hoc 签名检查和 artifact 上传，总耗时 15 分 45 秒。当前 JavaScript 改动需要新的 CI 运行确认。上一产物为 `XingGuang-iOS-8`（18.3 MB，artifact SHA-256 `7fee4726fb44cf7faab98ea08192764d5a7482096b188cd6f6303aa26c644fb9`）。
 
 第七次运行 `30084153754` 已定位 iPad 的文本 tab 自动化限制；第八次运行已确认其修复边界：iPhone 继续验收文本 tab 和配置保存，iPad 将该断言显式标记为跳过，同时验收应用启动与详情导航。下一道门槛是 TrollStore 真机验收。
 
@@ -87,4 +92,4 @@ xcodebuild \
 - AVPlayer 的后台播放、画中画与 AirPlay 实际可用；VLC 格式播放、切换、暂停、跳转正常。
 - 遇到网络、鉴权和 DRM 失败时显示明确错误，不错误回退或静默空白。
 
-真机验收通过前，不进入 QuickJS、直播或高级兼容阶段。
+第一阶段真机验收仍需完成；本批次需要新的 CI 验证 QuickJS/CommonCrypto、直播解析和备份导出，再进入 WebView、外置字幕、弹幕与高级网络阶段。

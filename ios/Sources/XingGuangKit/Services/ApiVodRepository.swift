@@ -5,6 +5,7 @@ public enum VodRepositoryError: Error, Equatable, LocalizedError {
     case unsupportedSiteType(Int)
     case invalidResponse
     case unsupportedPlayback(String)
+    case unsupportedDependency(String)
     case drmUnsupported(String)
 
     public var errorDescription: String? {
@@ -13,6 +14,7 @@ public enum VodRepositoryError: Error, Equatable, LocalizedError {
         case .unsupportedSiteType(let type): return "iOS 暂不支持此来源类型（\(type)）"
         case .invalidResponse: return "点播来源返回的数据无效"
         case .unsupportedPlayback(let value): return value
+        case .unsupportedDependency(let value): return "iOS 暂不支持此来源依赖：\(value)"
         case .drmUnsupported(let value): return "此视频使用 iOS 不支持的 DRM：\(value)"
         }
     }
