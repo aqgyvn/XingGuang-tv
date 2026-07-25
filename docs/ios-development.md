@@ -18,7 +18,7 @@
 
 尚未完成或尚未验收：
 
-- GitHub Actions 第八次运行 `30085938974` 已通过完整的 iPhone/iPad 测试、设备构建、IPA 打包、IPA 结构和 ad-hoc 签名检查，并上传了 `XingGuang-iOS-8` artifact。仍未完成 TrollStore 真机安装与功能验收，因此不能宣称媒体播放和设备兼容性已经在真实设备上验证。
+- GitHub Actions 运行 `30179725200` 已通过完整的 iPhone/iPad 测试、设备 Release 构建、IPA 打包、IPA 结构和 ad-hoc 签名检查，并上传了 `XingGuang-iOS-16` artifact。仍未完成 TrollStore 真机安装与功能验收，因此不能宣称媒体播放和设备兼容性已经在真实设备上验证。
 - JavaScript 仍不能运行依赖 Android JAR 的扩展函数；Android JAR、Python Spider 和部分来源专用 `playUrl` 解析链会返回明确的不兼容错误。
 - WebView 媒体嗅探、外置字幕文件、弹幕显示、二维码扫描、DoH/广告规则代理和完整文件打开流程仍在后续阶段，当前不能宣称已移植。
 - HLS AES 等由系统播放核心原生处理；传入 Widevine、PlayReady、ClearKey 或其他外置 DRM 描述时会给出 DRM 错误。当前没有 FairPlay 许可证代理实现。
@@ -69,6 +69,8 @@ xcodebuild \
 
 ## GitHub Actions
 
+运行 `30179725200` 已通过工程生成、依赖安装、完整 iPhone/iPad 单元与 UI 测试、设备 Release 构建、TrollStore IPA 打包、IPA 结构及 ad-hoc 签名检查。产物为 `XingGuang-iOS-16`，artifact 大小 `21,077,952` 字节，保留 14 天。该结果关闭了本批 QuickJS/CommonCrypto、直播解析和备份导出的 CI 验证缺口，但真机媒体能力仍需 TrollStore 验收。
+
 运行 `30179470554` 已确认代理兼容用例通过、AES 加解密不再触发独占访问冲突，并确认 RSA X.509/PKCS#8 动态加密与往返解密通过。剩余两个失败来自测试向量：AES 旧期望值不符合 UTF-8 输入的标准 CBC/PKCS7 结果，RSA 旧固定密文实际解密为 `??-RSA`；现已用独立加密实现核验并替换向量。修正后的完整 iPhone/iPad、Release、IPA 和签名检查仍需下一次 macOS CI 确认。
 
 运行 `30179024702` 已确认 QuickJS 销毁、Swift 编译和 3 个 iPhone UI 测试通过。剩余失败为 AES 输出缓冲区的 Swift 独占访问冲突、RSA 测试夹具未实际插入密钥，以及代理 Header JSON 在 Apple 平台保留 `\/` 转义；现已分别缓存 CommonCrypto 调用长度、修正测试插值并使用不转义斜杠的 JSON 序列化。上述修复仍需新的 macOS CI 运行确认；iPad、设备 Release、IPA 和签名步骤在该失败运行中均未执行。
@@ -81,7 +83,7 @@ xcodebuild \
 4. 先对嵌入框架执行 ad-hoc 签名，再签名 App，验证签名并打包 IPA。
 5. 校验 IPA 的 `Payload/XingGuang.app/Info.plist`，上传 IPA 与构建日志 14 天。
 
-`codex/ios-foundation` 的第八次运行 `30085938974` 已通过完整第一阶段链路：iPhone Simulator 测试（5 分 48 秒）、iPad Simulator 测试（6 分 40 秒）、设备 Release 构建（1 分 50 秒）、IPA 打包、结构检查、ad-hoc 签名检查和 artifact 上传，总耗时 15 分 45 秒。当前 JavaScript 改动需要新的 CI 运行确认。上一产物为 `XingGuang-iOS-8`（18.3 MB，artifact SHA-256 `7fee4726fb44cf7faab98ea08192764d5a7482096b188cd6f6303aa26c644fb9`）。
+`codex/ios-foundation` 的运行 `30179725200` 已通过当前完整 CI 链路：iPhone Simulator、iPad Simulator、设备 Release 构建、IPA 打包、结构检查、ad-hoc 签名检查和 artifact 上传，总耗时约 10 分钟。当前产物为 `XingGuang-iOS-16`（`21,077,952` 字节）。
 
 第七次运行 `30084153754` 已定位 iPad 的文本 tab 自动化限制；第八次运行已确认其修复边界：iPhone 继续验收文本 tab 和配置保存，iPad 将该断言显式标记为跳过，同时验收应用启动与详情导航。下一道门槛是 TrollStore 真机验收。
 
@@ -96,7 +98,7 @@ xcodebuild \
 - AVPlayer 的后台播放、画中画与 AirPlay 实际可用；VLC 格式播放、切换、暂停、跳转正常。
 - 遇到网络、鉴权和 DRM 失败时显示明确错误，不错误回退或静默空白。
 
-第一阶段真机验收仍需完成；本批次需要新的 CI 验证 QuickJS/CommonCrypto、直播解析和备份导出，再进入 WebView、外置字幕、弹幕与高级网络阶段。
+第一阶段真机验收仍需完成；QuickJS/CommonCrypto、直播解析和备份导出的 CI 已通过，后续可在真机验收稳定后进入 WebView、外置字幕、弹幕与高级网络阶段。
 
 ## 2026-07-26 CI 诊断
 

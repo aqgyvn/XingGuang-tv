@@ -2616,7 +2616,7 @@
 - Failed evidence: GitHub Actions run `30179470554`, job `89733538603`, passed compilation and all 3 iPhone UI tests. Only the stale AES expected ciphertext and malformed RSA fixed ciphertext failed; the proxy test and RSA dynamic encrypt/decrypt assertions passed. iPad tests, Release build, IPA packaging and signing were skipped.
 - Passed: .NET AES independently produced `prl/TvzJAMKu76w8wCF1Mw==` for `星光-AES` with the fixture key and IV.
 - Passed: Node.js `crypto` with the fixture PKCS#8 private key decrypted the old RSA vector to `??-RSA`; the replacement was generated from `星光-RSA` with the fixture X.509 public key and PKCS#1 padding.
-- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` will be rerun before commit.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after the documentation update.
 - Not run: corrected fixtures, complete iPhone/iPad suites, device build, IPA packaging and signing require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
 
 ### Notes
@@ -2624,3 +2624,21 @@
 - `docs/ios-development.md`: records run `30179470554`, the independently verified fixture issue and the pending rerun.
 - `progress.md`: appends the fixture verification evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Tests/XingGuangKitTests/JavaScriptCryptoBridgeTests.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Close the JavaScript compatibility CI validation loop
+
+### What was done
+- Confirmed the corrected crypto fixtures and the full current iOS feature batch on both simulator families and the unsigned device build path.
+- Recorded the successful TrollStore IPA artifact while retaining the separate real-device acceptance boundary.
+
+### Testing
+- Passed: GitHub Actions run `30179725200`, job `89734166768`, completed successfully at commit `feb1465`.
+- Passed: iPhone Simulator tests, iPad Simulator tests, device Release app build, TrollStore IPA packaging, embedded/app ad-hoc signing checks, IPA `Info.plist` structure check, and artifact upload.
+- Passed: artifact `XingGuang-iOS-16` was created with artifact ID `8625278521`, size `21,077,952` bytes, and a 14-day retention period.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after the documentation update.
+- Not run: TrollStore installation, real media sources, background playback, PiP, AirPlay, VLC fallback, orientation changes, and background restoration still require iPhone/iPad hardware acceptance.
+
+### Notes
+- `docs/ios-development.md`: replaces the stale pending-CI boundary with run `30179725200` and current artifact details.
+- `progress.md`: appends the complete CI evidence, remaining real-device boundary, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after the documentation commit is the branch tip, run `git revert HEAD`.
