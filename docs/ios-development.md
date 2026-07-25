@@ -69,6 +69,8 @@ xcodebuild \
 
 ## GitHub Actions
 
+运行 `30179024702` 已确认 QuickJS 销毁、Swift 编译和 3 个 iPhone UI 测试通过。剩余失败为 AES 输出缓冲区的 Swift 独占访问冲突、RSA 测试夹具未实际插入密钥，以及代理 Header JSON 在 Apple 平台保留 `\/` 转义；现已分别缓存 CommonCrypto 调用长度、修正测试插值并使用不转义斜杠的 JSON 序列化。上述修复仍需新的 macOS CI 运行确认；iPad、设备 Release、IPA 和签名步骤在该失败运行中均未执行。
+
 `iOS` workflow 在改动 `ios/**` 或 `.github/workflows/ios.yml` 时运行，也支持手动触发。它会：
 
 1. 安装 XcodeGen 和 CocoaPods，生成项目并安装 Pods。

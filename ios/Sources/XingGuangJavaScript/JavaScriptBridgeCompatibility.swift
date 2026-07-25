@@ -102,6 +102,9 @@ enum JavaScriptBridgeCrypto {
 
         var output = Data(count: input.count + kCCBlockSizeAES128)
         var outputLength = 0
+        let keyLength = keyData.count
+        let inputLength = input.count
+        let outputCapacity = output.count
         let status: CCCryptorStatus = output.withUnsafeMutableBytes { outputBytes in
             keyData.withUnsafeBytes { keyBytes in
                 input.withUnsafeBytes { inputBytes in
@@ -111,12 +114,12 @@ enum JavaScriptBridgeCrypto {
                             CCAlgorithm(kCCAlgorithmAES),
                             options,
                             keyBytes.baseAddress,
-                            keyData.count,
+                            keyLength,
                             ivPointer,
                             inputBytes.baseAddress,
-                            input.count,
+                            inputLength,
                             outputBytes.baseAddress,
-                            output.count,
+                            outputCapacity,
                             &outputLength
                         )
                     }

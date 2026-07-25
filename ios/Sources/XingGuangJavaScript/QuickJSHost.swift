@@ -283,7 +283,10 @@ final class QuickJSHostBox: @unchecked Sendable {
         guard let base = proxyURL(endpoint: endpoint, local: !dynamic),
               var components = URLComponents(string: base) else { return nil }
         let headers = object["headers"] as? [String: Any] ?? [:]
-        let headerData = try? JSONSerialization.data(withJSONObject: headers, options: [.fragmentsAllowed])
+        let headerData = try? JSONSerialization.data(
+            withJSONObject: headers,
+            options: [.fragmentsAllowed, .withoutEscapingSlashes]
+        )
         let headerValue = headerData.flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
         let siteType = (object["siteType"] as? NSNumber)?.stringValue ?? "0"
         let siteKey = object["siteKey"] as? String ?? ""

@@ -2583,3 +2583,24 @@
 - `docs/ios-development.md`: records CI run `30178696426`, its teardown failure and ownership correction.
 - `progress.md`: appends failure evidence, verification scope, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/CQuickJS/XGQuickJS.c docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Repair the remaining JavaScript compatibility test failures
+
+### What was done
+- Used GitHub Actions run `30179024702` to confirm the QuickJS lifecycle repair and isolate the remaining iPhone failures to AES buffer access, an invalid RSA test fixture, and proxy Header JSON slash escaping.
+- Cached CommonCrypto buffer lengths before entering unsafe data closures so AES no longer reads a mutably borrowed output value.
+- Corrected the RSA fixture to inject its X.509 public key, PKCS#8 private key, and fixed ciphertext into the JavaScript source.
+- Made proxy Header JSON serialization deterministic and Android-compatible by leaving URL slashes unescaped.
+
+### Testing
+- Failed evidence: GitHub Actions run `30179024702`, job `89732397401`, compiled successfully, released QuickJS without the previous assertion, and passed all 3 iPhone UI tests; AES then aborted with a Swift exclusivity violation, RSA returned empty values because the fixture variables were not interpolated, and the proxy Header retained escaped slashes. iPad tests, Release build, IPA packaging and signing were skipped.
+- Passed: source inspection confirms `CCCrypt` uses lengths captured before unsafe borrows, the RSA fixture variables are now consumed by Swift interpolation, and Header JSON uses `withoutEscapingSlashes` before URL query encoding.
+- Not run: corrected JavaScript tests, complete iPhone/iPad suites, device build, IPA packaging and signing require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `ios/Sources/XingGuangJavaScript/JavaScriptBridgeCompatibility.swift`: avoids overlapping access to AES data buffers.
+- `ios/Sources/XingGuangJavaScript/QuickJSHost.swift`: serializes proxy Header JSON without escaped URL slashes.
+- `ios/Tests/XingGuangKitTests/JavaScriptCryptoBridgeTests.swift`: injects real RSA fixture values into the JavaScript test module.
+- `docs/ios-development.md`: records run `30179024702`, its verified boundary and the pending rerun.
+- `progress.md`: appends failure evidence, validation scope, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/JavaScriptBridgeCompatibility.swift ios/Sources/XingGuangJavaScript/QuickJSHost.swift ios/Tests/XingGuangKitTests/JavaScriptCryptoBridgeTests.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.

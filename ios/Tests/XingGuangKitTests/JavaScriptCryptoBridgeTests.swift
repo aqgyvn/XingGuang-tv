@@ -33,9 +33,9 @@ final class JavaScriptCryptoBridgeTests: XCTestCase {
         export default {
           init: function() {},
           action: function() {
-            const fixed = rsaX('RSA/PKCS1', false, false, '\\(fixedCiphertext)', true, '\\(privateKey)', false);
-            const encrypted = rsaX('RSA/PKCS1', true, true, '\\u661f\\u5149-RSA', false, '\\(publicKey)', true);
-            const roundTrip = rsaX('RSA/PKCS1', false, false, encrypted, true, '\\(privateKey)', false);
+            const fixed = rsaX('RSA/PKCS1', false, false, '\(fixedCiphertext)', true, '\(privateKey)', false);
+            const encrypted = rsaX('RSA/PKCS1', true, true, '\\u661f\\u5149-RSA', false, '\(publicKey)', true);
+            const roundTrip = rsaX('RSA/PKCS1', false, false, encrypted, true, '\(privateKey)', false);
             return JSON.stringify({fixed: fixed, encrypted: encrypted, roundTrip: roundTrip});
           }
         };
