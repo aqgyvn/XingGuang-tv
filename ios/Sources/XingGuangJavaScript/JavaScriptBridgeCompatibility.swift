@@ -217,12 +217,12 @@ enum JavaScriptBridgeCrypto {
 
 enum JavaScriptTextDecoder {
     static func decode(_ data: Data, requestHeaders: [String: String]) -> String {
-        let charset = requestHeaders.first {
+        let charsetName = requestHeaders.first {
             $0.key.caseInsensitiveCompare("Content-Type") == .orderedSame
         }.flatMap { charset(from: $0.value) } ?? "utf-8"
 
         let encoding: String.Encoding
-        switch charset.lowercased() {
+        switch charsetName.lowercased() {
         case "gbk", "gb2312", "gb18030", "gb-18030":
             let rawValue = CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(0x0632))
             encoding = String.Encoding(rawValue: rawValue)

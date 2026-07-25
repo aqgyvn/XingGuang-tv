@@ -2525,3 +2525,22 @@
 - `docs/ios-development.md`: records CI run `30177937138`, its exact failure boundary and required rerun.
 - `progress.md`: appends failure evidence, validation scope, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/QuickJSHost.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Repair the JavaScript charset decoder CI compile failure
+
+### What was done
+- Used GitHub Actions run `30178184218` to confirm the previous optional-pattern repair and isolate the next compiler failure to the JavaScript response text decoder.
+- Renamed the local charset value so it no longer shadows the charset parser function, without changing supported encodings or fallback behavior.
+- Recorded the new CI boundary before starting another macOS validation run.
+
+### Testing
+- Failed evidence: GitHub Actions run `30178184218`, job `89730298177`, stopped during `Test on iPhone simulator` at `JavaScriptBridgeCompatibility.swift:222` with `cannot call value of non-function type 'String'`; iPad tests, Release build, IPA packaging and signing were skipped.
+- Passed: source inspection confirms the decoder still reads `Content-Type`, calls the same parser, selects the same encoding and preserves the UTF-8 fallback.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after the repair.
+- Not run: Swift compilation, iPhone/iPad tests, device build, IPA packaging and signing require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `ios/Sources/XingGuangJavaScript/JavaScriptBridgeCompatibility.swift`: avoids local name shadowing in response charset decoding.
+- `docs/ios-development.md`: records CI run `30178184218`, its exact failure boundary and required rerun.
+- `progress.md`: appends failure evidence, validation scope, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/JavaScriptBridgeCompatibility.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
