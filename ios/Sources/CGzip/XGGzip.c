@@ -13,7 +13,7 @@ int xg_gzip_decompress(const uint8_t *input, size_t input_length, uint8_t **outp
     size_t capacity = XG_GZIP_INITIAL_CAPACITY;
     int status;
 
-    if (!input || input_length == 0 || !output || !output_length || input_length > UINT_MAX) return Z_PARAM_ERROR;
+    if (!input || input_length == 0 || !output || !output_length || input_length > UINT_MAX) return Z_STREAM_ERROR;
     memset(&stream, 0, sizeof(stream));
     stream.next_in = (Bytef *)input;
     stream.avail_in = (uInt)input_length;
@@ -67,7 +67,7 @@ int xg_gzip_compress(const uint8_t *input, size_t input_length, uint8_t **output
     uLong bound;
     int status;
 
-    if ((!input && input_length != 0) || !output || !output_length || input_length > UINT_MAX) return Z_PARAM_ERROR;
+    if ((!input && input_length != 0) || !output || !output_length || input_length > UINT_MAX) return Z_STREAM_ERROR;
     memset(&stream, 0, sizeof(stream));
     if (deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 15 + 16, 8, Z_DEFAULT_STRATEGY) != Z_OK) return Z_DATA_ERROR;
 

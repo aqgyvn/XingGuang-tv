@@ -93,3 +93,7 @@ xcodebuild \
 - 遇到网络、鉴权和 DRM 失败时显示明确错误，不错误回退或静默空白。
 
 第一阶段真机验收仍需完成；本批次需要新的 CI 验证 QuickJS/CommonCrypto、直播解析和备份导出，再进入 WebView、外置字幕、弹幕与高级网络阶段。
+
+## 2026-07-26 CI 诊断
+
+GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和模拟器选择，但在 iPhone 模拟器编译 `CGzip` 时失败。原因是参数校验使用了 zlib 未定义的 `Z_PARAM_ERROR`；现已改为 zlib 标准错误码 `Z_STREAM_ERROR`。该修复仍需新的 macOS CI 运行验证，不能据此宣称 QuickJS、Swift 测试或 IPA 打包已经通过。

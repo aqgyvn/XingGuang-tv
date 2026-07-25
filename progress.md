@@ -2488,3 +2488,21 @@
 - `docs/ios-development.md`: records the completed batch and remaining platform limits.
 - `progress.md`: records this verification boundary and rollback point.
 - Rollback method: before commit, run `git restore -- ios docs/ios-development.md progress.md`; after the batch commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Repair the gzip bridge CI compile failure
+
+### What was done
+- Used GitHub Actions run `30177752122` to isolate the first phase-two build failure to the gzip C bridge before Swift or QuickJS validation could complete.
+- Replaced the undefined `Z_PARAM_ERROR` return value with zlib's standard `Z_STREAM_ERROR` for invalid compression and decompression arguments.
+- Recorded the failed validation boundary so later CI success is not inferred from the previous phase-one package.
+
+### Testing
+- Failed evidence: GitHub Actions run `30177752122`, job `89729229863`, stopped during `Test on iPhone simulator` with two `Use of undeclared identifier 'Z_PARAM_ERROR'` compiler errors in `XGGzip.c`; iPad tests, Release build, IPA packaging and signing were skipped.
+- Passed: source inspection confirms both invalid-argument branches now return the declared zlib constant `Z_STREAM_ERROR`, while successful paths and gzip data errors keep their previous behavior.
+- Not run: the corrected C bridge, Swift/QuickJS compilation, iPhone/iPad tests, device build, IPA packaging and signing require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `ios/Sources/CGzip/XGGzip.c`: uses a valid zlib error code for invalid arguments.
+- `docs/ios-development.md`: records CI run `30177752122`, its exact boundary and the required rerun.
+- `progress.md`: appends the failure evidence, validation gap, file list and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/CGzip/XGGzip.c docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
