@@ -103,3 +103,5 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 运行 `30178184218` 继续通过上述两处编译点，并将下一处失败定位到 `JavaScriptBridgeCompatibility.swift`：字符集局部变量与同名解析函数发生遮蔽。现已将局部值明确命名为 `charsetName`，字符集解析行为不变。该修复仍需新的 macOS CI 运行确认；本次运行同样未进入 iPad、设备 Release 和 IPA 步骤。
 
 运行 `30178314318` 已完成 Swift 编译和全部 iPhone UI 测试，但单元测试仍有 14 个失败：13 个 JavaScript 用例无法在 SwiftPM 平铺后的 bundle 根目录找到内置模块，1 个播放器恢复进度用例在主队列异步回调前提前断言。资源加载现按原子目录优先并兼容 bundle 根目录，播放器测试改为等待恢复回调；生产播放器时序未改变。上述修复仍需新的 macOS CI 运行确认，iPad、设备 Release 和 IPA 步骤在该失败运行中未执行。
+
+运行 `30178696426` 已确认资源加载修复和 iPhone UI 测试通过，剩余失败收敛为 QuickJS 销毁时的 `JS_FreeRuntime` 断言。模块加载器取得 compile-only 模块指针后未释放临时 `JSValue`，导致运行时仍有 GC 对象；现已按 QuickJS 模块加载器生命周期释放该临时值。该修复仍需新的 macOS CI 运行确认，iPad、设备 Release 和 IPA 步骤在该失败运行中未执行。

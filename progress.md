@@ -2564,3 +2564,22 @@
 - `docs/ios-development.md`: records CI run `30178314318`, its test boundary and the resource packaging behavior.
 - `progress.md`: appends failure evidence, verification scope, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/QuickJSHost.swift ios/Tests/XingGuangKitTests/FallbackPlayerEngineTests.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Repair the QuickJS module value lifecycle crash
+
+### What was done
+- Used GitHub Actions run `30178696426` to confirm bundled JavaScript resources now load and narrow the remaining iPhone failure to QuickJS runtime destruction.
+- Released the compile-only module value after extracting its module definition pointer, matching QuickJS loader ownership and preventing a retained GC object at runtime teardown.
+- Kept module resolution, evaluation and Spider protocol behavior unchanged.
+
+### Testing
+- Failed evidence: GitHub Actions run `30178696426`, job `89731581168`, passed compilation and all 3 iPhone UI tests but aborted `JavaScriptCryptoBridgeTests` at `JS_FreeRuntime` with `Assertion failed: (list_empty(&rt->gc_obj_list))`; iPad tests, Release build, IPA packaging and signing were skipped.
+- Passed: source ownership inspection confirms the compile-only `JSValue` is now balanced after its `JSModuleDef` pointer is obtained, while the module remains registered with the QuickJS context.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after the repair.
+- Not run: QuickJS teardown, complete iPhone/iPad suites, device build, IPA packaging and signing require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `ios/Sources/CQuickJS/XGQuickJS.c`: balances the compile-only module value in the native loader.
+- `docs/ios-development.md`: records CI run `30178696426`, its teardown failure and ownership correction.
+- `progress.md`: appends failure evidence, verification scope, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/CQuickJS/XGQuickJS.c docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.

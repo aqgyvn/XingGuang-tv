@@ -325,7 +325,7 @@ static JSModuleDef *xg_module_loader(JSContext *ctx, const char *module_name, vo
     free(source);
     if (JS_IsException(compiled)) return NULL;
     module = JS_VALUE_GET_PTR(compiled);
-    /* The module loader takes ownership of the compile-only module value. */
+    JS_FreeValue(ctx, compiled);
     return module;
 }
 
