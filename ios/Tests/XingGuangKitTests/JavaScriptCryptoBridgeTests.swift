@@ -21,14 +21,14 @@ final class JavaScriptCryptoBridgeTests: XCTestCase {
 
         let raw = try await repository.action(site: site, value: "")
         let object = try XCTUnwrap(try JSONSerialization.jsonObject(with: Data(raw.utf8)) as? [String: String])
-        XCTAssertEqual(object["encrypted"], "K074HTYp+Ws1aE9FeXhJXg==")
+        XCTAssertEqual(object["encrypted"], "prl/TvzJAMKu76w8wCF1Mw==")
         XCTAssertEqual(object["decrypted"], "星光-AES")
     }
 
     func testRSAPKCS1FixturesUseX509AndPKCS8Keys() async throws {
         let publicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCKMBx21dIZA67lOxW5rrHx0rEIDEQ5dmEEv4ybC5dT4TTw4gMuJH/S4F+5sfcqLsVIhMAvbnW7T9+vaMM7V6RBCxaSRvxSrIlQkaV6mcuEtDCcaPbLmHzwQWv6NRHjGTRg3zCEzSj04QJ/keV8UGkcdvbc5axB1/5aKIoG7HAtAwIDAQAB"
         let privateKey = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAIowHHbV0hkDruU7FbmusfHSsQgMRDl2YQS/jJsLl1PhNPDiAy4kf9LgX7mx9youxUiEwC9udbtP369owztXpEELFpJG/FKsiVCRpXqZy4S0MJxo9suYfPBBa/o1EeMZNGDfMITNKPThAn+R5XxQaRx29tzlrEHX/looigbscC0DAgMBAAECgYAKSp38Ewg+zlbqrIqoKwSxTAMyOb5PrJYkz+KNXit1gZq7QTctFbvNUozehrdagA7iS+dc657qBdSqECUmGMIF7T0FDKYMNAJXkxX2ZFrLuAOzbDF8giogPvWogUyzL7UTUbA18l3wHhxK5gGW0dG3ULUI04wo9riRFe9GUxcVzQJBANEFSudfaS0qb86nqkQ8SWIFmmg/H5xT1FMWjU0n9pE5PzbIPA04lsHOTZxHlRnpJnnj9ghwxZf2r5TL/OMuFQ8CQQCpPzf88Mdd919EKk9i99bqT/ZSG3TKd0FyHpc6AT0d54x53XfPlXa6J6IFU4VI4biDK5hlBH2p7M32njbzAbDNAkAJGjfm14rXArAXyclqa02uzRuqSoVv416tt5+zqnfcXyfXlOS4lqxKCFfs5Fkj5bldOYYvW+ne8kk3K6L5qboVAkEAp9RE1NJ/ILMZCSNbraxOtfOtMyZ+3fb8MwoatC5eSLVAG+h90p9IKLj8dYOo++i5a3ljmWimpEZqx0+E9dyLUQJAJnHzfjFqREO+uzxDadxfvMzG4NiTeHrL9KhSF2Q9LXDppj2k97OYmaJUKuqQVzm0t6OUU0XUirMwGwTFuqcUsw=="
-        let fixedCiphertext = "PdAHkG0sNY0oSvwNamtUm8jBHhBIqSAvJAvXs2bBCiwTOKWTPate9H3PPL1jqO40iGljgnSZED7iwx3Fk264B+yM/zXYpHn1rUU435ZjWE5A/BbxC3sLGMv0kNTeG7VIP/1tIKmu3Dtm5p9LSKG/0d++2buABceMqGaKYueNe4Y="
+        let fixedCiphertext = "V5yTBn/2NGSFwr/DTN5ZEb8Zq25VN2O+xt/f6tVj+e9X4zxQJL7a6m7UPM4Ie9ib0BqWXyG4r200OxNObJrRcy3GFeCbplLLe3z17nTuPvZDn4Svqn7zLlC75GZtLMs7z4M3IadA6w5bDqr1C3fwA7c04mWT/JTOE8xciAXImOw="
         let script = """
         export default {
           init: function() {},

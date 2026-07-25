@@ -2604,3 +2604,23 @@
 - `docs/ios-development.md`: records run `30179024702`, its verified boundary and the pending rerun.
 - `progress.md`: appends failure evidence, validation scope, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/JavaScriptBridgeCompatibility.swift ios/Sources/XingGuangJavaScript/QuickJSHost.swift ios/Tests/XingGuangKitTests/JavaScriptCryptoBridgeTests.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Correct the JavaScript crypto compatibility fixtures
+
+### What was done
+- Used GitHub Actions run `30179470554` to confirm the AES exclusivity repair, proxy Header behavior, RSA key imports, and RSA dynamic round trip.
+- Replaced the AES expected ciphertext with the independently verified UTF-8 AES-CBC/PKCS7 result.
+- Replaced the RSA fixed ciphertext after independent decryption proved the previous fixture encoded `??-RSA`; the new PKCS#1 ciphertext preserves the intended UTF-8 plaintext.
+
+### Testing
+- Failed evidence: GitHub Actions run `30179470554`, job `89733538603`, passed compilation and all 3 iPhone UI tests. Only the stale AES expected ciphertext and malformed RSA fixed ciphertext failed; the proxy test and RSA dynamic encrypt/decrypt assertions passed. iPad tests, Release build, IPA packaging and signing were skipped.
+- Passed: .NET AES independently produced `prl/TvzJAMKu76w8wCF1Mw==` for `星光-AES` with the fixture key and IV.
+- Passed: Node.js `crypto` with the fixture PKCS#8 private key decrypted the old RSA vector to `??-RSA`; the replacement was generated from `星光-RSA` with the fixture X.509 public key and PKCS#1 padding.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` will be rerun before commit.
+- Not run: corrected fixtures, complete iPhone/iPad suites, device build, IPA packaging and signing require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `ios/Tests/XingGuangKitTests/JavaScriptCryptoBridgeTests.swift`: replaces two invalid fixed crypto vectors.
+- `docs/ios-development.md`: records run `30179470554`, the independently verified fixture issue and the pending rerun.
+- `progress.md`: appends the fixture verification evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Tests/XingGuangKitTests/JavaScriptCryptoBridgeTests.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
