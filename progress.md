@@ -2506,3 +2506,22 @@
 - `docs/ios-development.md`: records CI run `30177752122`, its exact boundary and the required rerun.
 - `progress.md`: appends the failure evidence, validation gap, file list and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/CGzip/XGGzip.c docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Repair the QuickJS host optional-pattern CI compile failure
+
+### What was done
+- Used GitHub Actions run `30177937138` to confirm the gzip bridge repair and isolate the next phase-two compiler failure to `QuickJSHost.initialArgument()`.
+- Unwrapped the optional site extension before matching its string case, preserving the existing CatVod and non-string extension behavior.
+- Recorded the new CI boundary so downstream iPad, Release, IPA and signing checks are not reported as completed.
+
+### Testing
+- Failed evidence: GitHub Actions run `30177937138`, job `89729687210`, stopped during `Test on iPhone simulator` at `QuickJSHost.swift:115` with `pattern of type 'JSONValue' cannot match 'JSONValue?'`; iPad tests, Release build, IPA packaging and signing were skipped.
+- Passed: source inspection confirms the string extraction now operates on a non-optional `JSONValue` while nil and non-string extensions continue to use the existing `asAny` fallback.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after the repair.
+- Not run: Swift compilation, iPhone/iPad tests, device build, IPA packaging and signing require the next macOS GitHub Actions run; this Windows host has no Xcode toolchain.
+
+### Notes
+- `ios/Sources/XingGuangJavaScript/QuickJSHost.swift`: unwraps `site.ext` before enum pattern matching.
+- `docs/ios-development.md`: records CI run `30177937138`, its exact failure boundary and required rerun.
+- `progress.md`: appends failure evidence, validation scope, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/QuickJSHost.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.

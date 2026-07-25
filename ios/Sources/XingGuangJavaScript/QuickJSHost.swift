@@ -112,7 +112,8 @@ final class QuickJSHostBox: @unchecked Sendable {
             ]
             return result
         }
-        if case JSONValue.string(let value) = site.ext {
+        if let siteExtension = site.ext,
+           case .string(let value) = siteExtension {
             return value
         }
         return ext

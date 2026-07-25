@@ -97,3 +97,5 @@ xcodebuild \
 ## 2026-07-26 CI 诊断
 
 GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和模拟器选择，但在 iPhone 模拟器编译 `CGzip` 时失败。原因是参数校验使用了 zlib 未定义的 `Z_PARAM_ERROR`；现已改为 zlib 标准错误码 `Z_STREAM_ERROR`。该修复仍需新的 macOS CI 运行验证，不能据此宣称 QuickJS、Swift 测试或 IPA 打包已经通过。
+
+后续运行 `30177937138` 已通过 `CGzip` 编译，并将下一处失败定位到 `QuickJSHost.swift`：可选的 `site.ext` 使用了非可选枚举模式匹配。现已先解包可选值再匹配字符串扩展，行为保持不变。该修复仍需新的 macOS CI 运行确认；iPad 测试、设备 Release 构建和 IPA 打包在这次失败运行中均未执行。
