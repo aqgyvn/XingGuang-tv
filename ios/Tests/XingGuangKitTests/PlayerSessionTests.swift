@@ -94,6 +94,36 @@ final class PlayerSessionTests: XCTestCase {
         XCTAssertTrue(session.startPictureInPicture())
         XCTAssertEqual(engine.pictureInPictureCallCount, 1)
     }
+
+    func testLoopReplaysFromConfiguredOpening() async {
+        let engine = SessionPlayerEngineStub(loadState: .loading)
+        let session = PlayerSession(engine: engine)
+        let replayed = expectation(description: "loop replayed")
+        engine.onSeek = { position in
+            if position == 18 { replayed.fulfill() }
+        }
+        session.loopStart = 18
+        session.loopEnabled = true
+
+        engine.send(.ended)
+        await fulfillment(of: [replayed], timeout: 1)
+
+        XCTAssertEqual(engine.seekPositions, [18])
+        XCTAssertEqual(engine.playCallCount, 1)
+    }
+
+    func testSleepTimerPausesAndClearsRemainingTime() async {
+        let engine = SessionPlayerEngineStub(loadState: .playing)
+        let session = PlayerSession(engine: engine)
+        let paused = expectation(description: "sleep timer paused playback")
+        engine.onPause = { paused.fulfill() }
+
+        session.setSleepTimer(after: 0.02)
+        await fulfillment(of: [paused], timeout: 1)
+
+        XCTAssertEqual(session.sleepTimerRemaining, 0)
+        XCTAssertEqual(engine.pauseCallCount, 1)
+    }
 }
 
 private final class SessionPlayerEngineStub: PlayerEngine {
@@ -113,8 +143,11 @@ private final class SessionPlayerEngineStub: PlayerEngine {
     private(set) var rates: [Float] = []
     private(set) var selectedTrack: PlayerTrack?
     private(set) var pictureInPictureCallCount = 0
+    private(set) var playCallCount = 0
+    private(set) var pauseCallCount = 0
     var onSeek: ((TimeInterval) -> Void)?
     var onRate: ((Float) -> Void)?
+    var onPause: (() -> Void)?
 
     init(
         loadState: PlayerState,
@@ -129,8 +162,15 @@ private final class SessionPlayerEngineStub: PlayerEngine {
     }
 
     func load(_ request: PlaybackRequest) { stateSubject.send(loadState) }
-    func play() { stateSubject.send(.playing) }
-    func pause() { stateSubject.send(.paused) }
+    func play() {
+        playCallCount += 1
+        stateSubject.send(.playing)
+    }
+    func pause() {
+        pauseCallCount += 1
+        stateSubject.send(.paused)
+        onPause?()
+    }
     func seek(to position: TimeInterval) {
         seekPositions.append(position)
         onSeek?(position)

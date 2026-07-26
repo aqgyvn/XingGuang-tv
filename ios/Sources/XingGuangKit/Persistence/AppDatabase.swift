@@ -302,6 +302,16 @@ public final class AppDatabase: PersistenceStore, BackupDocumentApplying, @unche
             }
             UserDefaults.standard.set(preference.rawValue, forKey: "ios.playerEngine")
         }
+        if preferences["ios.playbackAspectMode"] == nil,
+           let value = numberValue(preferences["scale"]),
+           PlayerAspectMode(rawValue: value) != nil {
+            UserDefaults.standard.set(value, forKey: "ios.playbackAspectMode")
+        }
+        if preferences["ios.liveAspectMode"] == nil,
+           let value = numberValue(preferences["scale_live"]),
+           PlayerAspectMode(rawValue: value) != nil {
+            UserDefaults.standard.set(value, forKey: "ios.liveAspectMode")
+        }
         if preferences["ios.subtitleTextSize"] == nil, let value = doubleValue(preferences["subtitle_text_size"]), value > 0 {
             UserDefaults.standard.set(value, forKey: "ios.subtitleTextSize")
         }

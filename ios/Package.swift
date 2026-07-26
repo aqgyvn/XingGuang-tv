@@ -37,7 +37,8 @@ let package = Package(
                 "CGzip",
                 .product(name: "GRDB", package: "GRDB.swift")
             ],
-            resources: [.process("Resources")]
+            resources: [.process("Resources")],
+            linkerSettings: [.linkedFramework("MediaPlayer")]
         ),
         .target(
             name: "XingGuangJavaScript",

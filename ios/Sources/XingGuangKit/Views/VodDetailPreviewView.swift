@@ -13,6 +13,11 @@ struct VodDetailPreviewView: View {
     @State private var seekPosition = 0.0
     @State private var seeking = false
     @State private var speed = 1.0
+    @State private var aspectMode: PlayerAspectMode
+    @State private var reverseSort = false
+    @State private var opening = 0.0
+    @State private var ending = 0.0
+    @State private var episodeEndHandled = false
     @State private var playbackTask: Task<Void, Never>?
     @State private var playingEpisodeURL = ""
     @State private var expectedResumePosition = 0.0
@@ -38,6 +43,7 @@ struct VodDetailPreviewView: View {
         _vod = State(initialValue: vod)
         _session = StateObject(wrappedValue: model.makePlayerSession())
         _speed = State(initialValue: model.defaultPlaybackSpeed)
+        _aspectMode = State(initialValue: model.defaultAspectMode)
     }
 
     private var routes: [PlaybackRoute] { vod.playbackRoutes }
@@ -78,6 +84,10 @@ struct VodDetailPreviewView: View {
             if !seeking, time.position.isFinite { seekPosition = max(time.position, 0) }
             guard let episode = currentEpisode else { return }
             guard playingEpisodeURL == episode.url else { return }
+            if shouldFinishAtEnding(time) {
+                handleEpisodeEnd()
+                return
+            }
             if expectedResumePosition > 0 {
                 if time.position >= max(expectedResumePosition - 5, 0) {
                     expectedResumePosition = 0
@@ -93,6 +103,9 @@ struct VodDetailPreviewView: View {
                 persistPlayback()
             }
         }
+        .onReceive(session.$state) { state in
+            if case .ended = state, !session.loopEnabled { handleEpisodeEnd() }
+        }
         .onReceive(session.$tracks) { tracks in
             selectedAudioTrackID = retainedTrackID(selectedAudioTrackID, in: tracks)
             selectedVideoTrackID = retainedTrackID(selectedVideoTrackID, in: tracks)
@@ -102,6 +115,7 @@ struct VodDetailPreviewView: View {
             playbackTask?.cancel()
             overlayTask?.cancel()
             persistPlayback()
+            session.cancelSleepTimer()
             session.stop()
         }
         .fileImporter(
@@ -132,7 +146,8 @@ struct VodDetailPreviewView: View {
         VStack(spacing: 0) {
             ZStack {
                 PlayerSurfaceView(engine: session.engine)
-                    .aspectRatio(16.0 / 9.0, contentMode: .fit)
+                    .playerAspect(aspectMode)
+                PlayerGestureOverlay(aspectMode: aspectMode)
                 if model.danmakuEnabled, !danmakuCues.isEmpty {
                     DanmakuOverlayView(cues: danmakuCues, position: session.time.position)
                 }
@@ -207,6 +222,7 @@ struct VodDetailPreviewView: View {
                 Text("\(formatTime(seekPosition)) / \(formatTime(session.time.duration))")
                     .font(.caption.monospacedDigit())
                 Spacer()
+                playbackOptionsMenu
                 trackMenu
                 if session.capabilities.contains(.pictureInPicture), canRequestPictureInPicture {
                     Button {
@@ -321,6 +337,79 @@ struct VodDetailPreviewView: View {
         .accessibilityLabel("音轨与字幕")
     }
 
+    private var playbackOptionsMenu: some View {
+        Menu {
+            Button {
+                session.loopEnabled.toggle()
+            } label: {
+                Label("单集循环", systemImage: session.loopEnabled ? "checkmark" : "repeat.1")
+            }
+            Menu {
+                ForEach([5, 15, 30, 60], id: \.self) { minutes in
+                    Button(minutes == 60 ? "1 小时" : "\(minutes) 分钟") {
+                        session.setSleepTimer(minutes: minutes)
+                    }
+                }
+                if session.sleepTimerRemaining > 0 {
+                    Button("延长 5 分钟") { session.extendSleepTimer() }
+                    Button("取消定时器", role: .destructive) { session.cancelSleepTimer() }
+                }
+            } label: {
+                Label(sleepTimerTitle, systemImage: "timer")
+            }
+            Menu {
+                ForEach(PlayerAspectMode.allCases) { mode in
+                    Button {
+                        aspectMode = mode
+                        model.defaultAspectMode = mode
+                        persistPlayback()
+                    } label: {
+                        Label(mode.title, systemImage: aspectMode == mode ? "checkmark" : "rectangle")
+                    }
+                }
+            } label: {
+                Label("画面比例：\(aspectMode.title)", systemImage: "aspectratio")
+            }
+            Divider()
+            Button {
+                opening = max(session.time.position, 0)
+                session.loopStart = opening
+                persistPlayback()
+            } label: {
+                Label("片头设为 \(formatTime(session.time.position))", systemImage: "forward.end")
+            }
+            .disabled(session.time.position <= 0)
+            if opening > 0 {
+                Button("清除片头", role: .destructive) {
+                    opening = 0
+                    session.loopStart = 0
+                    persistPlayback()
+                }
+            }
+            Button {
+                ending = max(session.time.duration - session.time.position, 0)
+                persistPlayback()
+            } label: {
+                Label("片尾设为 \(formatTime(session.time.duration - session.time.position))", systemImage: "backward.end")
+            }
+            .disabled(session.time.duration <= 0 || session.time.position <= 0)
+            if ending > 0 {
+                Button("清除片尾", role: .destructive) {
+                    ending = 0
+                    persistPlayback()
+                }
+            }
+        } label: {
+            Image(systemName: session.sleepTimerRemaining > 0 ? "timer" : "ellipsis.circle")
+        }
+        .accessibilityLabel("播放设置")
+    }
+
+    private var sleepTimerTitle: String {
+        guard session.sleepTimerRemaining > 0 else { return "定时停止" }
+        return "定时停止：\(formatTime(TimeInterval(session.sleepTimerRemaining)))"
+    }
+
     @ViewBuilder
     private func trackButtons(_ tracks: [PlayerTrack]) -> some View {
         ForEach(tracks) { track in
@@ -407,9 +496,20 @@ struct VodDetailPreviewView: View {
     private var episodesGrid: some View {
         if let route = currentRoute {
             VStack(alignment: .leading, spacing: 12) {
-                SectionTitle(title: "选集", trailing: "正序")
+                HStack(spacing: 8) {
+                    SectionTitle(title: "选集")
+                    Button {
+                        reverseSort.toggle()
+                        persistPlayback()
+                    } label: {
+                        Label(reverseSort ? "倒序" : "正序", systemImage: "arrow.up.arrow.down")
+                            .font(.subheadline)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundColor(XingGuangTheme.primary)
+                }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 54, maximum: 88), spacing: 10)], spacing: 10) {
-                    ForEach(Array(route.episodes.enumerated()), id: \.offset) { index, episode in
+                    ForEach(displayedEpisodes(in: route), id: \.offset) { index, episode in
                         Button {
                             persistPlayback()
                             selectedEpisode = index
@@ -475,6 +575,11 @@ struct VodDetailPreviewView: View {
             }
         }
         speed = history.speed.isFinite ? min(max(history.speed, 0.5), 2) : model.defaultPlaybackSpeed
+        reverseSort = history.reverseSort
+        opening = Double(max(history.opening, 0)) / 1000
+        ending = Double(max(history.ending, 0)) / 1000
+        aspectMode = PlayerAspectMode(rawValue: history.scale) ?? model.defaultAspectMode
+        session.loopStart = opening
         lastPersistedPosition = Double(max(history.position, 0)) / 1000
         lastPersistedEpisodeURL = history.episodeURL
     }
@@ -494,14 +599,17 @@ struct VodDetailPreviewView: View {
                 let history = model.history(for: vod)
                 let storedPosition = history?.episodeURL == episode.url ? Double(max(history?.position ?? 0, 0)) / 1000 : 0
                 let storedDuration = history?.episodeURL == episode.url ? Double(max(history?.duration ?? 0, 0)) / 1000 : 0
-                let resume = storedDuration > 0 ? min(storedPosition, storedDuration) : storedPosition
+                let completed = storedDuration > 0 && storedPosition + max(ending, 5) >= storedDuration
+                let resume = completed ? opening : max(storedDuration > 0 ? min(storedPosition, storedDuration) : storedPosition, opening)
                 expectedResumePosition = resume
+                session.loopStart = opening
                 session.load(request, resumeAt: resume)
                 session.setRate(Float(speed))
                 configureOverlays(for: request)
                 playingEpisodeURL = episode.url
                 lastPersistedPosition = resume
                 lastPersistedEpisodeURL = episode.url
+                episodeEndHandled = false
             } catch is CancellationError {
             } catch {
                 guard !Task.isCancelled else { return }
@@ -519,7 +627,17 @@ struct VodDetailPreviewView: View {
         let duration = session.time.duration.isFinite ? max(session.time.duration, 0) : 0
         let buffered = session.time.buffered.isFinite ? max(session.time.buffered, 0) : position
         let safeTime = PlayerTime(position: position, duration: duration, buffered: buffered)
-        model.savePlayback(vod: vod, route: route, episode: episode, time: safeTime, speed: speed.isFinite ? speed : 1)
+        model.savePlayback(
+            vod: vod,
+            route: route,
+            episode: episode,
+            time: safeTime,
+            speed: speed.isFinite ? speed : 1,
+            reverseSort: reverseSort,
+            opening: Int64(opening * 1000),
+            ending: Int64(ending * 1000),
+            scale: aspectMode.rawValue
+        )
         lastPersistedPosition = position
         lastPersistedEpisodeURL = episode.url
     }
@@ -532,6 +650,7 @@ struct VodDetailPreviewView: View {
         lastPersistedEpisodeURL = currentEpisode?.url ?? ""
         playingEpisodeURL = ""
         expectedResumePosition = 0
+        episodeEndHandled = false
         currentPlaybackRequest = nil
         subtitleResources = []
         danmakuResources = []
@@ -539,6 +658,32 @@ struct VodDetailPreviewView: View {
         danmakuCues = []
         selectedSubtitleResourceID = ""
         selectedDanmakuResourceID = ""
+    }
+
+    private func displayedEpisodes(in route: PlaybackRoute) -> [(offset: Int, element: PlaybackEpisode)] {
+        let episodes = Array(route.episodes.enumerated())
+        return reverseSort ? Array(episodes.reversed()) : episodes
+    }
+
+    private func shouldFinishAtEnding(_ time: PlayerTime) -> Bool {
+        guard !episodeEndHandled, ending > 0, time.duration > 0, time.position > 0 else { return false }
+        return time.position + ending >= time.duration
+    }
+
+    private func handleEpisodeEnd() {
+        guard !episodeEndHandled else { return }
+        episodeEndHandled = true
+        persistPlayback()
+        if session.loopEnabled {
+            session.replay(from: opening)
+            episodeEndHandled = false
+            return
+        }
+        let nextIndex = reverseSort ? selectedEpisode - 1 : selectedEpisode + 1
+        guard let route = currentRoute, route.episodes.indices.contains(nextIndex) else { return }
+        selectedEpisode = nextIndex
+        resetPersistenceCheckpoint()
+        play(route: route, episode: route.episodes[nextIndex])
     }
 
     private func configureOverlays(for request: PlaybackRequest) {

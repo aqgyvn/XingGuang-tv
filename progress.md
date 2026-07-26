@@ -3113,6 +3113,38 @@
 - `progress.md`: appends the final verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
 
+## 2026-07-27 - Task: Add iOS playback experience parity
+
+### What was done
+- Added left-side brightness and right-side system-volume gestures to VOD, live and local-media playback.
+- Added sleep timer controls to all playback pages and single-episode looping to VOD and local media.
+- Added opening/ending skip, ordered/reversed episode display and next-episode behavior to VOD playback.
+- Added five aspect modes with separate default and live preferences, existing-history persistence and Android backup aliases.
+- Changed periodic history saves to preserve Android playback-option fields instead of resetting them.
+
+### Testing
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'`.
+- Added unit coverage for loop replay position, sleep-timer pause, playback-option preservation, aspect preference persistence and Android backup aliases.
+- Passed before this batch: GitHub Actions run `30214215174` completed iPhone/iPad tests, device Release, IPA structure and signing checks and produced `XingGuang-iOS-32`.
+- Not available on this Windows host: Swift/UIKit/MediaPlayer compilation and gesture execution. This batch requires a new full macOS CI run and TrollStore device verification.
+
+### Notes
+- `ios/Package.swift`: links the iOS system MediaPlayer framework used by the volume gesture.
+- `ios/Sources/XingGuangKit/Player/PlayerInteraction.swift`: defines aspect modes and shared brightness/volume gesture handling.
+- `ios/Sources/XingGuangKit/Player/PlayerSession.swift`: adds loop replay and sleep-timer state/actions.
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: persists aspect preferences and preserves playback-option history fields.
+- `ios/Sources/XingGuangKit/Persistence/AppDatabase.swift`: maps Android `scale` and `scale_live` backup aliases to iOS preferences.
+- `ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift`: adds VOD loop, timer, skip, aspect, reverse order and gesture controls.
+- `ios/Sources/XingGuangKit/Views/LiveHomeView.swift`: adds live timer, aspect and gesture controls.
+- `ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift`: adds local-media loop, timer, aspect and gesture controls.
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: adds default and live aspect selectors.
+- `ios/Tests/XingGuangKitTests/PlayerSessionTests.swift`: covers loop and timer behavior.
+- `ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift`: covers history preservation and aspect backup aliases.
+- `docs/ios-development.md`: documents behavior, framework dependency and verification boundary.
+- `docs/ios-compatibility-matrix.md`: updates Android/iOS playback parity status.
+- `progress.md`: appends implementation, verification evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Package.swift ios/Sources/XingGuangKit/Player/PlayerInteraction.swift ios/Sources/XingGuangKit/Player/PlayerSession.swift ios/Sources/XingGuangKit/State/XingGuangAppModel.swift ios/Sources/XingGuangKit/Persistence/AppDatabase.swift ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift ios/Sources/XingGuangKit/Views/LiveHomeView.swift ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift ios/Sources/XingGuangKit/Views/SettingsView.swift ios/Tests/XingGuangKitTests/PlayerSessionTests.swift ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift docs/ios-development.md docs/ios-compatibility-matrix.md progress.md`; after this feature commit is the branch tip, run `git revert HEAD`.
+
 ## 2026-07-27 - Task: Update QuickJS stack state after Swift thread hops
 
 ### What was done

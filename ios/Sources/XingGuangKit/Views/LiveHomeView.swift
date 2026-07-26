@@ -123,6 +123,7 @@ public struct LiveHomeView: View {
         .onDisappear {
             epgTask?.cancel()
             lineFallbackTask?.cancel()
+            session.cancelSleepTimer()
             session.stop()
         }
         .accessibilityIdentifier("live.home")
@@ -171,7 +172,8 @@ public struct LiveHomeView: View {
         VStack(spacing: 0) {
             ZStack {
                 PlayerSurfaceView(engine: session.engine)
-                    .aspectRatio(16.0 / 9.0, contentMode: .fit)
+                    .playerAspect(model.liveAspectMode)
+                PlayerGestureOverlay(aspectMode: model.liveAspectMode)
                 playerOverlay
             }
             liveControls
@@ -237,6 +239,7 @@ public struct LiveHomeView: View {
                 }
                 .accessibilityLabel(model.isLiveKept(live: source, channel: channel) ? "取消收藏频道" : "收藏频道")
             }
+            playbackOptionsMenu
             if session.capabilities.contains(.trackSelection), !session.tracks.isEmpty {
                 trackMenu
             }
@@ -405,6 +408,44 @@ public struct LiveHomeView: View {
         case .loading, .ready, .playing, .paused: return true
         case .idle, .ended, .failed: return false
         }
+    }
+
+    private var playbackOptionsMenu: some View {
+        Menu {
+            Menu {
+                ForEach([5, 15, 30, 60], id: \.self) { minutes in
+                    Button(minutes == 60 ? "1 小时" : "\(minutes) 分钟") {
+                        session.setSleepTimer(minutes: minutes)
+                    }
+                }
+                if session.sleepTimerRemaining > 0 {
+                    Button("延长 5 分钟") { session.extendSleepTimer() }
+                    Button("取消定时器", role: .destructive) { session.cancelSleepTimer() }
+                }
+            } label: {
+                Label(sleepTimerTitle, systemImage: "timer")
+            }
+            Menu {
+                ForEach(PlayerAspectMode.allCases) { mode in
+                    Button {
+                        model.liveAspectMode = mode
+                    } label: {
+                        Label(mode.title, systemImage: model.liveAspectMode == mode ? "checkmark" : "rectangle")
+                    }
+                }
+            } label: {
+                Label("画面比例：\(model.liveAspectMode.title)", systemImage: "aspectratio")
+            }
+        } label: {
+            Image(systemName: session.sleepTimerRemaining > 0 ? "timer" : "ellipsis.circle")
+        }
+        .accessibilityLabel("播放设置")
+    }
+
+    private var sleepTimerTitle: String {
+        guard session.sleepTimerRemaining > 0 else { return "定时停止" }
+        let seconds = session.sleepTimerRemaining
+        return String(format: "定时停止：%02d:%02d", seconds / 60, seconds % 60)
     }
 
     private var audioTracks: [PlayerTrack] { session.tracks.filter { $0.kind == .audio } }

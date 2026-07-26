@@ -146,6 +146,57 @@ final class XingGuangAppModelTests: XCTestCase {
         XCTAssertEqual(defaults.object(forKey: "ios.defaultPlaybackSpeed") as? Double, 1.5)
     }
 
+    func testPlaybackSavePreservesAndroidHistoryOptions() throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let database = try AppDatabase.inMemory()
+        let model = XingGuangAppModel(defaults: defaults, persistence: database)
+        let vod = Vod(vodID: "options", vodName: "影片")
+        let episode = PlaybackEpisode(name: "第二集", url: "https://example.com/2.m3u8")
+        let route = PlaybackRoute(name: "线路", episodes: [episode])
+
+        model.savePlayback(
+            vod: vod,
+            route: route,
+            episode: episode,
+            time: PlayerTime(position: 30, duration: 120),
+            speed: 1.5,
+            reverseSort: true,
+            opening: 12_000,
+            ending: 8_000,
+            scale: PlayerAspectMode.crop.rawValue
+        )
+        model.savePlayback(
+            vod: vod,
+            route: route,
+            episode: episode,
+            time: PlayerTime(position: 45, duration: 120),
+            speed: 1.5
+        )
+
+        let history = try XCTUnwrap(database.loadHistories().first)
+        XCTAssertTrue(history.reverseSort)
+        XCTAssertEqual(history.opening, 12_000)
+        XCTAssertEqual(history.ending, 8_000)
+        XCTAssertEqual(history.scale, PlayerAspectMode.crop.rawValue)
+        XCTAssertEqual(history.position, 45_000)
+    }
+
+    func testAspectPreferencesPersistAndExportAndroidAliases() throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let model = XingGuangAppModel(defaults: defaults)
+        model.defaultAspectMode = .standard
+        model.liveAspectMode = .crop
+
+        let backup = try model.makeBackupDocument()
+
+        XCTAssertEqual(defaults.integer(forKey: "ios.playbackAspectMode"), PlayerAspectMode.standard.rawValue)
+        XCTAssertEqual(defaults.integer(forKey: "ios.liveAspectMode"), PlayerAspectMode.crop.rawValue)
+        XCTAssertEqual(backup.preferences["scale"], .number(Double(PlayerAspectMode.standard.rawValue)))
+        XCTAssertEqual(backup.preferences["scale_live"], .number(Double(PlayerAspectMode.crop.rawValue)))
+    }
+
     func testBackupDocumentIncludesCurrentConfigurationAndAndroidAliases() throws {
         let (defaults, suiteName) = makeDefaults()
         defer { defaults.removePersistentDomain(forName: suiteName) }

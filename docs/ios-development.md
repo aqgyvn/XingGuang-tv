@@ -189,3 +189,11 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 运行 `30213741191` 在 iPhone 的第 3 次回环代理请求上复现同一首字符异常，证明改用常规表达式求值没有解决问题，该方案已撤回。QuickJS 公共头文件明确要求 runtime 换线程后调用 `JS_UpdateStackTop`；Swift actor 虽然保证串行，但不保证每次恢复在同一系统线程。原生桥现于加载 Spider 和每次方法调用前更新栈顶，并恢复结构化 `JS_ParseJSON`。该线程切换修复仍须完整 macOS CI 验证。
 
 运行 `30214215174` 已通过五次连续本地代理请求、全部 iPhone/iPad 单元与 UI 测试、设备 Release 构建、TrollStore IPA 结构和 ad-hoc 签名检查，确认线程切换修复有效。产物为 `XingGuang-iOS-32`（artifact ID `8635451446`，`22,777,323` 字节，保留至 2026-08-09）；真实 JavaScript 来源及代理媒体仍需 TrollStore 真机验收。
+
+## 播放体验对齐
+
+- 点播播放器现支持单集循环、5/15/30/60 分钟定时暂停、延长/取消定时器、当前进度设为片头、剩余时长设为片尾，以及按正序或倒序自动连播下一集。
+- 点播历史继续使用既有 `opening`、`ending`、`revSort` 和 `scale` 字段；周期性进度保存会读取并保留这些设置，不新增数据库字段。
+- 点播、直播和本地媒体均提供原始、16:9、4:3、填充和裁剪。默认比例与直播比例写入 iOS 偏好，并兼容 Android 备份的 `scale`、`scale_live`。
+- 三个播放页面的左侧纵向手势调用 `UIScreen.brightness`，右侧通过系统 `MPVolumeView` 修改媒体音量；水平拖动不触发亮度或音量修改。
+- `MediaPlayer` 为系统框架，仅用于系统音量控件，不引入第三方二进制。Windows 无法编译或模拟这些 UIKit/MediaPlayer 行为，本批次须通过新的 iPhone/iPad、Release、IPA 和签名 CI；真实亮度、音量和三内核裁剪效果仍需 TrollStore 真机验收。

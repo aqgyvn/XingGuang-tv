@@ -51,6 +51,12 @@ public final class XingGuangAppModel: ObservableObject {
     @Published public var defaultPlaybackSpeed: Double {
         didSet { defaults.set(defaultPlaybackSpeed, forKey: "ios.defaultPlaybackSpeed") }
     }
+    @Published public var defaultAspectMode: PlayerAspectMode {
+        didSet { defaults.set(defaultAspectMode.rawValue, forKey: "ios.playbackAspectMode") }
+    }
+    @Published public var liveAspectMode: PlayerAspectMode {
+        didSet { defaults.set(liveAspectMode.rawValue, forKey: "ios.liveAspectMode") }
+    }
     @Published public var playerPreference: PlayerEnginePreference {
         didSet { defaults.set(playerPreference.rawValue, forKey: "ios.playerEngine") }
     }
@@ -114,6 +120,11 @@ public final class XingGuangAppModel: ObservableObject {
         self.automaticLineChange = defaults.object(forKey: "ios.automaticLineChange") as? Bool ?? true
         let storedSpeed = defaults.object(forKey: "ios.defaultPlaybackSpeed") as? Double ?? 1
         self.defaultPlaybackSpeed = min(max(storedSpeed, 0.5), 2)
+        let storedAspect = defaults.object(forKey: "ios.playbackAspectMode") as? Int ?? 0
+        let defaultAspectMode = PlayerAspectMode(rawValue: storedAspect) ?? .original
+        self.defaultAspectMode = defaultAspectMode
+        let storedLiveAspect = defaults.object(forKey: "ios.liveAspectMode") as? Int ?? storedAspect
+        self.liveAspectMode = PlayerAspectMode(rawValue: storedLiveAspect) ?? defaultAspectMode
         let storedPlayerPreference = defaults.string(forKey: "ios.playerEngine") ?? ""
         self.playerPreference = PlayerEnginePreference(rawValue: storedPlayerPreference) ?? .avPlayer
         if !storedPlayerPreference.isEmpty, PlayerEnginePreference(rawValue: storedPlayerPreference) == nil {
@@ -246,6 +257,8 @@ public final class XingGuangAppModel: ObservableObject {
         incognito = defaults.object(forKey: "ios.incognito") as? Bool ?? incognito
         automaticLineChange = defaults.object(forKey: "ios.automaticLineChange") as? Bool ?? automaticLineChange
         defaultPlaybackSpeed = min(max(defaults.object(forKey: "ios.defaultPlaybackSpeed") as? Double ?? defaultPlaybackSpeed, 0.5), 2)
+        defaultAspectMode = PlayerAspectMode(rawValue: defaults.object(forKey: "ios.playbackAspectMode") as? Int ?? defaultAspectMode.rawValue) ?? defaultAspectMode
+        liveAspectMode = PlayerAspectMode(rawValue: defaults.object(forKey: "ios.liveAspectMode") as? Int ?? liveAspectMode.rawValue) ?? liveAspectMode
         playerPreference = PlayerEnginePreference(rawValue: defaults.string(forKey: "ios.playerEngine") ?? "") ?? playerPreference
         subtitleTextSize = min(max(defaults.object(forKey: "ios.subtitleTextSize") as? Double ?? subtitleTextSize, 14), 42)
         subtitleBottomOffset = min(max(defaults.object(forKey: "ios.subtitleBottomOffset") as? Double ?? subtitleBottomOffset, 8), 120)
@@ -349,12 +362,16 @@ public final class XingGuangAppModel: ObservableObject {
                 "ios.incognito": .bool(incognito),
                 "ios.automaticLineChange": .bool(automaticLineChange),
                 "ios.defaultPlaybackSpeed": .number(defaultPlaybackSpeed),
+                "ios.playbackAspectMode": .number(Double(defaultAspectMode.rawValue)),
+                "ios.liveAspectMode": .number(Double(liveAspectMode.rawValue)),
                 "ios.subtitleTextSize": .number(subtitleTextSize),
                 "ios.subtitleBottomOffset": .number(subtitleBottomOffset),
                 "ios.danmakuEnabled": .bool(danmakuEnabled),
                 "player_engine": .number(androidPlayerEngineValue),
                 "incognito": .bool(incognito),
                 "change": .bool(automaticLineChange),
+                "scale": .number(Double(defaultAspectMode.rawValue)),
+                "scale_live": .number(Double(liveAspectMode.rawValue)),
                 "subtitle_text_size": .number(subtitleTextSize),
                 "subtitle_position": .number(subtitleBottomOffset),
                 "danmaku_show": .bool(danmakuEnabled)
@@ -450,9 +467,22 @@ public final class XingGuangAppModel: ObservableObject {
         histories.first { $0.key == historyKey(for: vod) }
     }
 
-    public func savePlayback(vod: Vod, route: PlaybackRoute, episode: PlaybackEpisode, time: PlayerTime, speed: Double = 1) {
+    public func savePlayback(
+        vod: Vod,
+        route: PlaybackRoute,
+        episode: PlaybackEpisode,
+        time: PlayerTime,
+        speed: Double = 1,
+        reverseSort: Bool? = nil,
+        opening: Int64? = nil,
+        ending: Int64? = nil,
+        scale: Int? = nil
+    ) {
         guard !incognito, let persistence else { return }
-        var history = History(key: historyKey(for: vod), vodName: vod.vodName, vodPic: vod.vodPic)
+        let key = historyKey(for: vod)
+        var history = (try? persistence.history(key: key)) ?? History(key: key, vodName: vod.vodName, vodPic: vod.vodPic)
+        history.vodName = vod.vodName
+        history.vodPic = vod.vodPic
         history.vodFlag = route.name
         history.vodRemarks = episode.name
         history.episodeURL = episode.url
@@ -460,6 +490,10 @@ public final class XingGuangAppModel: ObservableObject {
         history.position = Int64(time.position * 1000)
         history.duration = Int64(time.duration * 1000)
         history.speed = speed
+        if let reverseSort { history.reverseSort = reverseSort }
+        if let opening { history.opening = opening }
+        if let ending { history.ending = ending }
+        if let scale { history.scale = scale }
         try? persistence.saveHistory(history)
         reloadPersistence()
     }

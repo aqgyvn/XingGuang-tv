@@ -598,6 +598,16 @@ private struct PlayerSettingsPreviewView: View {
                         .foregroundColor(.secondary)
                 }
                 Toggle("直播自动换线", isOn: $model.automaticLineChange)
+                Picker("默认画面比例", selection: $model.defaultAspectMode) {
+                    ForEach(PlayerAspectMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                Picker("直播画面比例", selection: $model.liveAspectMode) {
+                    ForEach(PlayerAspectMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
             }
 
             Section("速度") {
