@@ -43,8 +43,9 @@ public struct PlayerFailure: Error, Equatable, LocalizedError {
 }
 
 public enum PlayerEngineKind: String, Equatable {
+    case mpv
+    case mdk
     case avPlayer
-    case vlc
 }
 
 public enum PlayerCapability: String, Hashable {

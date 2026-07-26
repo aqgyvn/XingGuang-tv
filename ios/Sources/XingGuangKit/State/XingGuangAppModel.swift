@@ -109,7 +109,11 @@ public final class XingGuangAppModel: ObservableObject {
         self.automaticLineChange = defaults.object(forKey: "ios.automaticLineChange") as? Bool ?? true
         let storedSpeed = defaults.object(forKey: "ios.defaultPlaybackSpeed") as? Double ?? 1
         self.defaultPlaybackSpeed = min(max(storedSpeed, 0.5), 2)
-        self.playerPreference = PlayerEnginePreference(rawValue: defaults.string(forKey: "ios.playerEngine") ?? "") ?? .automatic
+        let storedPlayerPreference = defaults.string(forKey: "ios.playerEngine") ?? ""
+        self.playerPreference = PlayerEnginePreference(rawValue: storedPlayerPreference) ?? .avPlayer
+        if !storedPlayerPreference.isEmpty, PlayerEnginePreference(rawValue: storedPlayerPreference) == nil {
+            defaults.set(PlayerEnginePreference.avPlayer.rawValue, forKey: "ios.playerEngine")
+        }
         let storedSubtitleSize = defaults.object(forKey: "ios.subtitleTextSize") as? Double ?? 22
         self.subtitleTextSize = min(max(storedSubtitleSize, 14), 42)
         let storedSubtitleOffset = defaults.object(forKey: "ios.subtitleBottomOffset") as? Double ?? 24
@@ -283,7 +287,7 @@ public final class XingGuangAppModel: ObservableObject {
                 "ios.subtitleTextSize": .number(subtitleTextSize),
                 "ios.subtitleBottomOffset": .number(subtitleBottomOffset),
                 "ios.danmakuEnabled": .bool(danmakuEnabled),
-                "player_engine": .number(playerPreference == .vlc ? 2 : 0),
+                "player_engine": .number(androidPlayerEngineValue),
                 "incognito": .bool(incognito),
                 "change": .bool(automaticLineChange),
                 "subtitle_text_size": .number(subtitleTextSize),
@@ -291,6 +295,14 @@ public final class XingGuangAppModel: ObservableObject {
                 "danmaku_show": .bool(danmakuEnabled)
             ]
         )
+    }
+
+    private var androidPlayerEngineValue: Double {
+        switch playerPreference {
+        case .avPlayer: return 0
+        case .mdk: return 1
+        case .mpv: return 2
+        }
     }
 
     public func reloadLiveSources() {

@@ -94,6 +94,20 @@ final class AppDatabaseTests: XCTestCase {
 
         XCTAssertEqual(UserDefaults.standard.object(forKey: "ios.incognito") as? Bool, true)
         XCTAssertEqual(UserDefaults.standard.object(forKey: "ios.automaticLineChange") as? Bool, false)
-        XCTAssertEqual(UserDefaults.standard.string(forKey: "ios.playerEngine"), PlayerEnginePreference.vlc.rawValue)
+        XCTAssertEqual(UserDefaults.standard.string(forKey: "ios.playerEngine"), PlayerEnginePreference.mpv.rawValue)
+    }
+
+    func testAndroidIJKPreferenceMapsToMDK() throws {
+        let database = try AppDatabase.inMemory()
+        let keys = ["ios.playerEngine", "player_engine"]
+        defer { keys.forEach { UserDefaults.standard.removeObject(forKey: $0) } }
+        let document = BackupDocument(
+            configs: [ConfigRecord(type: 0, url: "https://example.com/config.json")],
+            preferences: ["player_engine": .number(1)]
+        )
+
+        try database.replaceAll(with: BackupImportService().validate(document))
+
+        XCTAssertEqual(UserDefaults.standard.string(forKey: "ios.playerEngine"), PlayerEnginePreference.mdk.rawValue)
     }
 }

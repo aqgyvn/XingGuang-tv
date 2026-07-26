@@ -15,8 +15,9 @@ struct XingGuangApp: App {
         }
         let store = try? AppDatabase.live()
         let factory = ClosurePlayerEngineFactory(
-            avPlayer: { AVPlayerEngine() },
-            vlc: { VLCPlayerEngineAdapter() }
+            mpv: { MPVPlayerEngineAdapter() },
+            mdk: { MDKPlayerEngineAdapter() },
+            avPlayer: { AVPlayerEngine() }
         )
         let networkPolicy = HTTPNetworkPolicyStore()
         let httpClient = URLSessionHTTPClient(policyStore: networkPolicy)

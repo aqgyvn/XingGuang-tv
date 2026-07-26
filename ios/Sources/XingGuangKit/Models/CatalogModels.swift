@@ -497,9 +497,9 @@ public extension Vod {
 }
 
 public enum PlayerEnginePreference: String, Codable, Equatable, CaseIterable {
-    case automatic
+    case mpv
+    case mdk
     case avPlayer
-    case vlc
 }
 
 public struct SubtitleResource: Codable, Equatable, Identifiable {
@@ -610,7 +610,7 @@ public struct PlaybackRequest: Codable, Equatable {
         danmaku: [DanmakuResource] = [],
         drm: PlaybackDRM? = nil,
         timeout: TimeInterval = 15,
-        enginePreference: PlayerEnginePreference = .automatic,
+        enginePreference: PlayerEnginePreference = .avPlayer,
         requiresSniffing: Bool = false,
         sniffScript: String = ""
     ) {

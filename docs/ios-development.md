@@ -2,7 +2,7 @@
 
 ## 当前阶段
 
-当前实现处于“第二阶段：JavaScript 数据源接入（进行中）”。第一阶段的 API 点播、持久化与双播放核心已经通过 CI；目标平台为 iOS/iPadOS 15.0 及以上，分发方式为 TrollStore 私人安装。
+当前分支正在把已通过 CI 的 AVPlayer/VLC 版本替换为 MPV、MDK、AVPlayer 三播放核心；新内核版本尚待 macOS CI 和 TrollStore 真机验收。目标平台为 iOS/iPadOS 15.0 及以上，分发方式为 TrollStore 私人安装。
 
 已实现的代码能力：
 
@@ -10,8 +10,8 @@
 - `type 0` XML、`type 1` JSON、`type 4` 扩展 API 的配置、首页、分类、搜索、详情和播放地址请求。
 - Android 字段语义兼容的配置、站点、影片、筛选、播放线路、收藏、历史、进度和轨道模型；数字型 ID、URL 对数组及 type 4 的字幕/DRM/请求头结果均可解码。
 - GRDB/SQLite 持久化：`config`、`site`、`live`、`keep`、`history`、`track` 表；支持配置替换、收藏、历史、继续观看、线路、进度和倍速保存。
-- `Automatic`、`AVPlayer`、`VLC` 三种播放内核模式。自动模式对 RTSP/RTMP/RTP、MKV、FLV、WebM、AVI、DASH/MPD 先选 VLC；其他地址先选 AVPlayer，格式或解码失败时仅回退一次。认证、网络和 DRM 错误不会回退。
-- AVPlayer 支持系统可播放的 HLS、MP4/MOV、内嵌音视频/字幕轨道、倍速、后台音频、AirPlay 与系统画中画；画中画通过单层 `AVPlayerLayer` 的显式入口启动，是否可用仍需真机验收。MobileVLCKit 负责 RTSP、RTMP 和非系统封装/编码的回退播放。
+- `MPV`、`MDK`、`AVPlayer` 三种强制播放内核模式，不再提供自动选核或隐藏回退。默认使用 AVPlayer；Android 备份的 `player_engine` 按 `0=AVPlayer`、`1=MDK`、`2=MPV` 导入，旧 iOS 的 `automatic/vlc` 偏好回退为 AVPlayer。
+- AVPlayer 支持系统可播放的 HLS、MP4/MOV、内嵌音视频/字幕轨道、倍速、后台音频、AirPlay 与系统画中画；MPVKit 使用 libmpv + Metal/MoltenVK，swift-mdk 使用 MDK 原生 Surface，负责用户明确选择后的扩展格式播放。
 - 配置切换会取消旧配置与片库请求，UI 状态只在主线程更新。
 - JavaScript `type 3` 已接入官方 QuickJS C runtime、按来源串行 context、模块加载、`init/home/homeVod/category/detail/search/play`、`proxy/live/action/sniffer/isVideo`、`req/http`、`local`、console、URL 合并、MD5、AES/RSA、GBK 和繁简转换桥；正式 App 已按来源类型路由 API 与 JavaScript 实现。
 - 直播已支持 JSON/M3U/TXT、分组、频道备用线路、请求头继承、JavaScript `liveContent(url)` 动态源、JSON/XMLTV/XMLTV.gz EPG、日期切换、当前节目和 Android 兼容回看/时移模板；备份已支持 Android 字段 JSON 与 `.bk.gz` 导入/导出，并在校验后事务替换本地数据。
@@ -19,11 +19,11 @@
 
 尚未完成或尚未验收：
 
-- GitHub Actions 运行 `30179725200` 已通过完整的 iPhone/iPad 测试、设备 Release 构建、IPA 打包、IPA 结构和 ad-hoc 签名检查，并上传了 `XingGuang-iOS-16` artifact。仍未完成 TrollStore 真机安装与功能验收，因此不能宣称媒体播放和设备兼容性已经在真实设备上验证。
+- 既有 GitHub Actions 成功运行及 `XingGuang-iOS-25` 产物仍属于旧 AVPlayer/VLC 版本，不包含本次 MPV/MDK 替换；新版本通过完整 CI 前没有可安装交付物。
 - JavaScript 仍不能运行依赖 Android JAR 的扩展函数；Android JAR、Python Spider 和部分来源专用 `playUrl` 解析链会返回明确的不兼容错误。
 - WebView 媒体嗅探、二维码扫描、DoH/广告规则代理和完整配置文件打开流程仍在后续阶段，当前不能宣称已移植。
 - HLS AES 等由系统播放核心原生处理；传入 Widevine、PlayReady、ClearKey 或其他外置 DRM 描述时会给出 DRM 错误。当前没有 FairPlay 许可证代理实现。
-- VLC 路径不承诺 AirPlay、系统画中画或任意自定义 Header 与 Android 完全一致；外置字幕采用播放器上层同步渲染，不依赖 AVPlayer/VLC 的内置字幕实现。
+- MPV/MDK 路径不承诺 AirPlay、系统画中画或任意自定义 Header 与 Android 完全一致；外置字幕仍可采用播放器上层同步渲染，不依赖某个内核的字幕样式实现。
 
 本阶段是在用户明确要求下提前启动的；第一阶段真机验收仍是发布门槛，第二阶段完成后必须重新通过完整 CI，再进行真机验收，不能把模拟器通过当作设备功能通过。
 
@@ -32,9 +32,8 @@
 - `ios/Package.swift`：可预览、可测试的 `XingGuangKit` Swift Package，并通过 SwiftPM 引入 GRDB。
 - `ios/Sources/CQuickJS/`：固定 QuickJS `2026-06-04` 上游提交的 C runtime 与 iOS 薄桥接层。
 - `ios/Sources/XingGuangJavaScript/`：JavaScript context、模块/网络/local 桥、type 3 Repository 和内置兼容库资源。
-- `ios/project.yml`：XcodeGen 工程定义；生成通用 iPhone/iPad App、单元测试和 UI 测试 target。
-- `ios/Podfile` 与 `ios/Podfile.lock`：App 层引入固定版本 `MobileVLCKit 3.6.0b10`。
-- `ios/App/`：SwiftUI 启动壳、Info.plist、应用图标和 MobileVLCKit 适配器。
+- `ios/project.yml`：XcodeGen 工程定义；生成通用 iPhone/iPad App、单元测试和 UI 测试 target，并通过 SwiftPM 固定 MPVKit `1.0.0` 与 swift-mdk 提交 `d52412460acf238c4780a1a3da16190fa05e27b4`。
+- `ios/App/`：SwiftUI 启动壳、Info.plist、应用图标及 MPV、MDK App 层适配器。
 - `ios/Sources/XingGuangKit/`：模型、网络、持久化、播放器、状态和 SwiftUI 页面。
 - `ios/Tests/`：模型、API、数据库、选核、续播、状态和 UI 启动测试。
 - `.github/workflows/ios.yml`：macOS 构建、iPhone/iPad Simulator 测试与 TrollStore IPA 打包。
@@ -44,31 +43,33 @@ Android Gradle 模块继续位于仓库根目录。iOS 工程不引用或修改 
 ## 依赖与许可
 
 - [GRDB.swift](https://github.com/groue/GRDB.swift)：SwiftPM 依赖，用于 SQLite 持久化；遵循其 MIT 许可证。
-- [MobileVLCKit](https://code.videolan.org/videolan/VLCKit)：CocoaPods 依赖，用于 VLC 回退播放；版本 `3.6.0b10` 的 podspec 标示为 LGPL v2.1。分发 IPA 前必须按该许可证保留相应告知与合规义务。
+- [MPVKit](https://github.com/mpvkit/MPVKit)：SwiftPM 固定 `1.0.0`，使用非 GPL 的 `MPVKit` product；其 libmpv/FFmpeg 二进制按 LGPL v3 提供，分发 IPA 前必须履行相应告知和可替换/重链接义务。
+- [swift-mdk](https://github.com/wang-bin/swift-mdk)：SwiftPM 固定提交 `d52412460acf238c4780a1a3da16190fa05e27b4`，其二进制 SDK 为 `v0.37.0`。当前仓库没有 MDK License Key；无 Key 构建可运行，但官方说明可能在最后一帧显示二维码，正式使用前需取得适用授权并通过 `MDK_LICENSE_KEY` 构建设置注入。
 - [QuickJS](https://github.com/bellard/quickjs)：固定提交 `04be246001599f5995fa2f2d8c91a0f198d3f34c`，遵循仓库内 `ios/Sources/CQuickJS/quickjs/LICENSE` 的 MIT 许可文本。
 
-MobileVLCKit 会增加 IPA 体积。`Podfile.lock` 固定 pod 版本与规格校验；SwiftPM 的 GRDB 解析结果需由首次 macOS/Xcode 构建确认。
+MPVKit 包含多组媒体二进制，会显著增加依赖下载量和 IPA 体积；MPVKit、swift-mdk 与 GRDB 的 SwiftPM 解析及链接结果必须由 macOS/Xcode 构建确认。
 
 ## Mac 本地构建
 
-前置条件：Xcode、XcodeGen、CocoaPods 和已安装的 iOS Simulator runtime。
+前置条件：Xcode、XcodeGen 和已安装的 iOS Simulator runtime。
 
 ```bash
 cd ios
 xcodegen generate
-pod install
 xcodebuild \
-  -workspace XingGuang.xcworkspace \
+  -project XingGuang.xcodeproj \
   -scheme XingGuang \
   -destination 'platform=iOS Simulator,name=iPhone 16' \
   test
 ```
 
-在 Xcode 中打开 `ios/XingGuang.xcworkspace`，不要打开生成的 `.xcodeproj`。`XingGuangKit` 保留离线 fixtures，可用于 SwiftUI Canvas；真正的网络、GRDB 和 VLC 验证应使用 App target。
+在 Xcode 中打开生成的 `ios/XingGuang.xcodeproj`。`XingGuangKit` 保留离线 fixtures，可用于 SwiftUI Canvas；真正的网络、GRDB、MPV 和 MDK 验证应使用 App target。
 
-当前 Windows 主机没有 `swift`、`xcodebuild`、`xcodegen`、`pod` 或 `xcrun`，因此无法提供实时 iOS Simulator 预览。接入 Mac 后可用 Xcode Canvas，或使用已安装的 Build iOS Apps 模拟器预览能力进行热迭代。
+当前 Windows 主机没有 `swift`、`xcodebuild`、`xcodegen` 或 `xcrun`，因此无法提供实时 iOS Simulator 预览。接入 Mac 后可用 Xcode Canvas，或使用已安装的 Build iOS Apps 模拟器预览能力进行热迭代。
 
 ## GitHub Actions
+
+以下成功记录是历史构建证据；本次三内核替换必须产生新的成功运行和 artifact 后，才能作为当前版本的安装依据。
 
 运行 `30193845251` 的第 2 次尝试已通过完整 iPhone/iPad 测试、设备 Release 构建、TrollStore IPA 打包和签名检查。产物为 `XingGuang-iOS-17`（20.2 MB，SHA-256 `8e2780718314bbd26a60bad691923e4537b5e4e894e6bb6cb7a53203ce85e96c`）；第 1 次尝试仅有既有配置保存 UI 断言波动，原样重跑通过。
 
@@ -80,7 +81,7 @@ xcodebuild \
 
 `iOS` workflow 在改动 `ios/**` 或 `.github/workflows/ios.yml` 时运行，也支持手动触发。它会：
 
-1. 安装 XcodeGen 和 CocoaPods，生成项目并安装 Pods。
+1. 安装 XcodeGen，生成项目并由 Xcode/SwiftPM 解析依赖。
 2. 在一个 iPhone Simulator 和一个 iPad Simulator 上运行单元/UI 测试。
 3. 使用 `iphoneos` SDK 构建 Release App bundle。
 4. 先对嵌入框架执行 ad-hoc 签名，再签名 App，验证签名并打包 IPA。
@@ -97,8 +98,8 @@ xcodebuild \
 - 应用能安装、启动，三个底部入口均可进入；iPhone/iPad 横竖屏下没有重叠或截断。
 - 可加载真实 type 0、1、4 配置，切换来源、分类、搜索、详情、线路和选集正常。
 - 收藏、历史、继续观看、进度、倍速和线路在重启后保持正确。
-- HLS/MP4 走 AVPlayer，RTSP/RTMP 或 MKV/FLV/WebM/MPD 走 VLC；强制内核不自动切换，自动模式只进行一次格式回退。
-- AVPlayer 的后台播放、画中画与 AirPlay 实际可用；VLC 格式播放、切换、暂停、跳转正常。
+- 分别选择 MPV、MDK、AVPlayer 后，同一播放请求只进入所选内核，不发生自动切换或隐藏回退。
+- AVPlayer 的后台播放、画中画与 AirPlay 实际可用；MPV/MDK 的扩展格式、Header/Cookie、切换、暂停、跳转和倍速正常。
 - 遇到网络、鉴权和 DRM 失败时显示明确错误，不错误回退或静默空白。
 
 第一阶段真机验收仍需完成；QuickJS/CommonCrypto、直播解析和备份导出的 CI 已通过，后续可在真机验收稳定后进入 WebView、外置字幕、弹幕与高级网络阶段。
@@ -111,7 +112,7 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 
 ## Web 媒体嗅探与本地代理
 
-- API type 4 和 JavaScript type 3 播放结果中的 `parse != 0` 不再直接返回“不支持”。播放请求会保留页面 URL、Header、Cookie、超时及来源 `click` 脚本，由正式 App 注入的 `WKWebView` 嗅探器解析真实媒体 URL 后再交给 AVPlayer/VLC。
+- API type 4 和 JavaScript type 3 播放结果中的 `parse != 0` 不再直接返回“不支持”。播放请求会保留页面 URL、Header、Cookie、超时及来源 `click` 脚本，由正式 App 注入的 `WKWebView` 嗅探器解析真实媒体 URL 后再交给当前选择的 MPV、MDK 或 AVPlayer。
 - 嗅探器观察 `fetch`、`XMLHttpRequest`、`video/audio/source`、Performance Resource 和页面媒体事件；优先按媒体 MIME/扩展名识别，并可调用来源的 JavaScript `isVideo` 协议补充判断。每次任务最多检查 128 个 URL，支持超时和任务取消。
 - 成功解析后会合并 WebKit Cookie，并清除嗅探标记，播放器仍只接收最终 `PlaybackRequest`，不承载网页生命周期。
 - 正式 App 在读取配置前启动本地代理。代理仅绑定 `127.0.0.1`，在 9978-9998 中选择可用端口，只接受 `/proxy?do=js` 的 GET/HEAD 请求，限制请求头、参数长度和同时连接数，并只路由到已经初始化的 JavaScript 来源。
@@ -136,7 +137,7 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 
 - iOS 现保留 Android 配置中的 `headers`、`ads` 和 `doh` 字段。配置加载成功后才替换共享网络策略，旧请求仍由原任务取消机制结束。
 - `headers` 按 Android 的“主机包含或完整正则匹配”语义注入，并覆盖同名请求头；覆盖 API、扩展配置、直播/EPG、字幕弹幕及 JavaScript `req/http`。
-- `ads` 在 App 自有 HTTP 发出前阻止匹配主机，并在 WKWebView 嗅探中同时过滤页面导航、媒体候选和内容子资源。AVPlayer/VLC 内部媒体请求不经过该策略，不能保证与 Android 完全一致。
+- `ads` 在 App 自有 HTTP 发出前阻止匹配主机，并在 WKWebView 嗅探中同时过滤页面导航、媒体候选和内容子资源。MPV、MDK、AVPlayer 内部媒体请求不经过该策略，不能保证与 Android 完全一致。
 - `doh` 服务器配置会被兼容解码和保留，但 iOS/iPadOS 15 的公开 `URLSession` API 不允许 App 为单次请求替换 DNS 解析器。当前使用设备系统 DNS/加密 DNS 设置；未使用会破坏 HTTPS SNI/证书校验的 IP 替换方案，也不把仅预查询 DoH 冒充为生效。
 - 本批次已添加配置解码、Header 注入、广告阻止和配置切换更新策略的固定测试；Swift/WebKit 编译与完整 IPA 仍须下一次 macOS CI 确认。
 
@@ -157,9 +158,9 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 ## 本地媒体文件
 
 - 设置页的“打开本地媒体”通过系统 Files 选择器接收常用视频和音频格式。所选文件会在安全作用域有效期间复制到 App 的 `Caches/ImportedMedia`，播放器不依赖 Files 提供方的临时授权。
-- 本地媒体复用正式双内核路由：MP4/MOV/M4V 和常用系统音频优先 AVPlayer；MKV/FLV/WebM/AVI 等非系统封装按扩展名预先交给 VLC，未知的播放格式仍遵守一次格式/解码错误回退规则。
+- 本地媒体复用正式三内核选择：文件只交给设置中明确选择的 MPV、MDK 或 AVPlayer，不再按扩展名自动选核或失败回退。
 - 页面提供播放暂停、进度跳转、倍速和实际内核状态。缓存目录可能由系统回收，当前不提供媒体库或长期收藏语义。
-- 文件复制、SwiftUI 播放页和 MobileVLCKit 链接仍须 macOS CI；真实大文件、外部 Files 提供方及格式兼容性须 TrollStore 真机验收。
+- 文件复制、SwiftUI 播放页和 MPVKit/swift-mdk 链接仍须 macOS CI；真实大文件、外部 Files 提供方及格式兼容性须 TrollStore 真机验收。
 
 ## Android / iOS 兼容审计
 

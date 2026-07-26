@@ -294,7 +294,12 @@ public final class AppDatabase: PersistenceStore, BackupDocumentApplying, @unche
             UserDefaults.standard.set(value, forKey: "ios.automaticLineChange")
         }
         if preferences["ios.playerEngine"] == nil, let value = numberValue(preferences["player_engine"]) {
-            let preference = value == 0 ? PlayerEnginePreference.avPlayer : PlayerEnginePreference.vlc
+            let preference: PlayerEnginePreference
+            switch Int(value) {
+            case 1: preference = .mdk
+            case 2: preference = .mpv
+            default: preference = .avPlayer
+            }
             UserDefaults.standard.set(preference.rawValue, forKey: "ios.playerEngine")
         }
         if preferences["ios.subtitleTextSize"] == nil, let value = doubleValue(preferences["subtitle_text_size"]), value > 0 {

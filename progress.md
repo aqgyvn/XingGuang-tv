@@ -2955,3 +2955,47 @@
 - `docs/ios-development.md`: records the successful final-plan CI run and the installable artifact identity.
 - `progress.md`: appends final CI evidence, remaining hardware boundaries, changed files and rollback point.
 - Rollback method: before committing, restore `docs/ios-development.md` and `progress.md`; after this evidence commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Replace iOS playback cores with MPV, MDK and AVPlayer
+
+### What was done
+- Replaced the iOS Automatic/AVPlayer/VLC selection with exactly MPV, MDK and AVPlayer; each request now stays on the explicitly selected core without hidden fallback.
+- Integrated MPVKit and swift-mdk through pinned SwiftPM dependencies, removed MobileVLCKit/CocoaPods, and added real App-layer adapters for playback, seeking, rate, time, tracks, subtitles and network request metadata.
+- Kept Android backup compatibility by mapping `player_engine` values `0/1/2` to AVPlayer/MDK/MPV and migrated removed iOS `automatic/vlc` preferences to AVPlayer.
+- Changed CI and local Mac instructions to generate and build `XingGuang.xcodeproj`, and documented MPV LGPL obligations plus the unresolved MDK License Key requirement.
+
+### Testing
+- Passed: source-reference inspection found no remaining production/test references to `MobileVLCKit`, `VLCPlayerEngineAdapter`, player `.vlc`, player `.automatic` or `FallbackPlayerEngine`.
+- Passed: focused tests now cover strict three-core factory selection, settings order, AVPlayer default, Android MPV/MDK backup mapping and removed iOS preference migration.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'`.
+- Passed: MPVKit `1.0.0` and swift-mdk commit `d52412460acf238c4780a1a3da16190fa05e27b4` manifests and official iOS examples were inspected against the adapters.
+- Not run: Swift compilation, XcodeGen generation, SwiftPM binary resolution, iPhone/iPad tests, device Release build, IPA packaging and signing require the next macOS GitHub Actions run.
+- Not run: real MPV/MDK formats, network headers, tracks, background behavior and AVPlayer PiP/AirPlay require TrollStore hardware acceptance.
+
+### Notes
+- `.github/workflows/ios.yml`: removes CocoaPods/workspace steps, builds the generated project and extends the binary-dependency timeout.
+- `ios/project.yml`: pins MPVKit and swift-mdk SwiftPM packages, links both products and exposes the optional MDK license build setting.
+- `ios/Podfile` and `ios/Podfile.lock`: removed with the obsolete MobileVLCKit dependency.
+- `ios/App/VLCPlayerEngineAdapter.swift`: removed the VLC implementation.
+- `ios/App/MPVPlayerEngineAdapter.swift`: adds libmpv event handling and Metal/MoltenVK rendering.
+- `ios/App/MDKPlayerEngineAdapter.swift`: adds swift-mdk native-surface playback and state/time/track bridging.
+- `ios/App/UnavailablePlayerEngine.swift`: supplies an explicit dependency-missing error for conditional SDK builds.
+- `ios/App/XingGuangApp.swift`: injects MPV, MDK and AVPlayer builders.
+- `ios/App/Info.plist`: declares the optional `MDKLicenseKey` build-setting expansion.
+- `ios/Sources/XingGuangKit/Models/CatalogModels.swift`: defines only the three requested preferences and defaults requests to AVPlayer.
+- `ios/Sources/XingGuangKit/Services/VodRepository.swift`: defines MPV, MDK and AVPlayer engine identities.
+- `ios/Sources/XingGuangKit/Player/FallbackPlayerEngine.swift`: removed automatic routing and VLC fallback.
+- `ios/Sources/XingGuangKit/Player/PlayerEngineFactory.swift`: creates only the explicitly requested engine.
+- `ios/Sources/XingGuangKit/Persistence/AppDatabase.swift`: maps Android player values to their iOS equivalents.
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: normalizes old preferences and exports Android-compatible player values.
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: presents MPV, MDK and AVPlayer in the requested order.
+- `ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift`: displays the active three-core name.
+- `ios/Tests/XingGuangKitTests/FallbackPlayerEngineTests.swift`: removed obsolete automatic-fallback tests.
+- `ios/Tests/XingGuangKitTests/PlayerEngineFactoryTests.swift`: verifies strict selection, default and display order.
+- `ios/Tests/XingGuangKitTests/AppDatabaseTests.swift`: verifies Android MDK/MPV preference imports.
+- `ios/Tests/XingGuangKitTests/PlayerSessionTests.swift`: updates third-party engine metadata/resume coverage.
+- `ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift`: verifies MPV backup export and old VLC preference migration.
+- `docs/ios-development.md`: updates build, dependency, license, routing and acceptance guidance.
+- `docs/ios-compatibility-matrix.md`: replaces all current VLC/automatic behavior with the three requested cores and their platform boundaries.
+- `progress.md`: appends this implementation, verification gap, changed-file list and rollback point.
+- Rollback method: before committing, run `git restore -- .github/workflows/ios.yml docs/ios-development.md docs/ios-compatibility-matrix.md ios progress.md`, then `Remove-Item -LiteralPath ios/App/MDKPlayerEngineAdapter.swift,ios/App/MPVPlayerEngineAdapter.swift,ios/App/UnavailablePlayerEngine.swift,ios/Sources/XingGuangKit/Player/PlayerEngineFactory.swift,ios/Tests/XingGuangKitTests/PlayerEngineFactoryTests.swift`; after the implementation commit is the branch tip, run `git revert HEAD`.

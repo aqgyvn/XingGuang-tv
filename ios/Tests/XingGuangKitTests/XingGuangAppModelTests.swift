@@ -107,7 +107,7 @@ final class XingGuangAppModelTests: XCTestCase {
         let model = XingGuangAppModel(defaults: defaults)
         model.vodConfigURL = "https://example.com/vod.json"
         model.liveConfigURL = "https://example.com/live.json"
-        model.playerPreference = .vlc
+        model.playerPreference = .mpv
         model.incognito = true
         model.automaticLineChange = false
 
@@ -118,6 +118,16 @@ final class XingGuangAppModelTests: XCTestCase {
         XCTAssertEqual(backup.preferences["player_engine"], .number(2))
         XCTAssertEqual(backup.preferences["incognito"], .bool(true))
         XCTAssertEqual(backup.preferences["change"], .bool(false))
+    }
+
+    func testRemovedIOSPlayerPreferencesFallBackToAVPlayer() {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set("vlc", forKey: "ios.playerEngine")
+
+        let model = XingGuangAppModel(defaults: defaults)
+
+        XCTAssertEqual(model.playerPreference, .avPlayer)
     }
 
     func testPlaybackRequiringSniffingIsResolvedBeforePlayerLoad() async throws {

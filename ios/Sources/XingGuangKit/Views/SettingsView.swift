@@ -79,9 +79,9 @@ public struct SettingsView: View {
                         .font(.headline)
                         .foregroundColor(XingGuangTheme.text)
                     Picker("播放内核", selection: $model.playerPreference) {
-                        Text("自动").tag(PlayerEnginePreference.automatic)
+                        Text("MPV").tag(PlayerEnginePreference.mpv)
+                        Text("MDK").tag(PlayerEnginePreference.mdk)
                         Text("AVPlayer").tag(PlayerEnginePreference.avPlayer)
-                        Text("VLC").tag(PlayerEnginePreference.vlc)
                     }
                     .pickerStyle(.segmented)
                 }

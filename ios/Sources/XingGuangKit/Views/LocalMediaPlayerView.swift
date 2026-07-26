@@ -74,7 +74,7 @@ struct LocalMediaPlayerView: View {
                         }
 
                         Spacer()
-                        Text(session.kind == .vlc ? "VLC" : "AVPlayer")
+                        Text(engineName)
                             .font(.subheadline.weight(.medium))
                             .foregroundColor(XingGuangTheme.secondaryText)
                     }
@@ -102,6 +102,14 @@ struct LocalMediaPlayerView: View {
         }
         .onDisappear { session.stop() }
         .accessibilityIdentifier("localMedia.player")
+    }
+
+    private var engineName: String {
+        switch session.kind {
+        case .mpv: return "MPV"
+        case .mdk: return "MDK"
+        case .avPlayer: return "AVPlayer"
+        }
     }
 
     @ViewBuilder

@@ -25,7 +25,7 @@ final class PlayerSessionTests: XCTestCase {
         XCTAssertTrue(engine.seekPositions.isEmpty)
     }
 
-    func testPlayingStateRestoresPositionForVLCStyleEngine() async {
+    func testPlayingStateRestoresPositionForThirdPartyEngine() async {
         let engine = SessionPlayerEngineStub(loadState: .loading)
         let session = PlayerSession(engine: engine)
         let resumed = expectation(description: "resume seek forwarded")
@@ -65,7 +65,7 @@ final class PlayerSessionTests: XCTestCase {
         XCTAssertEqual(engine.rates, [1])
     }
 
-    func testPreferredRateIsReappliedWhenFallbackEngineStartsPlaying() async {
+    func testPreferredRateIsReappliedWhenEngineStartsPlaying() async {
         let engine = SessionPlayerEngineStub(loadState: .loading)
         let session = PlayerSession(engine: engine)
 
@@ -83,13 +83,13 @@ final class PlayerSessionTests: XCTestCase {
     func testSessionExposesEngineMetadataAndForwardsPictureInPicture() {
         let engine = SessionPlayerEngineStub(
             loadState: .loading,
-            kind: .vlc,
+            kind: .mpv,
             capabilities: [.pictureInPicture, .trackSelection],
             pictureInPictureResult: true
         )
         let session = PlayerSession(engine: engine)
 
-        XCTAssertEqual(session.kind, .vlc)
+        XCTAssertEqual(session.kind, .mpv)
         XCTAssertEqual(session.capabilities, [.pictureInPicture, .trackSelection])
         XCTAssertTrue(session.startPictureInPicture())
         XCTAssertEqual(engine.pictureInPictureCallCount, 1)

@@ -9,6 +9,12 @@ options:
 packages:
   XingGuangKit:
     path: .
+  MPVKit:
+    url: https://github.com/mpvkit/MPVKit.git
+    exactVersion: 1.0.0
+  swift-mdk:
+    url: https://github.com/wang-bin/swift-mdk.git
+    revision: d52412460acf238c4780a1a3da16190fa05e27b4
 
 settings:
   base:
@@ -29,6 +35,10 @@ targets:
         product: XingGuangKit
       - package: XingGuangKit
         product: XingGuangJavaScript
+      - package: MPVKit
+        product: MPVKit
+      - package: swift-mdk
+        product: swift-mdk
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.xingguang.video.ios
@@ -40,6 +50,7 @@ targets:
         CODE_SIGN_STYLE: Automatic
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 0.1.0
+        MDK_LICENSE_KEY: ""
 
   XingGuangKitTests:
     type: bundle.unit-test
