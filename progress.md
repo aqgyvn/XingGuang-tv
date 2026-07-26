@@ -2784,3 +2784,21 @@
 - `docs/ios-development.md`: records the rejected hypothesis and current repair boundary.
 - `progress.md`: appends CI evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/CQuickJS/include/XGQuickJS.h ios/Sources/CQuickJS/XGQuickJS.c ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift ios/Sources/XingGuangJavaScript/LocalProxyServer.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Validate Web sniffing and local proxy on macOS CI
+
+### What was done
+- Confirmed that isolating repository execution from the Network.framework callback removed the loopback QuickJS 502 without regressing existing JavaScript protocol tests.
+- Closed the full simulator, device build, TrollStore packaging and signing validation loop for the Web sniffing/proxy batch.
+
+### Testing
+- Passed: GitHub Actions run `30196524299`, job `89778917960`, completed successfully.
+- Passed: all iPhone and iPad unit/UI tests, including the real loopback `LocalProxyServer` integration fixture and repeated async QuickJS parameters.
+- Passed: unsigned device Release build, embedded framework/app ad-hoc signing checks, IPA structure check and artifact upload.
+- Passed: artifact `XingGuang-iOS-21`, ID `8630371695`, size `21,238,473` bytes, expires 2026-08-09.
+- Not run: TrollStore installation, protected Web pages, Cookie/UA/Referer authentication and final AVPlayer/VLC playback remain real-device checks.
+
+### Notes
+- `docs/ios-development.md`: records the successful run and artifact identity while retaining the hardware boundary.
+- `progress.md`: appends the complete CI evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after the validation commit is the branch tip, run `git revert HEAD`.

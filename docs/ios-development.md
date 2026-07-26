@@ -129,3 +129,5 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 运行 `30196066791` 已确认上述 Swift/C 接口可以编译，随后在新增测试源码处失败：测试把异步调用直接放进了 `XCTAssertEqual` 自动闭包。现已先等待异步结果再执行同步断言；该次运行未执行 iPad、设备 Release 和 IPA 步骤，完整链路仍待下一次 CI。
 
 运行 `30196244674` 已确认测试编译修复和直接重复异步参数用例通过，但回环代理仍返回 502；显式参数长度接口还导致两个既有 JavaScript 用例新增 `xg-arguments` 失败，证明该修改无效。现已恢复原 QuickJS 参数接口，并让 Network.framework 回调通过独立任务进入 Repository/actor，避免继承网络回调执行上下文。该修复仍须新的 macOS CI 验证。
+
+运行 `30196524299` 已确认独立代理任务修复有效，并通过 iPhone/iPad 完整测试、设备 Release 构建、TrollStore IPA 打包、结构与 ad-hoc 签名检查。产物为 `XingGuang-iOS-21`（artifact ID `8630371695`，`21,238,473` 字节，保留至 2026-08-09）；真实网页嗅探、鉴权 Cookie 和最终媒体播放仍需 TrollStore 真机验收。
