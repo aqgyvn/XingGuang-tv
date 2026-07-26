@@ -151,3 +151,5 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 - 验证成功的文件会原子复制到 App `Application Support/ImportedConfigurations` 后再保存 `file://` 地址，不依赖 Files 临时安全作用域，重启后仍可读取。
 - App 声明相机用途仅用于配置二维码；无相机、拒绝权限和无效二维码均显示明确错误。模拟器只能验证界面和错误状态，实际摄像头扫描需 TrollStore 真机验收。
 - Android `.bk.gz` 备份入口与事务恢复逻辑保持独立：配置文件导入不会覆盖收藏、历史、偏好或数据库表。
+
+运行 `30197705390` 第 2 次尝试已通过 iPhone/iPad 测试、设备 Release 构建、IPA 结构和 ad-hoc 签名检查。可安装产物是 artifact ID `8630820708` 的 `XingGuang-iOS-24`（`21,312,143` 字节，保留至 2026-08-09）；同名 artifact ID `8630678736` 仅 `52,450` 字节，是第 1 次 UI runner 初始化失败时上传的日志，不包含可安装 IPA。

@@ -2896,3 +2896,21 @@
 - `docs/ios-development.md`: documents validation, private storage and hardware boundaries.
 - `progress.md`: appends implementation, verification evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/App/Info.plist ios/Sources/XingGuangKit/Services/ConfigurationImportService.swift ios/Sources/XingGuangKit/Views/Components/QRCodeScannerView.swift ios/Sources/XingGuangKit/Views/SettingsView.swift ios/Tests/XingGuangKitTests/ConfigurationImportServiceTests.swift ios/Tests/XingGuangUITests/XingGuangUITests.swift docs/ios-development.md progress.md`; after the feature commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Validate configuration file and QR import on macOS CI
+
+### What was done
+- Confirmed configuration file validation/storage, AVFoundation scanner compilation and all four settings commands on iPhone/iPad and the device build path.
+- Classified attempt 1 as a UI runner initialization failure after the unchanged attempt 2 passed, and distinguished the valid IPA artifact from the logs-only artifact.
+
+### Testing
+- Passed: GitHub Actions run `30197705390`, attempt 2, job `89782810631`, completed successfully.
+- Passed: all iPhone/iPad unit and UI tests, device Release build, IPA structure check, embedded/app ad-hoc signing checks and artifact upload.
+- Passed: installable artifact `XingGuang-iOS-24`, ID `8630820708`, size `21,312,143` bytes, expires 2026-08-09.
+- Infrastructure failure: attempt 1 stopped before UI tests because `AXDisableAccessibilityOnTermination` returned `kAXErrorCannotComplete`; its ID `8630678736` artifact is only `52,450` bytes of logs.
+- Not run: real Files providers, camera permission prompts, QR recognition and loaded-source behavior require TrollStore hardware acceptance.
+
+### Notes
+- `docs/ios-development.md`: records successful attempt 2 and identifies the installable artifact.
+- `progress.md`: appends complete CI evidence, artifact distinction, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after the validation commit is the branch tip, run `git revert HEAD`.
