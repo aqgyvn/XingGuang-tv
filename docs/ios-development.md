@@ -125,3 +125,5 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 运行 `30178696426` 已确认资源加载修复和 iPhone UI 测试通过，剩余失败收敛为 QuickJS 销毁时的 `JS_FreeRuntime` 断言。模块加载器取得 compile-only 模块指针后未释放临时 `JSValue`，导致运行时仍有 GC 对象；现已按 QuickJS 模块加载器生命周期释放该临时值。该修复仍需新的 macOS CI 运行确认，iPad、设备 Release 和 IPA 步骤在该失败运行中未执行。
 
 运行 `30195499024` 已通过 Swift 编译、3 个 iPhone UI 用例及除本地代理外的单元测试。本地代理请求已到达回环服务器，但 QuickJS 在 `xg-arguments:1:1` 解析第二次异步调用参数时返回 502。桥接层现改为由 Swift 在 C 调用期间固定 JSON `Data` 缓冲区，并显式传入 UTF-8 字节长度，不再依赖临时 C 字符串和 `strlen`；同时新增跨异步让步的重复参数调用回归测试。该修复仍须新的 macOS CI 确认，不能据此宣称本地代理或本批 IPA 已通过。
+
+运行 `30196066791` 已确认上述 Swift/C 接口可以编译，随后在新增测试源码处失败：测试把异步调用直接放进了 `XCTAssertEqual` 自动闭包。现已先等待异步结果再执行同步断言；该次运行未执行 iPad、设备 Release 和 IPA 步骤，完整链路仍待下一次 CI。

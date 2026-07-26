@@ -2744,3 +2744,21 @@
 - `docs/ios-development.md`: records the failed run, repair boundary and pending CI status.
 - `progress.md`: appends implementation, verification evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/CQuickJS/include/XGQuickJS.h ios/Sources/CQuickJS/XGQuickJS.c ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Fix the QuickJS regression test concurrency compile error
+
+### What was done
+- Kept the compiled Swift/C byte-length bridge intact and corrected only the new XCTest call site.
+- Awaited the repository result before passing it into XCTest's synchronous assertion autoclosure.
+
+### Testing
+- Passed: GitHub Actions run `30196066791` compiled the repaired Swift/C QuickJS bridge before reaching the new test source.
+- Failed before fix: run `30196066791`, job `89777727821`, stopped at `JavaScriptVodRepositoryTests.swift` because an async call was used inside an assertion autoclosure.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after the test correction.
+- Not run: corrected iPhone tests, iPad tests, device Release build, IPA packaging and signing require the next macOS CI run.
+
+### Notes
+- `ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift`: separates the async result from its synchronous equality assertion.
+- `docs/ios-development.md`: records run `30196066791` and the remaining validation boundary.
+- `progress.md`: appends the failed-run evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.

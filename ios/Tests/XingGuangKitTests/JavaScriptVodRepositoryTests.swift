@@ -241,7 +241,8 @@ final class JavaScriptVodRepositoryTests: XCTestCase {
         ]))
         let site = Site(key: "repeated-arguments", api: "https://example.com/repeated-arguments.js", type: 3)
 
-        XCTAssertEqual(try await repository.action(site: site, value: "first"), "first")
+        let first = try await repository.action(site: site, value: "first")
+        XCTAssertEqual(first, "first")
         await Task.yield()
         let response = try await repository.proxy(site: site, parameters: ["value": "第二次调用"])
 
