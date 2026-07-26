@@ -3208,3 +3208,20 @@
 - `docs/ios-compatibility-matrix.md`: marks cache management and global UA as aligned.
 - `progress.md`: appends implementation, verification evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift ios/Sources/XingGuangKit/Persistence/AppDatabase.swift ios/Sources/XingGuangKit/Services/HTTPClient.swift ios/Sources/XingGuangKit/State/XingGuangAppModel.swift ios/Sources/XingGuangKit/Views/SettingsView.swift ios/Tests/XingGuangKitTests/AppDatabaseTests.swift ios/Tests/XingGuangKitTests/HTTPClientTests.swift ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift docs/ios-development.md docs/ios-compatibility-matrix.md progress.md` and remove the two new cache service files; after this feature commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Fix JavaScript HTTP User-Agent build failure
+
+### What was done
+- Renamed the request-side merged Header variable so it no longer conflicts with the existing response Header variable in the same method.
+- Kept explicit/policy/global User-Agent precedence unchanged.
+
+### Testing
+- Failed before fix: GitHub Actions run `30215997513` stopped during iPhone compilation with `JavaScriptHTTP.swift:130:13: error: invalid redeclaration of 'headers'`; iPad, Release and IPA steps were skipped.
+- Passed: `git diff --check` after the one-variable rename.
+- Not available on this Windows host: Swift compilation; a new complete macOS CI run is required.
+
+### Notes
+- `ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift`: renames the request-side local from `headers` to `requestHeaders`.
+- `docs/ios-development.md`: records the failed run, exact cause and verification boundary.
+- `progress.md`: appends failure evidence, repair and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift docs/ios-development.md progress.md`; after this repair commit is the branch tip, run `git revert HEAD`.

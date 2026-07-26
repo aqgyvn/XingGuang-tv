@@ -205,3 +205,5 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 - 设置页的缓存项统计并清理 App 的 iOS `Caches` 目录，同时清空 `URLCache`。导入的本地媒体属于缓存，因此会被删除；SQLite、配置、收藏、历史和 UserDefaults 位于缓存目录之外，不参与清理。
 - 播放器设置提供全局 User-Agent。API、JavaScript HTTP、直播/EPG、字幕/弹幕、网页嗅探和媒体播放请求共用“显式 Header 优先、全局 UA 缺省补充”的规则；配置 Header、站点 Header、直播源或频道 UA 不会被全局值覆盖。
 - 备份同时写入 `ios.globalUserAgent` 和 Android 字段 `ua`，恢复 Android 备份时会把 `ua` 映射到 iOS 全局设置。本批次在 Windows 仅完成差异检查，须等待 macOS CI 编译、测试和 IPA 验证。
+
+首次验证运行 `30215997513` 在 iPhone 编译阶段发现 JavaScript HTTP 请求头与响应头局部变量重名，iPad、Release 和 IPA 未执行。请求侧变量已改为 `requestHeaders`；该修复不改变 Header 合并和全局 UA 优先级，仍需新一轮完整 CI 确认。

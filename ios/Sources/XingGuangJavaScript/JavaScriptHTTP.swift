@@ -83,14 +83,14 @@ public final class URLSessionJavaScriptHTTPTransport: NSObject, JavaScriptHTTPTr
             body: request.body,
             timeout: request.timeout
         ))
-        let headers = HTTPUserAgent.applyingDefault(
+        let requestHeaders = HTTPUserAgent.applyingDefault(
             to: policyRequest?.headers ?? request.headers,
             value: globalUserAgent()
         )
         var urlRequest = URLRequest(url: request.url, timeoutInterval: request.timeout)
         urlRequest.httpMethod = request.method.uppercased()
         urlRequest.httpBody = request.body
-        for (key, value) in headers {
+        for (key, value) in requestHeaders {
             urlRequest.setValue(value, forHTTPHeaderField: key)
         }
 
