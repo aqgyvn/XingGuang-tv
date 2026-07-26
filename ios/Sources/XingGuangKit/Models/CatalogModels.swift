@@ -10,9 +10,11 @@ public struct VodConfigDocument: Codable, Equatable {
     public var lives: [Live]
     public var flags: [String]
     public var ads: [String]
+    public var headers: [HTTPHeaderRule]
+    public var doh: [DoHServer]
 
     enum CodingKeys: String, CodingKey {
-        case spider, wallpaper, logo, notice, sites, parses, lives, flags, ads
+        case spider, wallpaper, logo, notice, sites, parses, lives, flags, ads, headers, doh
     }
 
     public init(
@@ -24,7 +26,9 @@ public struct VodConfigDocument: Codable, Equatable {
         parses: [ParseRule] = [],
         lives: [Live] = [],
         flags: [String] = [],
-        ads: [String] = []
+        ads: [String] = [],
+        headers: [HTTPHeaderRule] = [],
+        doh: [DoHServer] = []
     ) {
         self.spider = spider
         self.wallpaper = wallpaper
@@ -35,6 +39,8 @@ public struct VodConfigDocument: Codable, Equatable {
         self.lives = lives
         self.flags = flags
         self.ads = ads
+        self.headers = headers
+        self.doh = doh
     }
 
     public init(from decoder: Decoder) throws {
@@ -48,6 +54,8 @@ public struct VodConfigDocument: Codable, Equatable {
         lives = container.array(Live.self, .lives)
         flags = container.array(String.self, .flags)
         ads = container.array(String.self, .ads)
+        headers = container.array(HTTPHeaderRule.self, .headers)
+        doh = container.array(DoHServer.self, .doh)
     }
 }
 

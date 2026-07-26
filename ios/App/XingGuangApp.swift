@@ -18,14 +18,16 @@ struct XingGuangApp: App {
             avPlayer: { AVPlayerEngine() },
             vlc: { VLCPlayerEngineAdapter() }
         )
-        let javascript = JavaScriptVodRepository()
+        let networkPolicy = HTTPNetworkPolicyStore()
+        let httpClient = URLSessionHTTPClient(policyStore: networkPolicy)
+        let javascript = JavaScriptVodRepository(transport: URLSessionJavaScriptHTTPTransport(policyStore: networkPolicy))
         let proxyServer = LocalProxyServer(repository: javascript)
         self.proxyServer = proxyServer
         let repository = RoutingVodRepository(
-            api: ApiVodRepository(),
+            api: ApiVodRepository(client: httpClient),
             javascript: javascript
         )
-        let liveRepository = DefaultLiveRepository(dynamicContentLoader: { live in
+        let liveRepository = DefaultLiveRepository(client: httpClient, dynamicContentLoader: { live in
             var site = Site(key: live.name, name: live.name, api: live.api, type: 3)
             site.ext = live.ext
             site.jar = live.jar
@@ -38,9 +40,11 @@ struct XingGuangApp: App {
             liveRepository: liveRepository,
             persistence: store,
             playerFactory: factory,
+            timedTextLoader: TimedTextLoader(client: httpClient),
             webMediaSniffer: WebMediaSniffer(validator: { site, url in
                 try await javascript.isVideo(site: site, url: url)
-            }),
+            }, policyStore: networkPolicy),
+            networkPolicyStore: networkPolicy,
             usePreviewData: false
         ))
     }

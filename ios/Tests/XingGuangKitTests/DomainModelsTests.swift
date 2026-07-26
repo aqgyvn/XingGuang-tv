@@ -13,6 +13,17 @@ final class DomainModelsTests: XCTestCase {
         XCTAssertEqual(config.lives.first?.groups.first?.channels.count, 2)
     }
 
+    func testConfigDecodesAndroidHeaderAdsAndDoHFields() throws {
+        let data = Data(#"{"headers":[{"host":"api.example","header":{"Referer":"https://source.example/"}}],"ads":["ads.example"],"doh":[{"name":"Fixture","url":"https://doh.example/dns-query","ips":["1.1.1.1"]}]}"#.utf8)
+
+        let config = try JSONDecoder().decode(VodConfigDocument.self, from: data)
+
+        XCTAssertEqual(config.headers.first?.host, "api.example")
+        XCTAssertEqual(config.headers.first?.header["Referer"], "https://source.example/")
+        XCTAssertEqual(config.ads, ["ads.example"])
+        XCTAssertEqual(config.doh.first?.ips, ["1.1.1.1"])
+    }
+
     func testSiteUsesAndroidDefaultsWhenOptionalFieldsAreMissing() throws {
         let data = Data(#"{"key":"minimal","name":"Minimal","api":"https://example.com"}"#.utf8)
         let site = try JSONDecoder().decode(Site.self, from: data)

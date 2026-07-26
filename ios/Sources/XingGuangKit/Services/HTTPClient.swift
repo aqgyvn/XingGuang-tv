@@ -54,6 +54,7 @@ public enum HTTPClientError: Error, Equatable, LocalizedError {
     case timedOut
     case cancelled
     case transport(Int)
+    case blocked(String)
 
     public var errorDescription: String? {
         switch self {
@@ -64,6 +65,7 @@ public enum HTTPClientError: Error, Equatable, LocalizedError {
         case .timedOut: return "网络请求超时"
         case .cancelled: return "网络请求已取消"
         case .transport: return "网络连接失败"
+        case .blocked(let host): return "请求已被广告规则拦截：\(host)"
         }
     }
 }
@@ -74,16 +76,19 @@ public protocol HTTPClient: Sendable {
 
 public final class URLSessionHTTPClient: HTTPClient, @unchecked Sendable {
     private let session: URLSession
+    private let policyStore: HTTPNetworkPolicyStore?
 
-    public init(configuration: URLSessionConfiguration = .default) {
+    public init(configuration: URLSessionConfiguration = .default, policyStore: HTTPNetworkPolicyStore? = nil) {
         let sessionConfiguration = configuration
         sessionConfiguration.httpCookieStorage = HTTPCookieStorage.shared
         sessionConfiguration.httpShouldSetCookies = true
         sessionConfiguration.httpCookieAcceptPolicy = .always
         self.session = URLSession(configuration: sessionConfiguration)
+        self.policyStore = policyStore
     }
 
     public func send(_ request: HTTPRequest) async throws -> HTTPResponse {
+        let request = try policyStore?.prepare(request) ?? request
         var urlRequest = URLRequest(url: request.url, timeoutInterval: request.timeout)
         urlRequest.httpMethod = request.method.rawValue
         urlRequest.httpBody = request.body

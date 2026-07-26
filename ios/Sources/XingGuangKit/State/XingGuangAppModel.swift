@@ -72,6 +72,7 @@ public final class XingGuangAppModel: ObservableObject {
     private let playerFactory: PlayerEngineFactory
     private let timedTextLoader: any TimedTextLoading
     private let webMediaSniffer: (any WebMediaSniffing)?
+    private let networkPolicyStore: HTTPNetworkPolicyStore?
     private let defaults: UserDefaults
     private var configurationTask: Task<Void, Never>?
     private var catalogTask: Task<Void, Never>?
@@ -91,6 +92,7 @@ public final class XingGuangAppModel: ObservableObject {
         playerFactory: PlayerEngineFactory = PreviewPlayerEngineFactory(),
         timedTextLoader: any TimedTextLoading = TimedTextLoader(),
         webMediaSniffer: (any WebMediaSniffing)? = nil,
+        networkPolicyStore: HTTPNetworkPolicyStore? = nil,
         usePreviewData: Bool = true
     ) {
         self.repository = repository
@@ -99,6 +101,7 @@ public final class XingGuangAppModel: ObservableObject {
         self.playerFactory = playerFactory
         self.timedTextLoader = timedTextLoader
         self.webMediaSniffer = webMediaSniffer
+        self.networkPolicyStore = networkPolicyStore
         self.defaults = defaults
         self.vodConfigURL = defaults.string(forKey: "ios.vodConfigURL") ?? ""
         self.liveConfigURL = defaults.string(forKey: "ios.liveConfigURL") ?? ""
@@ -430,6 +433,7 @@ public final class XingGuangAppModel: ObservableObject {
                 }
                 try persistence?.replaceConfiguration(document, sourceURL: url.absoluteString)
                 configuration = document
+                networkPolicyStore?.apply(document)
                 liveSources = document.lives
                 selectedSite = document.sites.first(where: { $0.key == selectedSite.key && $0.hide != 1 }) ?? first
                 configurationSaveState = .saved

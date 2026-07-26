@@ -138,6 +138,27 @@ final class XingGuangAppModelTests: XCTestCase {
         XCTAssertEqual(sniffer.receivedSite?.key, "sniff")
     }
 
+    func testLoadedConfigurationUpdatesSharedNetworkPolicy() async throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set("https://example.com/config.json", forKey: "ios.vodConfigURL")
+        let policy = HTTPNetworkPolicyStore()
+        let repository = PolicyVodRepository()
+        let model = XingGuangAppModel(
+            defaults: defaults,
+            repository: repository,
+            networkPolicyStore: policy,
+            usePreviewData: false
+        )
+
+        model.bootstrap()
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        let prepared = try policy.prepare(HTTPRequest(url: URL(string: "https://api.example/catalog")!))
+        XCTAssertEqual(prepared.headers["Referer"], "https://source.example/")
+        XCTAssertThrowsError(try policy.prepare(HTTPRequest(url: URL(string: "https://ads.example/banner")!)))
+    }
+
     private func makeDefaults() -> (UserDefaults, String) {
         let suiteName = "XingGuangAppModelTests.\(UUID().uuidString)"
         return (UserDefaults(suiteName: suiteName)!, suiteName)
@@ -166,6 +187,24 @@ private final class SniffingVodRepository: VodRepository, @unchecked Sendable {
     func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest {
         PlaybackRequest(url: episodeURL, requiresSniffing: true)
     }
+}
+
+private final class PolicyVodRepository: VodRepository, @unchecked Sendable {
+    private let site = Site(key: "policy", name: "Policy", api: "https://api.example", type: 1)
+
+    func loadConfig(from url: URL) async throws -> VodConfigDocument {
+        VodConfigDocument(
+            sites: [site],
+            ads: ["ads.example"],
+            headers: [HTTPHeaderRule(host: "api.example", header: ["Referer": "https://source.example/"])]
+        )
+    }
+
+    func home(site: Site, includeFilters: Bool) async throws -> VodResult { VodResult() }
+    func category(site: Site, typeID: String, page: Int, filters: [String: String]) async throws -> VodResult { VodResult() }
+    func search(site: Site, keyword: String, page: Int) async throws -> VodResult { VodResult() }
+    func detail(site: Site, vodID: String) async throws -> VodResult { VodResult() }
+    func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest { PlaybackRequest(url: episodeURL) }
 }
 
 private final class FilterVodRepository: VodRepository, @unchecked Sendable {

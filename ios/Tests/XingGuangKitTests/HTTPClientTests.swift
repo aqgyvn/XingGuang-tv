@@ -50,6 +50,30 @@ final class HTTPClientTests: XCTestCase {
         }
     }
 
+    func testConfigurationPolicyInjectsMatchingHeadersAndBlocksAds() async throws {
+        let policy = HTTPNetworkPolicyStore()
+        policy.apply(VodConfigDocument(
+            ads: ["ads.example"],
+            headers: [HTTPHeaderRule(host: "api.example", header: ["Referer": "https://source.example/"])]
+        ))
+        URLProtocolStub.handler = { request in
+            URLProtocolStub.lastRequest = request
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (response, Data())
+        }
+        let client = makeClient(policyStore: policy)
+
+        _ = try await client.send(HTTPRequest(url: URL(string: "https://api.example/catalog")!))
+        XCTAssertEqual(URLProtocolStub.lastRequest?.value(forHTTPHeaderField: "Referer"), "https://source.example/")
+
+        do {
+            _ = try await client.send(HTTPRequest(url: URL(string: "https://video.ads.example/asset")!))
+            XCTFail("Expected the configured ad host to be blocked")
+        } catch let error as HTTPClientError {
+            XCTAssertEqual(error, .blocked("video.ads.example"))
+        }
+    }
+
     func testTaskCancellationPropagatesAsCancellationError() async throws {
         URLProtocolStub.delay = 1
         URLProtocolStub.handler = { request in
@@ -71,10 +95,10 @@ final class HTTPClientTests: XCTestCase {
         }
     }
 
-    private func makeClient() -> URLSessionHTTPClient {
+    private func makeClient(policyStore: HTTPNetworkPolicyStore? = nil) -> URLSessionHTTPClient {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [URLProtocolStub.self]
-        return URLSessionHTTPClient(configuration: configuration)
+        return URLSessionHTTPClient(configuration: configuration, policyStore: policyStore)
     }
 }
 

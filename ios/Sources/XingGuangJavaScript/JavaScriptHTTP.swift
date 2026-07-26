@@ -62,13 +62,25 @@ public final class URLSessionJavaScriptHTTPTransport: NSObject, JavaScriptHTTPTr
         }
     }
 
-    public override init() {}
+    private let policyStore: HTTPNetworkPolicyStore?
+
+    public init(policyStore: HTTPNetworkPolicyStore? = nil) {
+        self.policyStore = policyStore
+        super.init()
+    }
 
     public func send(_ request: JavaScriptHTTPRequest) throws -> JavaScriptHTTPResponse {
+        let policyRequest = try policyStore?.prepare(HTTPRequest(
+            method: request.method.uppercased() == "POST" ? .post : .get,
+            url: request.url,
+            headers: request.headers,
+            body: request.body,
+            timeout: request.timeout
+        ))
         var urlRequest = URLRequest(url: request.url, timeoutInterval: request.timeout)
         urlRequest.httpMethod = request.method.uppercased()
         urlRequest.httpBody = request.body
-        for (key, value) in request.headers {
+        for (key, value) in policyRequest?.headers ?? request.headers {
             urlRequest.setValue(value, forHTTPHeaderField: key)
         }
 

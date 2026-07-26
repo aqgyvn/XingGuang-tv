@@ -27,14 +27,16 @@ public final class WebMediaSniffer: WebMediaSniffing {
     public typealias VideoValidator = @Sendable (Site, String) async throws -> Bool
 
     private let validator: VideoValidator?
+    private let policyStore: HTTPNetworkPolicyStore?
 
-    public init(validator: VideoValidator? = nil) {
+    public init(validator: VideoValidator? = nil, policyStore: HTTPNetworkPolicyStore? = nil) {
         self.validator = validator
+        self.policyStore = policyStore
     }
 
     public func resolve(_ request: PlaybackRequest, site: Site) async throws -> PlaybackRequest {
         guard request.requiresSniffing else { return request }
-        let session = WebMediaSniffSession(request: request, site: site, validator: validator)
+        let session = WebMediaSniffSession(request: request, site: site, validator: validator, policyStore: policyStore)
         return try await withTaskCancellationHandler {
             try await session.run()
         } onCancel: {
@@ -48,6 +50,7 @@ private final class WebMediaSniffSession: NSObject, WKNavigationDelegate, WKScri
     private let request: PlaybackRequest
     private let site: Site
     private let validator: WebMediaSniffer.VideoValidator?
+    private let policyStore: HTTPNetworkPolicyStore?
     private let contentController = WKUserContentController()
     private var webView: WKWebView?
     private var continuation: CheckedContinuation<PlaybackRequest, Error>?
@@ -55,10 +58,11 @@ private final class WebMediaSniffSession: NSObject, WKNavigationDelegate, WKScri
     private var testedURLs: Set<String> = []
     private var finished = false
 
-    init(request: PlaybackRequest, site: Site, validator: WebMediaSniffer.VideoValidator?) {
+    init(request: PlaybackRequest, site: Site, validator: WebMediaSniffer.VideoValidator?, policyStore: HTTPNetworkPolicyStore?) {
         self.request = request
         self.site = site
         self.validator = validator
+        self.policyStore = policyStore
         super.init()
     }
 
@@ -77,6 +81,25 @@ private final class WebMediaSniffSession: NSObject, WKNavigationDelegate, WKScri
     }
 
     private func start(url: URL) {
+        let patterns = policyStore?.adPatterns() ?? []
+        guard !patterns.isEmpty, let rules = Self.contentBlockerRules(patterns) else {
+            startWebView(url: url)
+            return
+        }
+        let identifier = "com.xingguang.video.ios.ads.\(patterns.joined(separator: "|").hashValue)"
+        WKContentRuleListStore.default().compileContentRuleList(
+            forIdentifier: identifier,
+            encodedContentRuleList: rules
+        ) { [weak self] list, _ in
+            Task { @MainActor in
+                guard let self, !self.finished else { return }
+                if let list { self.contentController.add(list) }
+                self.startWebView(url: url)
+            }
+        }
+    }
+
+    private func startWebView(url: URL) {
         contentController.add(self, name: "xingGuangMedia")
         contentController.addUserScript(WKUserScript(
             source: Self.observerScript + "\n" + request.sniffScript,
@@ -124,6 +147,11 @@ private final class WebMediaSniffSession: NSObject, WKNavigationDelegate, WKScri
         return .allow
     }
 
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
+        guard let url = navigationAction.request.url, policyStore?.isBlocked(url) == true else { return .allow }
+        return .cancel
+    }
+
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         finish(.failure(WebMediaSnifferError.navigation(error.localizedDescription)))
     }
@@ -137,6 +165,7 @@ private final class WebMediaSniffSession: NSObject, WKNavigationDelegate, WKScri
               let url = URL(string: value, relativeTo: webView?.url)?.absoluteURL,
               let scheme = url.scheme?.lowercased(),
               ["http", "https", "rtsp", "rtmp"].contains(scheme) else { return }
+        guard policyStore?.isBlocked(url) != true else { return }
         let absolute = url.absoluteString
         guard testedURLs.insert(absolute).inserted else { return }
         guard testedURLs.count <= 128 else { return }
@@ -201,6 +230,17 @@ private final class WebMediaSniffSession: NSObject, WKNavigationDelegate, WKScri
         let extensionName = url.pathExtension.lowercased()
         return ["m3u8", "mpd", "mp4", "m4v", "mov", "mkv", "flv", "webm", "avi", "ts", "m2ts", "mp3", "aac", "m4a"].contains(extensionName)
             || ["rtsp", "rtmp"].contains(url.scheme?.lowercased() ?? "")
+    }
+
+    private static func contentBlockerRules(_ patterns: [String]) -> String? {
+        let rules: [[String: Any]] = patterns.map { pattern in
+            [
+                "trigger": ["url-filter": NSRegularExpression.escapedPattern(for: pattern)],
+                "action": ["type": "block"]
+            ]
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: rules) else { return nil }
+        return String(data: data, encoding: .utf8)
     }
 
     private static let observerScript = #"""

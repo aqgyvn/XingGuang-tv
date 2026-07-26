@@ -131,3 +131,11 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 运行 `30196244674` 已确认测试编译修复和直接重复异步参数用例通过，但回环代理仍返回 502；显式参数长度接口还导致两个既有 JavaScript 用例新增 `xg-arguments` 失败，证明该修改无效。现已恢复原 QuickJS 参数接口，并让 Network.framework 回调通过独立任务进入 Repository/actor，避免继承网络回调执行上下文。该修复仍须新的 macOS CI 验证。
 
 运行 `30196524299` 已确认独立代理任务修复有效，并通过 iPhone/iPad 完整测试、设备 Release 构建、TrollStore IPA 打包、结构与 ad-hoc 签名检查。产物为 `XingGuang-iOS-21`（artifact ID `8630371695`，`21,238,473` 字节，保留至 2026-08-09）；真实网页嗅探、鉴权 Cookie 和最终媒体播放仍需 TrollStore 真机验收。
+
+## 配置网络策略
+
+- iOS 现保留 Android 配置中的 `headers`、`ads` 和 `doh` 字段。配置加载成功后才替换共享网络策略，旧请求仍由原任务取消机制结束。
+- `headers` 按 Android 的“主机包含或完整正则匹配”语义注入，并覆盖同名请求头；覆盖 API、扩展配置、直播/EPG、字幕弹幕及 JavaScript `req/http`。
+- `ads` 在 App 自有 HTTP 发出前阻止匹配主机，并在 WKWebView 嗅探中同时过滤页面导航、媒体候选和内容子资源。AVPlayer/VLC 内部媒体请求不经过该策略，不能保证与 Android 完全一致。
+- `doh` 服务器配置会被兼容解码和保留，但 iOS/iPadOS 15 的公开 `URLSession` API 不允许 App 为单次请求替换 DNS 解析器。当前使用设备系统 DNS/加密 DNS 设置；未使用会破坏 HTTPS SNI/证书校验的 IP 替换方案，也不把仅预查询 DoH 冒充为生效。
+- 本批次已添加配置解码、Header 注入、广告阻止和配置切换更新策略的固定测试；Swift/WebKit 编译与完整 IPA 仍须下一次 macOS CI 确认。

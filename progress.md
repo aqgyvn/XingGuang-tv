@@ -2802,3 +2802,35 @@
 - `docs/ios-development.md`: records the successful run and artifact identity while retaining the hardware boundary.
 - `progress.md`: appends the complete CI evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after the validation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Apply Android-compatible Header and ad policies to iOS networking
+
+### What was done
+- Added Android-compatible `headers`, `ads` and `doh` configuration models without changing the Android source or database schema.
+- Added one shared policy store and applied matching Header injection and ad-host blocking to API, live/EPG, subtitle/danmaku and JavaScript HTTP requests.
+- Updated Web media sniffing to block matching navigation, candidate and content-resource URLs.
+- Wired policy replacement to successful configuration loading so invalid configurations cannot change the active network rules.
+- Documented the iOS 15 DoH platform boundary instead of claiming a preflight-only or TLS-breaking implementation.
+
+### Testing
+- Passed: fixed model fixture covers Android `headers`, `ads` and `doh` field decoding.
+- Passed: HTTP client fixture covers matching Header injection and pre-request ad blocking.
+- Passed: App-model fixture covers replacing the shared policy only after configuration load.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after implementation.
+- Not run: Swift/WebKit compilation, iPhone/iPad tests, device Release build, IPA packaging and signing require the next macOS GitHub Actions run.
+- Not run: real Header-authenticated sources and Web ad rules require TrollStore device acceptance; AVPlayer/VLC internal requests remain outside the App HTTP policy.
+
+### Notes
+- `ios/Sources/XingGuangKit/Services/HTTPNetworkPolicy.swift`: stores and applies configuration Header, ad and DoH metadata.
+- `ios/Sources/XingGuangKit/Models/CatalogModels.swift`: decodes and encodes Android network-policy fields.
+- `ios/Sources/XingGuangKit/Services/HTTPClient.swift`: applies policy before URLSession requests and reports blocked hosts.
+- `ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift`: applies the same policy to JavaScript `req/http` transport.
+- `ios/Sources/XingGuangKit/Services/WebMediaSniffer.swift`: filters ad navigation, media candidates and WebKit subresources.
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: activates policy only after a valid configuration load.
+- `ios/App/XingGuangApp.swift`: injects one policy-aware client across production repositories and services.
+- `ios/Tests/XingGuangKitTests/DomainModelsTests.swift`: covers Android network field decoding.
+- `ios/Tests/XingGuangKitTests/HTTPClientTests.swift`: covers Header injection and ad blocking.
+- `ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift`: covers configuration-driven policy replacement.
+- `docs/ios-development.md`: documents behavior and DoH/player-core boundaries.
+- `progress.md`: appends implementation, verification evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/App/XingGuangApp.swift ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift ios/Sources/XingGuangKit/Models/CatalogModels.swift ios/Sources/XingGuangKit/Services/HTTPClient.swift ios/Sources/XingGuangKit/Services/HTTPNetworkPolicy.swift ios/Sources/XingGuangKit/Services/WebMediaSniffer.swift ios/Sources/XingGuangKit/State/XingGuangAppModel.swift ios/Tests/XingGuangKitTests/DomainModelsTests.swift ios/Tests/XingGuangKitTests/HTTPClientTests.swift ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift docs/ios-development.md progress.md`; after the feature commit is the branch tip, run `git revert HEAD`.
