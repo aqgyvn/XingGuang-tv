@@ -13,6 +13,11 @@ struct SearchPreviewView: View {
     @State private var pageCount = 1
     @State private var activeKeyword = ""
 
+    init(model: XingGuangAppModel, initialQuery: String = "") {
+        self.model = model
+        _query = State(initialValue: initialQuery)
+    }
+
     var body: some View {
         NavigationView {
             Group {
@@ -78,6 +83,12 @@ struct SearchPreviewView: View {
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())
+        .onAppear {
+            if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+               activeKeyword.isEmpty {
+                performSearch()
+            }
+        }
         .onDisappear { searchTask?.cancel() }
     }
 

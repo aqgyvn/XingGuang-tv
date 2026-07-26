@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 @MainActor
@@ -40,6 +41,7 @@ struct VodDetailPreviewView: View {
     @State private var showsOverlaySettings = false
     @State private var sharePayload: PlaybackSharePayload?
     @State private var playbackInformation: PlaybackInformationPayload?
+    @State private var searchPresented = false
 
     init(vod: Vod, model: XingGuangAppModel) {
         self.model = model
@@ -65,6 +67,7 @@ struct VodDetailPreviewView: View {
                 if !detailError.isEmpty { Text(detailError).foregroundColor(.red).padding(.horizontal, 16) }
                 routePicker
                 episodesGrid
+                metadata
                 description
             }
             .padding(.bottom, 24)
@@ -147,6 +150,9 @@ struct VodDetailPreviewView: View {
         }
         .sheet(item: $playbackInformation) { payload in
             PlaybackInformationSheet(payload: payload)
+        }
+        .sheet(isPresented: $searchPresented) {
+            SearchPreviewView(model: model, initialQuery: vod.vodName)
         }
         .accessibilityIdentifier("vod.detail")
     }
@@ -508,12 +514,23 @@ struct VodDetailPreviewView: View {
 
     private var summary: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(vod.vodName)
-                .font(.title2.weight(.semibold))
+            Button {
+                searchPresented = true
+            } label: {
+                HStack(spacing: 8) {
+                    Text(vod.vodName)
+                        .font(.title2.weight(.semibold))
+                    Image(systemName: "magnifyingglass")
+                        .font(.subheadline)
+                }
                 .foregroundColor(XingGuangTheme.text)
+            }
+            .buttonStyle(.plain)
+            .disabled(model.selectedSite.searchable == 0 || vod.vodName.isEmpty)
             HStack(spacing: 8) {
                 if !vod.vodRemarks.isEmpty { badge(vod.vodRemarks) }
                 if !vod.vodYear.isEmpty { badge(vod.vodYear) }
+                if !vod.vodArea.isEmpty { badge(vod.vodArea) }
                 if !vod.typeName.isEmpty { badge(vod.typeName) }
             }
         }
@@ -589,7 +606,18 @@ struct VodDetailPreviewView: View {
 
     private var description: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionTitle(title: "简介")
+            HStack {
+                SectionTitle(title: "简介")
+                Spacer()
+                if !vod.vodContent.isEmpty {
+                    Button {
+                        UIPasteboard.general.string = vod.vodContent
+                    } label: {
+                        Image(systemName: "doc.on.doc")
+                    }
+                    .accessibilityLabel("复制简介")
+                }
+            }
             Text(vod.vodContent.isEmpty ? "暂无简介" : vod.vodContent)
                 .font(.body)
                 .foregroundColor(XingGuangTheme.text)
@@ -598,6 +626,34 @@ struct VodDetailPreviewView: View {
         .padding(16)
         .xingGuangPanel()
         .padding(.horizontal, 16)
+    }
+
+    @ViewBuilder
+    private var metadata: some View {
+        let values = [
+            ("站点", model.selectedSite.name),
+            ("导演", vod.vodDirector),
+            ("演员", vod.vodActor)
+        ].filter { !$0.1.isEmpty }
+        if !values.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                SectionTitle(title: "影片信息")
+                ForEach(Array(values.enumerated()), id: \.offset) { _, item in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.0)
+                            .font(.caption)
+                            .foregroundColor(XingGuangTheme.secondaryText)
+                        Text(item.1)
+                            .font(.body)
+                            .foregroundColor(XingGuangTheme.text)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .padding(16)
+            .xingGuangPanel()
+            .padding(.horizontal, 16)
+        }
     }
 
     private func loadDetail() async {

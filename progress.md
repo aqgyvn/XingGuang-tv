@@ -3392,3 +3392,23 @@
 - `docs/ios-development.md`: records the successful full CI run, artifact metadata and remaining device checks.
 - `progress.md`: appends final verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Complete iOS on-demand detail interactions
+
+### What was done
+- Added area, director, actor and active-site information to the on-demand detail page while omitting empty fields.
+- Added title-triggered search using the existing current-site search flow and search-history behavior.
+- Added an explicit system clipboard action for the full description.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors.
+- Verified all existing `SearchPreviewView` call sites use the backward-compatible default initializer or the new prefilled query.
+- Not available on this Windows host: Swift compilation and SwiftUI interaction tests; macOS CI must pass iPhone/iPad tests, device Release, IPA structure and ad-hoc signing.
+
+### Notes
+- `ios/Sources/XingGuangKit/Views/SearchPreviewView.swift`: accepts an optional initial query and performs it once when presented.
+- `ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift`: displays complete metadata, opens current-site title search and copies the description.
+- `docs/ios-compatibility-matrix.md`: records detail metadata and interaction parity.
+- `docs/ios-development.md`: documents the current-site network boundary and verification gap.
+- `progress.md`: appends implementation, verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/Views/SearchPreviewView.swift ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md`; after this feature commit is the branch tip, run `git revert HEAD`.
