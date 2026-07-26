@@ -416,7 +416,12 @@ int xg_quickjs_load_spider(XGQuickJSContext *context, const char *module_name) {
     return xg_drain_jobs(context);
 }
 
-char *xg_quickjs_call(XGQuickJSContext *context, const char *method, const char *arguments_json) {
+char *xg_quickjs_call(
+    XGQuickJSContext *context,
+    const char *method,
+    const char *arguments_json,
+    size_t arguments_length
+) {
     JSValue global;
     JSValue spider;
     JSValue function;
@@ -452,7 +457,12 @@ char *xg_quickjs_call(XGQuickJSContext *context, const char *method, const char 
         JS_FreeValue(context->context, spider);
         return xg_strdup("null");
     }
-    arguments = JS_ParseJSON(context->context, arguments_json ? arguments_json : "[]", arguments_json ? strlen(arguments_json) : 2, "xg-arguments");
+    arguments = JS_ParseJSON(
+        context->context,
+        arguments_json ? arguments_json : "[]",
+        arguments_json ? arguments_length : 2,
+        "xg-arguments"
+    );
     if (JS_IsException(arguments) || !JS_IsArray(context->context, arguments)) {
         if (JS_IsException(arguments)) xg_set_exception(context);
         else xg_set_error(context, "JavaScript 参数必须是数组");

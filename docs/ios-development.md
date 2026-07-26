@@ -123,3 +123,5 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 运行 `30178314318` 已完成 Swift 编译和全部 iPhone UI 测试，但单元测试仍有 14 个失败：13 个 JavaScript 用例无法在 SwiftPM 平铺后的 bundle 根目录找到内置模块，1 个播放器恢复进度用例在主队列异步回调前提前断言。资源加载现按原子目录优先并兼容 bundle 根目录，播放器测试改为等待恢复回调；生产播放器时序未改变。上述修复仍需新的 macOS CI 运行确认，iPad、设备 Release 和 IPA 步骤在该失败运行中未执行。
 
 运行 `30178696426` 已确认资源加载修复和 iPhone UI 测试通过，剩余失败收敛为 QuickJS 销毁时的 `JS_FreeRuntime` 断言。模块加载器取得 compile-only 模块指针后未释放临时 `JSValue`，导致运行时仍有 GC 对象；现已按 QuickJS 模块加载器生命周期释放该临时值。该修复仍需新的 macOS CI 运行确认，iPad、设备 Release 和 IPA 步骤在该失败运行中未执行。
+
+运行 `30195499024` 已通过 Swift 编译、3 个 iPhone UI 用例及除本地代理外的单元测试。本地代理请求已到达回环服务器，但 QuickJS 在 `xg-arguments:1:1` 解析第二次异步调用参数时返回 502。桥接层现改为由 Swift 在 C 调用期间固定 JSON `Data` 缓冲区，并显式传入 UTF-8 字节长度，不再依赖临时 C 字符串和 `strlen`；同时新增跨异步让步的重复参数调用回归测试。该修复仍须新的 macOS CI 确认，不能据此宣称本地代理或本批 IPA 已通过。

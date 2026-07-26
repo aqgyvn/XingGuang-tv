@@ -228,6 +228,26 @@ final class JavaScriptVodRepositoryTests: XCTestCase {
         XCTAssertEqual(String(data: data, encoding: .utf8), "proxied:ok")
     }
 
+    func testQuickJSArgumentsRemainValidAcrossRepeatedAsyncCalls() async throws {
+        let script = """
+        export default {
+          init: function() {},
+          action: function(value) { return value; },
+          proxy: function(params) { return [200, 'text/plain', params.value, {}, 0]; }
+        };
+        """
+        let repository = JavaScriptVodRepository(transport: ScriptTransport(sources: [
+            "https://example.com/repeated-arguments.js": Data(script.utf8)
+        ]))
+        let site = Site(key: "repeated-arguments", api: "https://example.com/repeated-arguments.js", type: 3)
+
+        XCTAssertEqual(try await repository.action(site: site, value: "first"), "first")
+        await Task.yield()
+        let response = try await repository.proxy(site: site, parameters: ["value": "第二次调用"])
+
+        XCTAssertEqual(String(data: response.data, encoding: .utf8), "第二次调用")
+    }
+
     func testLiveContentUsesAndroidLiveProtocol() async throws {
         let script = """
         export default {

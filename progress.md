@@ -2722,3 +2722,25 @@
 - `docs/ios-development.md`: documents behavior, security boundary and remaining hardware validation.
 - `progress.md`: appends implementation, validation evidence, file list and rollback point.
 - Rollback method: before committing, run `git restore -- ios docs/ios-development.md progress.md`; after the feature commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Stabilize QuickJS arguments used by the local proxy
+
+### What was done
+- Diagnosed the Web sniffing batch's only iPhone test failure as a QuickJS argument parse failure after the loopback request had already reached the registered JavaScript site.
+- Changed the Swift/C boundary to keep serialized argument bytes alive for the full native call and pass their exact byte count to QuickJS.
+- Added a repeated asynchronous call fixture with non-ASCII parameters to cover the failing runtime reuse path.
+
+### Testing
+- Passed: source inspection confirms every `xg_quickjs_call` declaration and call site now uses the explicit byte-count contract.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after implementation.
+- Failed before fix: GitHub Actions run `30195499024`, job `89776199234`, returned HTTP 502 in `testLocalProxyServerRoutesOnlyRegisteredJavaScriptSite` with `xg-arguments:1:1`; all preceding Swift compilation, UI tests and other unit tests passed.
+- Not run: the repaired QuickJS bridge, iPad tests, device Release build, IPA packaging and signing require the next macOS GitHub Actions run.
+
+### Notes
+- `ios/Sources/CQuickJS/include/XGQuickJS.h`: extends the native call contract with an explicit JSON byte length.
+- `ios/Sources/CQuickJS/XGQuickJS.c`: parses the exact Swift-provided argument buffer length.
+- `ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift`: pins serialized `Data` while calling C and reuses the same path for initialization.
+- `ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift`: adds repeated asynchronous argument regression coverage.
+- `docs/ios-development.md`: records the failed run, repair boundary and pending CI status.
+- `progress.md`: appends implementation, verification evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/CQuickJS/include/XGQuickJS.h ios/Sources/CQuickJS/XGQuickJS.c ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
