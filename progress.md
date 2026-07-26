@@ -2803,47 +2803,6 @@
 - `progress.md`: appends the complete CI evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after the validation commit is the branch tip, run `git revert HEAD`.
 
-## 2026-07-26 - Task: Complete the iOS plan with local media playback and compatibility audit
-
-### What was done
-- Added a system Files entry for local audio/video, copied selected media into the App cache while its security scope was active, and opened it through the existing automatic AVPlayer/VLC routing.
-- Added a focused local-media player with play/pause, seek, speed and active-engine status, plus import service and UI coverage.
-- Completed the Android mobile versus iOS compatibility matrix, explicitly separating aligned features, iOS equivalents, platform limits and items outside this plan.
-
-### Testing
-- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'`.
-- Passed: source-reference inspection confirms the Settings entry, importer, playback sheet, service tests and UI accessibility assertion are connected.
-- Not available on this Windows host: Swift/Xcode/XcodeGen/CocoaPods compilation. The branch must pass the macOS GitHub Actions iPhone/iPad tests, device Release build, IPA structure and signing checks before this batch is called installable.
-
-### Notes
-- `ios/Sources/XingGuangKit/Services/LocalMediaImportService.swift`: validates supported extensions and copies security-scoped media into the App cache without loading the whole file into memory.
-- `ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift`: adds the local-media playback surface and essential controls on the shared player session.
-- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: adds the Files picker entry, import state and local player presentation.
-- `ios/Tests/XingGuangKitTests/LocalMediaImportServiceTests.swift`: covers supported-file copying and unsupported-file rejection.
-- `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: confirms the local-media action is exposed from Settings on iPhone.
-- `docs/ios-development.md`: documents local media storage, player routing, verification boundaries and the compatibility audit link.
-- `docs/ios-compatibility-matrix.md`: records Android mobile page, data-source, player and setting parity without treating platform exclusions as completed features.
-- `progress.md`: appends this implementation and validation record.
-- Rollback method: before committing, restore the seven iOS/docs files listed above and remove this appended entry; after the feature commit is the branch tip, run `git revert HEAD`.
-
-## 2026-07-26 - Task: Validate final iOS plan completion on macOS CI
-
-### What was done
-- Confirmed the local media importer, shared AVPlayer/VLC player page and compatibility-audit batch on both supported device families.
-- Confirmed the device Release, TrollStore packaging, IPA structure and ad-hoc signing path and identified the installable artifact.
-
-### Testing
-- Passed: GitHub Actions run `30203798664`, job `89798248613`, completed successfully in 11 minutes 4 seconds.
-- Passed: iPhone and iPad unit/UI tests, including supported/unsupported local file fixtures and the Settings local-media action.
-- Passed: device Release build, IPA packaging, artifact upload, bundle structure and embedded/app ad-hoc signing checks.
-- Passed: artifact `XingGuang-iOS-25`, ID `8632548070`, size `21,367,271` bytes, SHA-256 `9252d978f2425eb91f94e0c0ec3d84388688d596d08ba6d503590819b0cc807a`, expires 2026-08-09.
-- Not run: real Files providers, large local media, camera, actual AVPlayer/VLC formats, PiP and AirPlay require TrollStore hardware acceptance.
-
-### Notes
-- `docs/ios-development.md`: records the successful final-plan CI run and the installable artifact identity.
-- `progress.md`: appends final CI evidence, remaining hardware boundaries, changed files and rollback point.
-- Rollback method: before committing, restore `docs/ios-development.md` and `progress.md`; after this evidence commit is the branch tip, run `git revert HEAD`.
-
 ## 2026-07-26 - Task: Apply Android-compatible Header and ad policies to iOS networking
 
 ### What was done
@@ -2955,3 +2914,44 @@
 - `docs/ios-development.md`: records successful attempt 2 and identifies the installable artifact.
 - `progress.md`: appends complete CI evidence, artifact distinction, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after the validation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Complete the iOS plan with local media playback and compatibility audit
+
+### What was done
+- Added a system Files entry for local audio/video, copied selected media into the App cache while its security scope was active, and opened it through the existing automatic AVPlayer/VLC routing.
+- Added a focused local-media player with play/pause, seek, speed and active-engine status, plus import service and UI coverage.
+- Completed the Android mobile versus iOS compatibility matrix, explicitly separating aligned features, iOS equivalents, platform limits and items outside this plan.
+
+### Testing
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'`.
+- Passed: source-reference inspection confirms the Settings entry, importer, playback sheet, service tests and UI accessibility assertion are connected.
+- Not available on this Windows host: Swift/Xcode/XcodeGen/CocoaPods compilation. The branch must pass the macOS GitHub Actions iPhone/iPad tests, device Release build, IPA structure and signing checks before this batch is called installable.
+
+### Notes
+- `ios/Sources/XingGuangKit/Services/LocalMediaImportService.swift`: validates supported extensions and copies security-scoped media into the App cache without loading the whole file into memory.
+- `ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift`: adds the local-media playback surface and essential controls on the shared player session.
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: adds the Files picker entry, import state and local player presentation.
+- `ios/Tests/XingGuangKitTests/LocalMediaImportServiceTests.swift`: covers supported-file copying and unsupported-file rejection.
+- `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: confirms the local-media action is exposed from Settings on iPhone.
+- `docs/ios-development.md`: documents local media storage, player routing, verification boundaries and the compatibility audit link.
+- `docs/ios-compatibility-matrix.md`: records Android mobile page, data-source, player and setting parity without treating platform exclusions as completed features.
+- `progress.md`: appends this implementation and validation record.
+- Rollback method: before committing, restore the seven iOS/docs files listed above and remove this appended entry; after the feature commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Validate final iOS plan completion on macOS CI
+
+### What was done
+- Confirmed the local media importer, shared AVPlayer/VLC player page and compatibility-audit batch on both supported device families.
+- Confirmed the device Release, TrollStore packaging, IPA structure and ad-hoc signing path and identified the installable artifact.
+
+### Testing
+- Passed: GitHub Actions run `30203798664`, job `89798248613`, completed successfully in 11 minutes 4 seconds.
+- Passed: iPhone and iPad unit/UI tests, including supported/unsupported local file fixtures and the Settings local-media action.
+- Passed: device Release build, IPA packaging, artifact upload, bundle structure and embedded/app ad-hoc signing checks.
+- Passed: artifact `XingGuang-iOS-25`, ID `8632548070`, size `21,367,271` bytes, SHA-256 `9252d978f2425eb91f94e0c0ec3d84388688d596d08ba6d503590819b0cc807a`, expires 2026-08-09.
+- Not run: real Files providers, large local media, camera, actual AVPlayer/VLC formats, PiP and AirPlay require TrollStore hardware acceptance.
+
+### Notes
+- `docs/ios-development.md`: records the successful final-plan CI run and the installable artifact identity.
+- `progress.md`: appends final CI evidence, remaining hardware boundaries, changed files and rollback point.
+- Rollback method: before committing, restore `docs/ios-development.md` and `progress.md`; after this evidence commit is the branch tip, run `git revert HEAD`.
