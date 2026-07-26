@@ -207,3 +207,5 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 - 备份同时写入 `ios.globalUserAgent` 和 Android 字段 `ua`，恢复 Android 备份时会把 `ua` 映射到 iOS 全局设置。本批次在 Windows 仅完成差异检查，须等待 macOS CI 编译、测试和 IPA 验证。
 
 首次验证运行 `30215997513` 在 iPhone 编译阶段发现 JavaScript HTTP 请求头与响应头局部变量重名，iPad、Release 和 IPA 未执行。请求侧变量已改为 `requestHeaders`；该修复不改变 Header 合并和全局 UA 优先级，仍需新一轮完整 CI 确认。
+
+修复后运行 `30216229525` 已通过全部 iPhone/iPad 单元与 UI 测试、设备 Release、TrollStore IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-35`（artifact ID `8635974723`，`22,895,448` 字节，保留至 2026-08-09）；清理真实缓存及真实站点/频道 UA 优先级仍需 TrollStore 真机验收。

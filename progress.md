@@ -3225,3 +3225,19 @@
 - `docs/ios-development.md`: records the failed run, exact cause and verification boundary.
 - `progress.md`: appends failure evidence, repair and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift docs/ios-development.md progress.md`; after this repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Record cache and User-Agent CI verification
+
+### What was done
+- Recorded the completed macOS validation and installable TrollStore artifact for cache management and global User-Agent parity.
+
+### Testing
+- Passed: GitHub Actions run `30216229525` completed all iPhone and iPad unit/UI tests.
+- Passed: the same run completed the device Release build, TrollStore IPA packaging, structure validation and ad-hoc signature checks.
+- Artifact: `XingGuang-iOS-35`, ID `8635974723`, `22,895,448` bytes, retained through 2026-08-09.
+- Remaining device validation: clear imported media while preserving persistent data, and verify global/source/channel UA precedence against real endpoints and MPV/MDK/AVPlayer.
+
+### Notes
+- `docs/ios-development.md`: records the successful full CI run, artifact metadata and remaining device checks.
+- `progress.md`: appends final verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
