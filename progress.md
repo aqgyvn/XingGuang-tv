@@ -3260,3 +3260,18 @@
 - `docs/ios-development.md`: documents Bundle metadata and the manual update boundary.
 - `progress.md`: appends implementation, verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/Views/SettingsView.swift ios/Tests/XingGuangUITests/XingGuangUITests.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md`; after this feature commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Record app version CI verification
+
+### What was done
+- Recorded the completed macOS validation and installable artifact for the settings version information.
+
+### Testing
+- Passed: GitHub Actions run `30216711028` completed the new iPhone version UI assertion and all iPhone/iPad tests.
+- Passed: the same run completed the device Release build, TrollStore IPA packaging, structure validation and ad-hoc signature checks.
+- Artifact: `XingGuang-iOS-36`, ID `8636151881`, `22,896,793` bytes, retained through 2026-08-09.
+
+### Notes
+- `docs/ios-development.md`: records the successful full CI run and artifact metadata.
+- `progress.md`: appends final verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.

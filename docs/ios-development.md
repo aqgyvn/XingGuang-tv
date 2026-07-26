@@ -214,3 +214,5 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 
 - 设置页从 App Bundle 读取 `CFBundleShortVersionString` 和 `CFBundleVersion`，显示当前安装 IPA 的版本号与构建号。
 - TrollStore 私人分发继续使用 GitHub Actions artifact 手动更新。iOS App 不在后台下载并替换自身，避免把 Android APK 自更新流程错误移植到 iOS。
+
+运行 `30216711028` 已通过版本行 UI 断言、全部 iPhone/iPad 测试、设备 Release、TrollStore IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-36`（artifact ID `8636151881`，`22,896,793` 字节，保留至 2026-08-09）。
