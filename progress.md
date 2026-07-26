@@ -2674,3 +2674,20 @@
 - `docs/ios-development.md`: records the new capability and remaining advanced-feature boundary.
 - `progress.md`: appends implementation, validation, file list and rollback point.
 - Rollback method: before committing, run `git restore -- ios docs/ios-development.md progress.md`; after the feature commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Validate external subtitles and danmaku on macOS CI
+
+### What was done
+- Confirmed the complete subtitle/danmaku batch on iPhone, iPad and the TrollStore device build path.
+- Classified the first attempt's existing configuration-save UI assertion as simulator automation instability after the unchanged second attempt passed.
+
+### Testing
+- Passed: GitHub Actions run `30193845251`, attempt 2, job `89772519079`, completed in 15 minutes 48 seconds.
+- Passed: iPhone tests in 5 minutes 24 seconds, iPad tests in 5 minutes 33 seconds, device Release build in 2 minutes 26 seconds, IPA packaging, structure/signing checks and artifact upload.
+- Passed: artifact `XingGuang-iOS-17` is 20.2 MB with SHA-256 `8e2780718314bbd26a60bad691923e4537b5e4e894e6bb6cb7a53203ce85e96c`.
+- Known boundary: real-device visual timing, Files security scope, VLC overlays, orientation and background restoration remain hardware acceptance items.
+
+### Notes
+- `docs/ios-development.md`: records the successful subtitle/danmaku CI run and artifact identity.
+- `progress.md`: appends CI evidence, the first-attempt classification and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after the documentation commit is the branch tip, run `git revert HEAD`.

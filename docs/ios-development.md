@@ -70,6 +70,8 @@ xcodebuild \
 
 ## GitHub Actions
 
+运行 `30193845251` 的第 2 次尝试已通过完整 iPhone/iPad 测试、设备 Release 构建、TrollStore IPA 打包和签名检查。产物为 `XingGuang-iOS-17`（20.2 MB，SHA-256 `8e2780718314bbd26a60bad691923e4537b5e4e894e6bb6cb7a53203ce85e96c`）；第 1 次尝试仅有既有配置保存 UI 断言波动，原样重跑通过。
+
 运行 `30179725200` 已通过工程生成、依赖安装、完整 iPhone/iPad 单元与 UI 测试、设备 Release 构建、TrollStore IPA 打包、IPA 结构及 ad-hoc 签名检查。产物为 `XingGuang-iOS-16`，artifact 大小 `21,077,952` 字节，保留 14 天。该结果关闭了本批 QuickJS/CommonCrypto、直播解析和备份导出的 CI 验证缺口，但真机媒体能力仍需 TrollStore 验收。
 
 运行 `30179470554` 已确认代理兼容用例通过、AES 加解密不再触发独占访问冲突，并确认 RSA X.509/PKCS#8 动态加密与往返解密通过。剩余两个失败来自测试向量：AES 旧期望值不符合 UTF-8 输入的标准 CBC/PKCS7 结果，RSA 旧固定密文实际解密为 `??-RSA`；现已用独立加密实现核验并替换向量。修正后的完整 iPhone/iPad、Release、IPA 和签名检查仍需下一次 macOS CI 确认。
