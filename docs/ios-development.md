@@ -19,9 +19,9 @@
 
 尚未完成或尚未验收：
 
-- 既有 GitHub Actions 成功运行及 `XingGuang-iOS-25` 产物仍属于旧 AVPlayer/VLC 版本，不包含本次 MPV/MDK 替换；新版本通过完整 CI 前没有可安装交付物。
+- `XingGuang-iOS-33` 已包含 MPV/MDK/AVPlayer、播放体验控制及完整 iPhone/iPad CI 验证；真实格式兼容、亮度、系统音量和画面比例仍以 TrollStore 真机验收为准。
 - JavaScript 仍不能运行依赖 Android JAR 的扩展函数；Android JAR、Python Spider 和部分来源专用 `playUrl` 解析链会返回明确的不兼容错误。
-- WebView 媒体嗅探、二维码扫描、DoH/广告规则代理和完整配置文件打开流程仍在后续阶段，当前不能宣称已移植。
+- WebView 媒体嗅探、二维码扫描、广告规则和配置文件打开流程已有 iOS 等效实现；DoH 受 iOS 15 URLSession 公共 API 限制，保留配置但使用系统 DNS。
 - HLS AES 等由系统播放核心原生处理；传入 Widevine、PlayReady、ClearKey 或其他外置 DRM 描述时会给出 DRM 错误。当前没有 FairPlay 许可证代理实现。
 - MPV/MDK 路径不承诺 AirPlay、系统画中画或任意自定义 Header 与 Android 完全一致；外置字幕仍可采用播放器上层同步渲染，不依赖某个内核的字幕样式实现。
 
@@ -199,3 +199,9 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 - `MediaPlayer` 为系统框架，仅用于系统音量控件，不引入第三方二进制。Windows 无法编译或模拟这些 UIKit/MediaPlayer 行为，本批次须通过新的 iPhone/iPad、Release、IPA 和签名 CI；真实亮度、音量和三内核裁剪效果仍需 TrollStore 真机验收。
 
 运行 `30215168139` 已通过新增播放器会话、持久化和备份测试、全部 iPhone/iPad UI 测试、设备 Release、IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-33`（artifact ID `8635726897`，`22,866,630` 字节，保留至 2026-08-09）；亮度、系统音量、定时暂停和三内核画面比例仍需 TrollStore 真机逐项验收。
+
+## 缓存与全局 User-Agent
+
+- 设置页的缓存项统计并清理 App 的 iOS `Caches` 目录，同时清空 `URLCache`。导入的本地媒体属于缓存，因此会被删除；SQLite、配置、收藏、历史和 UserDefaults 位于缓存目录之外，不参与清理。
+- 播放器设置提供全局 User-Agent。API、JavaScript HTTP、直播/EPG、字幕/弹幕、网页嗅探和媒体播放请求共用“显式 Header 优先、全局 UA 缺省补充”的规则；配置 Header、站点 Header、直播源或频道 UA 不会被全局值覆盖。
+- 备份同时写入 `ios.globalUserAgent` 和 Android 字段 `ua`，恢复 Android 备份时会把 `ua` 映射到 iOS 全局设置。本批次在 Windows 仅完成差异检查，须等待 macOS CI 编译、测试和 IPA 验证。

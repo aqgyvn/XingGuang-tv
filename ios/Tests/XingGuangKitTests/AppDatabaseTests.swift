@@ -79,14 +79,18 @@ final class AppDatabaseTests: XCTestCase {
 
     func testAndroidPreferencesAreMappedToIOSPlaybackSettings() throws {
         let database = try AppDatabase.inMemory()
-        let keys = ["ios.incognito", "ios.automaticLineChange", "ios.playerEngine", "incognito", "change", "player_engine"]
+        let keys = [
+            "ios.incognito", "ios.automaticLineChange", "ios.playerEngine", HTTPUserAgent.preferenceKey,
+            "incognito", "change", "player_engine", "ua"
+        ]
         defer { keys.forEach { UserDefaults.standard.removeObject(forKey: $0) } }
         let document = BackupDocument(
             configs: [ConfigRecord(type: 0, url: "https://example.com/config.json")],
             preferences: [
                 "incognito": .bool(true),
                 "change": .bool(false),
-                "player_engine": .number(2)
+                "player_engine": .number(2),
+                "ua": .string("Android-UA")
             ]
         )
 
@@ -95,6 +99,7 @@ final class AppDatabaseTests: XCTestCase {
         XCTAssertEqual(UserDefaults.standard.object(forKey: "ios.incognito") as? Bool, true)
         XCTAssertEqual(UserDefaults.standard.object(forKey: "ios.automaticLineChange") as? Bool, false)
         XCTAssertEqual(UserDefaults.standard.string(forKey: "ios.playerEngine"), PlayerEnginePreference.mpv.rawValue)
+        XCTAssertEqual(UserDefaults.standard.string(forKey: HTTPUserAgent.preferenceKey), "Android-UA")
     }
 
     func testAndroidIJKPreferenceMapsToMDK() throws {

@@ -74,21 +74,47 @@ public protocol HTTPClient: Sendable {
     func send(_ request: HTTPRequest) async throws -> HTTPResponse
 }
 
+public enum HTTPUserAgent {
+    public static let preferenceKey = "ios.globalUserAgent"
+
+    public static func configured(defaults: UserDefaults = .standard) -> String {
+        defaults.string(forKey: preferenceKey)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
+    public static func applyingDefault(to headers: [String: String], value: String) -> [String: String] {
+        guard !headers.keys.contains(where: { $0.caseInsensitiveCompare("User-Agent") == .orderedSame }) else {
+            return headers
+        }
+        let value = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return headers }
+        var result = headers
+        result["User-Agent"] = value
+        return result
+    }
+}
+
 public final class URLSessionHTTPClient: HTTPClient, @unchecked Sendable {
     private let session: URLSession
     private let policyStore: HTTPNetworkPolicyStore?
+    private let globalUserAgent: @Sendable () -> String
 
-    public init(configuration: URLSessionConfiguration = .default, policyStore: HTTPNetworkPolicyStore? = nil) {
+    public init(
+        configuration: URLSessionConfiguration = .default,
+        policyStore: HTTPNetworkPolicyStore? = nil,
+        globalUserAgent: @escaping @Sendable () -> String = { HTTPUserAgent.configured() }
+    ) {
         let sessionConfiguration = configuration
         sessionConfiguration.httpCookieStorage = HTTPCookieStorage.shared
         sessionConfiguration.httpShouldSetCookies = true
         sessionConfiguration.httpCookieAcceptPolicy = .always
         self.session = URLSession(configuration: sessionConfiguration)
         self.policyStore = policyStore
+        self.globalUserAgent = globalUserAgent
     }
 
     public func send(_ request: HTTPRequest) async throws -> HTTPResponse {
-        let request = try policyStore?.prepare(request) ?? request
+        var request = try policyStore?.prepare(request) ?? request
+        request.headers = HTTPUserAgent.applyingDefault(to: request.headers, value: globalUserAgent())
         var urlRequest = URLRequest(url: request.url, timeoutInterval: request.timeout)
         urlRequest.httpMethod = request.method.rawValue
         urlRequest.httpBody = request.body

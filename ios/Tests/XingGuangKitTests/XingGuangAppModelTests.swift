@@ -206,6 +206,7 @@ final class XingGuangAppModelTests: XCTestCase {
         model.playerPreference = .mpv
         model.incognito = true
         model.automaticLineChange = false
+        model.globalUserAgent = "XingGuang-UA"
 
         let backup = try model.makeBackupDocument()
 
@@ -214,6 +215,8 @@ final class XingGuangAppModelTests: XCTestCase {
         XCTAssertEqual(backup.preferences["player_engine"], .number(2))
         XCTAssertEqual(backup.preferences["incognito"], .bool(true))
         XCTAssertEqual(backup.preferences["change"], .bool(false))
+        XCTAssertEqual(backup.preferences["ua"], .string("XingGuang-UA"))
+        XCTAssertEqual(backup.preferences[HTTPUserAgent.preferenceKey], .string("XingGuang-UA"))
     }
 
     func testRemovedIOSPlayerPreferencesFallBackToAVPlayer() {
@@ -236,12 +239,30 @@ final class XingGuangAppModelTests: XCTestCase {
         )
         let episode = PlaybackEpisode(name: "正片", url: "https://example.com/player")
         let route = PlaybackRoute(name: "线路", episodes: [episode])
+        model.globalUserAgent = "Global-UA"
 
         let request = try await model.resolvePlayback(route: route, episode: episode)
 
         XCTAssertEqual(request.url, "https://cdn.example/video.m3u8")
         XCTAssertFalse(request.requiresSniffing)
         XCTAssertEqual(sniffer.receivedSite?.key, "sniff")
+        XCTAssertEqual(sniffer.receivedRequest?.headers["User-Agent"], "Global-UA")
+    }
+
+    func testLivePlaybackUsesGlobalUserAgentOnlyAsFallback() throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let model = XingGuangAppModel(defaults: defaults)
+        model.globalUserAgent = "Global-UA"
+        let live = Live(name: "直播")
+        var channel = Channel(name: "频道", urls: ["https://example.com/live.m3u8"])
+
+        let fallback = try model.livePlaybackRequest(live: live, channel: channel)
+        XCTAssertEqual(fallback.headers["User-Agent"], "Global-UA")
+
+        channel.userAgent = "Channel-UA"
+        let explicit = try model.livePlaybackRequest(live: live, channel: channel)
+        XCTAssertEqual(explicit.headers["User-Agent"], "Channel-UA")
     }
 
     func testLoadedConfigurationUpdatesSharedNetworkPolicy() async throws {
@@ -274,9 +295,11 @@ final class XingGuangAppModelTests: XCTestCase {
 @MainActor
 private final class MockWebMediaSniffer: WebMediaSniffing {
     private(set) var receivedSite: Site?
+    private(set) var receivedRequest: PlaybackRequest?
 
     func resolve(_ request: PlaybackRequest, site: Site) async throws -> PlaybackRequest {
         receivedSite = site
+        receivedRequest = request
         var result = request
         result.url = "https://cdn.example/video.m3u8"
         result.requiresSniffing = false

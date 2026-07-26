@@ -321,6 +321,14 @@ public final class AppDatabase: PersistenceStore, BackupDocumentApplying, @unche
         if preferences["ios.danmakuEnabled"] == nil, let value = boolValue(preferences["danmaku_show"]) {
             UserDefaults.standard.set(value, forKey: "ios.danmakuEnabled")
         }
+        if preferences[HTTPUserAgent.preferenceKey] == nil, let value = stringValue(preferences["ua"]) {
+            UserDefaults.standard.set(value, forKey: HTTPUserAgent.preferenceKey)
+        }
+    }
+
+    private func stringValue(_ value: JSONValue?) -> String? {
+        guard case .string(let value) = value else { return nil }
+        return value
     }
 
     private func boolValue(_ value: JSONValue?) -> Bool? {

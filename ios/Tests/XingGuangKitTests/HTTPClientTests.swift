@@ -74,6 +74,29 @@ final class HTTPClientTests: XCTestCase {
         }
     }
 
+    func testGlobalUserAgentIsDefaultAndDoesNotOverrideRequestOrPolicy() async throws {
+        URLProtocolStub.handler = { request in
+            URLProtocolStub.lastRequest = request
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (response, Data())
+        }
+        let policy = HTTPNetworkPolicyStore()
+        policy.apply(VodConfigDocument(headers: [HTTPHeaderRule(host: "policy.example", header: ["User-Agent": "Policy-UA"])]))
+        let client = makeClient(policyStore: policy, globalUserAgent: { "Global-UA" })
+
+        _ = try await client.send(HTTPRequest(url: URL(string: "https://default.example/data")!))
+        XCTAssertEqual(URLProtocolStub.lastRequest?.value(forHTTPHeaderField: "User-Agent"), "Global-UA")
+
+        _ = try await client.send(HTTPRequest(
+            url: URL(string: "https://source.example/data")!,
+            headers: ["user-agent": "Source-UA"]
+        ))
+        XCTAssertEqual(URLProtocolStub.lastRequest?.value(forHTTPHeaderField: "User-Agent"), "Source-UA")
+
+        _ = try await client.send(HTTPRequest(url: URL(string: "https://policy.example/data")!))
+        XCTAssertEqual(URLProtocolStub.lastRequest?.value(forHTTPHeaderField: "User-Agent"), "Policy-UA")
+    }
+
     func testTaskCancellationPropagatesAsCancellationError() async throws {
         URLProtocolStub.delay = 1
         URLProtocolStub.handler = { request in
@@ -95,10 +118,17 @@ final class HTTPClientTests: XCTestCase {
         }
     }
 
-    private func makeClient(policyStore: HTTPNetworkPolicyStore? = nil) -> URLSessionHTTPClient {
+    private func makeClient(
+        policyStore: HTTPNetworkPolicyStore? = nil,
+        globalUserAgent: @escaping @Sendable () -> String = { "" }
+    ) -> URLSessionHTTPClient {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [URLProtocolStub.self]
-        return URLSessionHTTPClient(configuration: configuration, policyStore: policyStore)
+        return URLSessionHTTPClient(
+            configuration: configuration,
+            policyStore: policyStore,
+            globalUserAgent: globalUserAgent
+        )
     }
 }
 

@@ -18,12 +18,16 @@ public struct SettingsView: View {
     @State private var localMediaFile: LocalMediaFile?
     @State private var localMediaError = ""
     @State private var localMediaLoading = false
+    @State private var cacheSizeText = "计算中"
+    @State private var cacheError = ""
+    @State private var cacheIsWorking = false
 
     private let backupDestination: (any BackupDocumentApplying)?
     private let backupImportService: BackupImportService
     private let backupExportService: BackupExportService
     private let configurationImportService: ConfigurationImportService
     private let localMediaImportService: LocalMediaImportService
+    private let cacheManagementService: CacheManagementService
 
     public init(
         model: XingGuangAppModel,
@@ -31,7 +35,8 @@ public struct SettingsView: View {
         backupImportService: BackupImportService = BackupImportService(),
         backupExportService: BackupExportService = BackupExportService(),
         configurationImportService: ConfigurationImportService = ConfigurationImportService(),
-        localMediaImportService: LocalMediaImportService = LocalMediaImportService()
+        localMediaImportService: LocalMediaImportService = LocalMediaImportService(),
+        cacheManagementService: CacheManagementService = CacheManagementService()
     ) {
         self.model = model
         self.backupDestination = backupDestination
@@ -39,6 +44,7 @@ public struct SettingsView: View {
         self.backupExportService = backupExportService
         self.configurationImportService = configurationImportService
         self.localMediaImportService = localMediaImportService
+        self.cacheManagementService = cacheManagementService
     }
 
     public var body: some View {
@@ -115,6 +121,29 @@ public struct SettingsView: View {
 
                     Divider().padding(.leading, 48)
 
+                    Button {
+                        clearCache()
+                    } label: {
+                        settingsRow(
+                            title: "缓存",
+                            value: cacheIsWorking ? "正在清理" : cacheSizeText,
+                            systemName: "trash"
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(cacheIsWorking)
+                    .accessibilityIdentifier("settings.cache.clear")
+
+                    if !cacheError.isEmpty {
+                        Label(cacheError, systemImage: "xmark.octagon.fill")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundColor(.red)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                    }
+
+                    Divider().padding(.leading, 48)
+
                     NavigationLink(destination: PlayerSettingsPreviewView(model: model)) {
                         settingsRow(title: "播放器设置", value: "进入", systemName: "slider.horizontal.3")
                     }
@@ -174,6 +203,7 @@ public struct SettingsView: View {
         .background(XingGuangTheme.background.ignoresSafeArea())
         .navigationTitle("设置")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { refreshCacheSize() }
         .onChange(of: model.vodConfigURL) { _ in model.resetConfigurationSaveState() }
         .onChange(of: model.liveConfigURL) { _ in model.resetConfigurationSaveState() }
         .fileImporter(
@@ -247,6 +277,28 @@ public struct SettingsView: View {
                 localMediaFile = try await localMediaImportService.importFile(at: url)
             } catch {
                 localMediaError = error.localizedDescription
+            }
+        }
+    }
+
+    private func refreshCacheSize() {
+        Task {
+            let bytes = await cacheManagementService.size()
+            cacheSizeText = bytes == 0 ? "无" : ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+        }
+    }
+
+    private func clearCache() {
+        cacheIsWorking = true
+        cacheError = ""
+        Task {
+            defer { cacheIsWorking = false }
+            do {
+                try await cacheManagementService.clear()
+                cacheSizeText = "无"
+            } catch {
+                cacheError = "缓存清理失败：\(error.localizedDescription)"
+                refreshCacheSize()
             }
         }
     }
@@ -594,7 +646,7 @@ private struct PlayerSettingsPreviewView: View {
                 HStack {
                     Text("播放内核")
                     Spacer()
-                    Text("AVPlayer")
+                    Text(playerEngineTitle)
                         .foregroundColor(.secondary)
                 }
                 Toggle("直播自动换线", isOn: $model.automaticLineChange)
@@ -628,9 +680,24 @@ private struct PlayerSettingsPreviewView: View {
             Section("弹幕") {
                 Toggle("显示弹幕", isOn: $model.danmakuEnabled)
             }
+
+            Section("网络") {
+                TextField("User-Agent", text: $model.globalUserAgent)
+                    .textInputAutocapitalization(.never)
+                    .disableAutocorrection(true)
+                    .accessibilityIdentifier("settings.player.userAgent")
+            }
         }
         .navigationTitle("播放器设置")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var playerEngineTitle: String {
+        switch model.playerPreference {
+        case .mpv: return "MPV"
+        case .mdk: return "MDK"
+        case .avPlayer: return "AVPlayer"
+        }
     }
 }
 

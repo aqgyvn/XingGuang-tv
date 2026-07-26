@@ -69,6 +69,9 @@ public final class XingGuangAppModel: ObservableObject {
     @Published public var danmakuEnabled: Bool {
         didSet { defaults.set(danmakuEnabled, forKey: "ios.danmakuEnabled") }
     }
+    @Published public var globalUserAgent: String {
+        didSet { defaults.set(globalUserAgent, forKey: HTTPUserAgent.preferenceKey) }
+    }
 
     public var continueWatching: History? { histories.first }
     public var repositoryAvailable: Bool { repository != nil }
@@ -135,6 +138,7 @@ public final class XingGuangAppModel: ObservableObject {
         let storedSubtitleOffset = defaults.object(forKey: "ios.subtitleBottomOffset") as? Double ?? 24
         self.subtitleBottomOffset = min(max(storedSubtitleOffset, 8), 120)
         self.danmakuEnabled = defaults.object(forKey: "ios.danmakuEnabled") as? Bool ?? true
+        self.globalUserAgent = HTTPUserAgent.configured(defaults: defaults)
         self.searchHistory = Array((defaults.stringArray(forKey: "ios.searchHistory") ?? []).prefix(20))
 
         if usePreviewData {
@@ -263,6 +267,7 @@ public final class XingGuangAppModel: ObservableObject {
         subtitleTextSize = min(max(defaults.object(forKey: "ios.subtitleTextSize") as? Double ?? subtitleTextSize, 14), 42)
         subtitleBottomOffset = min(max(defaults.object(forKey: "ios.subtitleBottomOffset") as? Double ?? subtitleBottomOffset, 8), 120)
         danmakuEnabled = defaults.object(forKey: "ios.danmakuEnabled") as? Bool ?? danmakuEnabled
+        globalUserAgent = HTTPUserAgent.configured(defaults: defaults)
     }
 
     public func search(keyword: String, page: Int = 1) async throws -> [Vod] {
@@ -299,8 +304,14 @@ public final class XingGuangAppModel: ObservableObject {
     }
 
     public func resolvePlayback(route: PlaybackRoute, episode: PlaybackEpisode) async throws -> PlaybackRequest {
-        guard let repository else { return PlaybackRequest(url: episode.url) }
+        guard let repository else {
+            var request = PlaybackRequest(url: episode.url)
+            request.headers = HTTPUserAgent.applyingDefault(to: request.headers, value: globalUserAgent)
+            request.enginePreference = playerPreference
+            return request
+        }
         var request = try await repository.resolvePlayback(site: selectedSite, flag: route.name, episodeURL: episode.url)
+        request.headers = HTTPUserAgent.applyingDefault(to: request.headers, value: globalUserAgent)
         if request.requiresSniffing {
             guard let webMediaSniffer else {
                 throw VodRepositoryError.unsupportedPlayback("当前运行环境未配置网页媒体嗅探器")
@@ -367,6 +378,7 @@ public final class XingGuangAppModel: ObservableObject {
                 "ios.subtitleTextSize": .number(subtitleTextSize),
                 "ios.subtitleBottomOffset": .number(subtitleBottomOffset),
                 "ios.danmakuEnabled": .bool(danmakuEnabled),
+                HTTPUserAgent.preferenceKey: .string(globalUserAgent),
                 "player_engine": .number(androidPlayerEngineValue),
                 "incognito": .bool(incognito),
                 "change": .bool(automaticLineChange),
@@ -374,7 +386,8 @@ public final class XingGuangAppModel: ObservableObject {
                 "scale_live": .number(Double(liveAspectMode.rawValue)),
                 "subtitle_text_size": .number(subtitleTextSize),
                 "subtitle_position": .number(subtitleBottomOffset),
-                "danmaku_show": .bool(danmakuEnabled)
+                "danmaku_show": .bool(danmakuEnabled),
+                "ua": .string(globalUserAgent)
             ]
         )
     }
@@ -431,6 +444,7 @@ public final class XingGuangAppModel: ObservableObject {
         if !userAgent.isEmpty { headers["User-Agent"] = userAgent }
         if !origin.isEmpty { headers["Origin"] = origin }
         if !referer.isEmpty { headers["Referer"] = referer }
+        headers = HTTPUserAgent.applyingDefault(to: headers, value: globalUserAgent)
         return PlaybackRequest(
             url: value,
             headers: headers,

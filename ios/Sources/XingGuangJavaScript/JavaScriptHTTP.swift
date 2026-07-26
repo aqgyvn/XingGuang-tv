@@ -64,9 +64,14 @@ public final class URLSessionJavaScriptHTTPTransport: NSObject, JavaScriptHTTPTr
     }
 
     private let policyStore: HTTPNetworkPolicyStore?
+    private let globalUserAgent: @Sendable () -> String
 
-    public init(policyStore: HTTPNetworkPolicyStore? = nil) {
+    public init(
+        policyStore: HTTPNetworkPolicyStore? = nil,
+        globalUserAgent: @escaping @Sendable () -> String = { HTTPUserAgent.configured() }
+    ) {
         self.policyStore = policyStore
+        self.globalUserAgent = globalUserAgent
         super.init()
     }
 
@@ -78,10 +83,14 @@ public final class URLSessionJavaScriptHTTPTransport: NSObject, JavaScriptHTTPTr
             body: request.body,
             timeout: request.timeout
         ))
+        let headers = HTTPUserAgent.applyingDefault(
+            to: policyRequest?.headers ?? request.headers,
+            value: globalUserAgent()
+        )
         var urlRequest = URLRequest(url: request.url, timeoutInterval: request.timeout)
         urlRequest.httpMethod = request.method.uppercased()
         urlRequest.httpBody = request.body
-        for (key, value) in policyRequest?.headers ?? request.headers {
+        for (key, value) in headers {
             urlRequest.setValue(value, forHTTPHeaderField: key)
         }
 

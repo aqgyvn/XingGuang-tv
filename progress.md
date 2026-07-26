@@ -3179,3 +3179,32 @@
 - `docs/ios-development.md`: records the rejected parser hypothesis, confirmed thread requirement and verification boundary.
 - `progress.md`: appends implementation, evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/CQuickJS/XGQuickJS.c docs/ios-development.md progress.md`; after this repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Add iOS cache management and global User-Agent parity
+
+### What was done
+- Added settings-page cache size display and scoped clearing for the iOS Caches directory and URL cache without touching persistent configuration, favorites, history or preferences.
+- Added a persisted global User-Agent with Android `ua` backup compatibility and default-only injection across API, JavaScript HTTP, live/EPG, sniffing and media playback requests.
+- Preserved source-specific, configuration-specific and channel-specific User-Agent precedence, and corrected the player settings summary to show the selected MPV, MDK or AVPlayer core.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors.
+- Added unit coverage for nested cache size calculation, scoped cache clearing, global UA injection precedence, Android `ua` restore, playback sniffing headers, live channel precedence and backup aliases.
+- Not available on this Windows host: Swift/Xcode compilation and iOS runtime execution; macOS CI must pass unit tests, iPhone/iPad UI launch, device Release, IPA structure and ad-hoc signing before this batch is installable.
+- Remaining device validation: clear imported media, confirm database/favorites/history remain, and verify global/source/channel UA behavior against real endpoints and all three playback cores.
+
+### Notes
+- `ios/Sources/XingGuangKit/Services/CacheManagementService.swift`: calculates and clears only the configured cache directory plus URL cache.
+- `ios/Sources/XingGuangKit/Services/HTTPClient.swift`: defines the shared default-UA rule and applies it to URLSession requests.
+- `ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift`: applies the same default-UA precedence to JavaScript HTTP calls.
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: persists, restores, exports and applies global UA to sniffing and playback requests.
+- `ios/Sources/XingGuangKit/Persistence/AppDatabase.swift`: maps Android backup field `ua` to the iOS preference.
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: adds cache controls and global UA input and fixes the displayed selected player core.
+- `ios/Tests/XingGuangKitTests/CacheManagementServiceTests.swift`: covers cache sizing and scoped clearing.
+- `ios/Tests/XingGuangKitTests/HTTPClientTests.swift`: covers global, explicit and policy UA precedence.
+- `ios/Tests/XingGuangKitTests/AppDatabaseTests.swift`: covers Android UA restore mapping.
+- `ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift`: covers playback/live UA behavior and backup aliases.
+- `docs/ios-development.md`: documents cache scope, UA precedence, backup behavior and the current verification boundary.
+- `docs/ios-compatibility-matrix.md`: marks cache management and global UA as aligned.
+- `progress.md`: appends implementation, verification evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift ios/Sources/XingGuangKit/Persistence/AppDatabase.swift ios/Sources/XingGuangKit/Services/HTTPClient.swift ios/Sources/XingGuangKit/State/XingGuangAppModel.swift ios/Sources/XingGuangKit/Views/SettingsView.swift ios/Tests/XingGuangKitTests/AppDatabaseTests.swift ios/Tests/XingGuangKitTests/HTTPClientTests.swift ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift docs/ios-development.md docs/ios-compatibility-matrix.md progress.md` and remove the two new cache service files; after this feature commit is the branch tip, run `git revert HEAD`.
