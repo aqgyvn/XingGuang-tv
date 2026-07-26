@@ -2826,6 +2826,24 @@
 - `progress.md`: appends this implementation and validation record.
 - Rollback method: before committing, restore the seven iOS/docs files listed above and remove this appended entry; after the feature commit is the branch tip, run `git revert HEAD`.
 
+## 2026-07-26 - Task: Validate final iOS plan completion on macOS CI
+
+### What was done
+- Confirmed the local media importer, shared AVPlayer/VLC player page and compatibility-audit batch on both supported device families.
+- Confirmed the device Release, TrollStore packaging, IPA structure and ad-hoc signing path and identified the installable artifact.
+
+### Testing
+- Passed: GitHub Actions run `30203798664`, job `89798248613`, completed successfully in 11 minutes 4 seconds.
+- Passed: iPhone and iPad unit/UI tests, including supported/unsupported local file fixtures and the Settings local-media action.
+- Passed: device Release build, IPA packaging, artifact upload, bundle structure and embedded/app ad-hoc signing checks.
+- Passed: artifact `XingGuang-iOS-25`, ID `8632548070`, size `21,367,271` bytes, SHA-256 `9252d978f2425eb91f94e0c0ec3d84388688d596d08ba6d503590819b0cc807a`, expires 2026-08-09.
+- Not run: real Files providers, large local media, camera, actual AVPlayer/VLC formats, PiP and AirPlay require TrollStore hardware acceptance.
+
+### Notes
+- `docs/ios-development.md`: records the successful final-plan CI run and the installable artifact identity.
+- `progress.md`: appends final CI evidence, remaining hardware boundaries, changed files and rollback point.
+- Rollback method: before committing, restore `docs/ios-development.md` and `progress.md`; after this evidence commit is the branch tip, run `git revert HEAD`.
+
 ## 2026-07-26 - Task: Apply Android-compatible Header and ad policies to iOS networking
 
 ### What was done

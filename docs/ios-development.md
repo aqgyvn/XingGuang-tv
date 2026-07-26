@@ -164,3 +164,5 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 ## Android / iOS 兼容审计
 
 完整页面、数据源、播放器和设置项审计见 [`ios-compatibility-matrix.md`](ios-compatibility-matrix.md)。矩阵明确区分已对齐、iOS 等效、平台限制和不在本轮范围；CI 通过与 TrollStore 真机通过分别记录，不互相替代。
+
+运行 `30203798664` 已通过本地媒体与兼容审计批次的 iPhone/iPad 单元和 UI 测试、设备 Release 构建、TrollStore IPA 打包、结构与 ad-hoc 签名检查。可安装产物为 `XingGuang-iOS-25`（artifact ID `8632548070`，`21,367,271` 字节，SHA-256 `9252d978f2425eb91f94e0c0ec3d84388688d596d08ba6d503590819b0cc807a`，保留至 2026-08-09）；本地大文件、外部 Files 提供方与具体编解码兼容性仍需 TrollStore 真机验收。
