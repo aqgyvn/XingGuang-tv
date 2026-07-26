@@ -30,6 +30,7 @@ final class XingGuangUITests: XCTestCase {
         XCTAssertTrue(app.buttons["settings.live.file"].exists)
         XCTAssertTrue(app.buttons["settings.live.scan"].exists)
         XCTAssertTrue(app.buttons["settings.localMedia.open"].exists)
+        XCTAssertTrue(app.staticTexts["settings.version.value"].exists)
 
         let vodField = app.textFields["点播配置"]
         XCTAssertTrue(vodField.waitForExistence(timeout: 5))

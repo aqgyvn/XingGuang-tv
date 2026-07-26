@@ -209,3 +209,8 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 首次验证运行 `30215997513` 在 iPhone 编译阶段发现 JavaScript HTTP 请求头与响应头局部变量重名，iPad、Release 和 IPA 未执行。请求侧变量已改为 `requestHeaders`；该修复不改变 Header 合并和全局 UA 优先级，仍需新一轮完整 CI 确认。
 
 修复后运行 `30216229525` 已通过全部 iPhone/iPad 单元与 UI 测试、设备 Release、TrollStore IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-35`（artifact ID `8635974723`，`22,895,448` 字节，保留至 2026-08-09）；清理真实缓存及真实站点/频道 UA 优先级仍需 TrollStore 真机验收。
+
+## 版本与更新
+
+- 设置页从 App Bundle 读取 `CFBundleShortVersionString` 和 `CFBundleVersion`，显示当前安装 IPA 的版本号与构建号。
+- TrollStore 私人分发继续使用 GitHub Actions artifact 手动更新。iOS App 不在后台下载并替换自身，避免把 Android APK 自更新流程错误移植到 iOS。

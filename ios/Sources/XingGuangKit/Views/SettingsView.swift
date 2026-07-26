@@ -195,6 +195,19 @@ public struct SettingsView: View {
 
                     backupImportStatus
                     backupExportStatus
+
+                    Divider().padding(.leading, 48)
+
+                    HStack(spacing: 10) {
+                        settingsLabel(title: "版本", systemName: "info.circle")
+                        Spacer()
+                        Text(appVersionText)
+                            .font(.subheadline)
+                            .foregroundColor(XingGuangTheme.secondaryText)
+                            .accessibilityIdentifier("settings.version.value")
+                    }
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 52)
                 }
                 .xingGuangPanel()
             }
@@ -595,6 +608,13 @@ public struct SettingsView: View {
             .foregroundColor(XingGuangTheme.text)
             .frame(maxWidth: .infinity, minHeight: 52)
             .contentShape(Rectangle())
+    }
+
+    private var appVersionText: String {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let version = info["CFBundleShortVersionString"] as? String ?? "未知"
+        let build = info["CFBundleVersion"] as? String ?? ""
+        return build.isEmpty ? version : "\(version) (\(build))"
     }
 }
 

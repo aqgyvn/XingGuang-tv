@@ -92,7 +92,8 @@ CI 通过只证明编译、测试、IPA 结构和签名有效；真机媒体、�
 | 缓存大小与清理 | 已对齐 | 设置页显示 iOS Caches 占用并可手动清理，覆盖导入的本地媒体和 URL 缓存；不删除配置、数据库、收藏、历史或偏好。 |
 | 全局 User-Agent | 已对齐 | 播放器设置提供持久化 UA；来源、配置 Header 和频道 UA 优先，全局 UA 仅在请求未指定时补充，并兼容 Android 备份字段 `ua`。 |
 | 渲染方式、Libass、系统字幕样式 | 平台限制 | 使用 AVPlayer、MPV/Metal、MDK Surface 与 App 字幕覆盖层，无 Android 渲染器等价开关。 |
-| 自动更新与版本页 | 不在本轮范围 | TrollStore IPA 由 GitHub Actions artifact 手动更新。 |
+| 版本信息 | 已对齐 | 设置页显示当前 IPA 的版本号和构建号。 |
+| 自动更新 | 平台限制 | TrollStore IPA 由 GitHub Actions artifact 手动安装；App 不在后台下载并替换自身。 |
 
 ## 验收边界
 

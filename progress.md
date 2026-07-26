@@ -3241,3 +3241,22 @@
 - `docs/ios-development.md`: records the successful full CI run, artifact metadata and remaining device checks.
 - `progress.md`: appends final verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Add iOS app version information
+
+### What was done
+- Added the installed IPA version and build number to the iOS settings page.
+- Kept TrollStore updates as an explicit artifact installation flow instead of copying Android APK self-update behavior.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors.
+- Added an iPhone UI assertion for the version value.
+- Not available on this Windows host: Swift/Xcode compilation; macOS CI must pass iPhone/iPad tests, device Release, IPA structure and ad-hoc signing.
+
+### Notes
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: displays Bundle version/build metadata in settings.
+- `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: verifies the version value exists on iPhone.
+- `docs/ios-compatibility-matrix.md`: marks version information aligned and separates the TrollStore update limitation.
+- `docs/ios-development.md`: documents Bundle metadata and the manual update boundary.
+- `progress.md`: appends implementation, verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/Views/SettingsView.swift ios/Tests/XingGuangUITests/XingGuangUITests.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md`; after this feature commit is the branch tip, run `git revert HEAD`.
