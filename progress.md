@@ -3275,3 +3275,26 @@
 - `docs/ios-development.md`: records the successful full CI run and artifact metadata.
 - `progress.md`: appends final verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Align iOS playback gestures
+
+### What was done
+- Added horizontal seek, double-tap play/pause and 1x to 5x pinch zoom to the shared playback gesture layer.
+- Applied the same behavior to on-demand, live and local-media playback, including an explicit reset-zoom action.
+- Corrected the compatibility matrix so current Android mobile behavior is not reported as missing cross-route autoplay or mirroring functionality.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors.
+- Added unit coverage for seek target calculation, media-bound clamping and zoom clamping.
+- Not available on this Windows host: SwiftUI compilation and multi-touch simulator checks; macOS CI must pass iPhone/iPad tests, device Release, IPA structure and ad-hoc signing.
+
+### Notes
+- `ios/Sources/XingGuangKit/Player/PlayerInteraction.swift`: extends the shared gesture overlay and adds testable seek/zoom calculations.
+- `ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift`: connects seek, playback toggle and zoom to on-demand playback.
+- `ios/Sources/XingGuangKit/Views/LiveHomeView.swift`: connects the same gestures to live playback.
+- `ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift`: connects the same gestures to local-media playback.
+- `ios/Tests/XingGuangKitTests/PlayerGestureMathTests.swift`: verifies seek and zoom boundaries.
+- `docs/ios-compatibility-matrix.md`: records gesture parity and corrects non-applicable Android rows.
+- `docs/ios-development.md`: documents behavior and the current verification boundary.
+- `progress.md`: appends implementation, verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/Player/PlayerInteraction.swift ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift ios/Sources/XingGuangKit/Views/LiveHomeView.swift ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md` and remove `ios/Tests/XingGuangKitTests/PlayerGestureMathTests.swift`; after this feature commit is the branch tip, run `git revert HEAD`.

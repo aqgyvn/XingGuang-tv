@@ -54,12 +54,32 @@ private struct PlayerAspectModifier: ViewModifier {
 
 public struct PlayerGestureOverlay: View {
     private let aspectMode: PlayerAspectMode
+    private let position: TimeInterval
+    private let duration: TimeInterval
+    private let onSeek: ((TimeInterval) -> Void)?
+    private let onTogglePlayback: (() -> Void)?
+    @Binding private var zoomScale: CGFloat
     @State private var gestureKind: GestureKind = .none
     @State private var initialValue: Float = 0
     @State private var displayedValue: Float?
+    @State private var displayedSeek: TimeInterval?
+    @State private var displayedZoom: CGFloat?
+    @State private var lastMagnification: CGFloat = 1
 
-    public init(aspectMode: PlayerAspectMode) {
+    public init(
+        aspectMode: PlayerAspectMode,
+        position: TimeInterval = 0,
+        duration: TimeInterval = 0,
+        zoomScale: Binding<CGFloat> = .constant(1),
+        onSeek: ((TimeInterval) -> Void)? = nil,
+        onTogglePlayback: (() -> Void)? = nil
+    ) {
         self.aspectMode = aspectMode
+        self.position = position
+        self.duration = duration
+        self._zoomScale = zoomScale
+        self.onSeek = onSeek
+        self.onTogglePlayback = onTogglePlayback
     }
 
     public var body: some View {
@@ -72,8 +92,17 @@ public struct PlayerGestureOverlay: View {
                 Color.clear
                     .contentShape(Rectangle())
                     .gesture(dragGesture(size: proxy.size))
+                    .simultaneousGesture(magnificationGesture)
+                    .onTapGesture(count: 2) { onTogglePlayback?() }
 
-                if let displayedValue, gestureKind != .ignored {
+                if let displayedSeek, gestureKind == .seek {
+                    gestureIndicator(
+                        systemName: displayedSeek >= position ? "goforward" : "gobackward",
+                        text: formatTime(displayedSeek)
+                    )
+                } else if let displayedZoom {
+                    gestureIndicator(systemName: "plus.magnifyingglass", text: String(format: "%.1fx", displayedZoom))
+                } else if let displayedValue, gestureKind != .ignored {
                     VStack(spacing: 8) {
                         Image(systemName: gestureKind == .brightness ? "sun.max.fill" : "speaker.wave.2.fill")
                         Text("\(Int((displayedValue * 100).rounded()))%")
@@ -98,8 +127,13 @@ public struct PlayerGestureOverlay: View {
             .onChanged { value in
                 guard size.height > 0 else { return }
                 if gestureKind == .none {
-                    guard abs(value.translation.height) > abs(value.translation.width) else {
-                        gestureKind = .ignored
+                    if abs(value.translation.width) > abs(value.translation.height) {
+                        guard onSeek != nil, duration > 0 else {
+                            gestureKind = .ignored
+                            return
+                        }
+                        gestureKind = .seek
+                        initialValue = Float(position)
                         return
                     }
                     gestureKind = value.startLocation.x < size.width / 2 ? .brightness : .volume
@@ -108,6 +142,14 @@ public struct PlayerGestureOverlay: View {
                         : SystemVolumeController.shared.currentValue
                 }
                 guard gestureKind != .ignored else { return }
+                if gestureKind == .seek {
+                    displayedSeek = PlayerGestureMath.seekTarget(
+                        initial: TimeInterval(initialValue),
+                        translation: value.translation.width,
+                        duration: duration
+                    )
+                    return
+                }
                 let delta = Float(-value.translation.height / size.height * 1.5)
                 let value = min(max(initialValue + delta, 0), 1)
                 displayedValue = value
@@ -118,17 +160,67 @@ public struct PlayerGestureOverlay: View {
                 }
             }
             .onEnded { _ in
+                if gestureKind == .seek, let displayedSeek { onSeek?(displayedSeek) }
                 gestureKind = .none
                 displayedValue = nil
+                displayedSeek = nil
             }
+    }
+
+    private var magnificationGesture: some Gesture {
+        MagnificationGesture()
+            .onChanged { value in
+                gestureKind = .ignored
+                displayedValue = nil
+                displayedSeek = nil
+                let delta = value / lastMagnification
+                zoomScale = PlayerGestureMath.zoomScale(current: zoomScale, delta: delta)
+                lastMagnification = value
+                displayedZoom = zoomScale
+            }
+            .onEnded { _ in
+                gestureKind = .none
+                lastMagnification = 1
+                displayedZoom = nil
+            }
+    }
+
+    private func gestureIndicator(systemName: String, text: String) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: systemName)
+            Text(text).font(.caption.monospacedDigit())
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 12)
+        .background(Color.black.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .allowsHitTesting(false)
+    }
+
+    private func formatTime(_ value: TimeInterval) -> String {
+        let seconds = max(Int(value), 0)
+        return String(format: "%02d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
     }
 }
 
 private enum GestureKind {
     case none
     case ignored
+    case seek
     case brightness
     case volume
+}
+
+enum PlayerGestureMath {
+    static func seekTarget(initial: TimeInterval, translation: CGFloat, duration: TimeInterval) -> TimeInterval {
+        min(max(initial + TimeInterval(translation) * 0.05, 0), max(duration, 0))
+    }
+
+    static func zoomScale(current: CGFloat, delta: CGFloat) -> CGFloat {
+        min(max(current * delta, 1), 5)
+    }
 }
 
 private final class SystemVolumeController {

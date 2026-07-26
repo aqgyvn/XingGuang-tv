@@ -16,6 +16,7 @@ public struct LiveHomeView: View {
     @State private var playbackNotice = ""
     @State private var epgTask: Task<Void, Never>?
     @State private var lineFallbackTask: Task<Void, Never>?
+    @State private var zoomScale: CGFloat = 1
     @State private var attemptedLines: Set<Int> = []
     @State private var selectedAudioTrackID = ""
     @State private var selectedVideoTrackID = ""
@@ -173,9 +174,18 @@ public struct LiveHomeView: View {
             ZStack {
                 PlayerSurfaceView(engine: session.engine)
                     .playerAspect(model.liveAspectMode)
-                PlayerGestureOverlay(aspectMode: model.liveAspectMode)
+                    .scaleEffect(zoomScale)
+                PlayerGestureOverlay(
+                    aspectMode: model.liveAspectMode,
+                    position: session.time.position,
+                    duration: session.time.duration,
+                    zoomScale: $zoomScale,
+                    onSeek: session.seek,
+                    onTogglePlayback: session.togglePlayback
+                )
                 playerOverlay
             }
+            .clipped()
             liveControls
         }
         .background(Color.black)
@@ -435,6 +445,13 @@ public struct LiveHomeView: View {
                 }
             } label: {
                 Label("画面比例：\(model.liveAspectMode.title)", systemImage: "aspectratio")
+            }
+            if zoomScale > 1 {
+                Button {
+                    zoomScale = 1
+                } label: {
+                    Label("重置缩放", systemImage: "arrow.counterclockwise")
+                }
             }
         } label: {
             Image(systemName: session.sleepTimerRemaining > 0 ? "timer" : "ellipsis.circle")

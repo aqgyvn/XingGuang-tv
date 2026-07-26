@@ -14,6 +14,7 @@ struct VodDetailPreviewView: View {
     @State private var seeking = false
     @State private var speed = 1.0
     @State private var aspectMode: PlayerAspectMode
+    @State private var zoomScale: CGFloat = 1
     @State private var reverseSort = false
     @State private var opening = 0.0
     @State private var ending = 0.0
@@ -147,7 +148,15 @@ struct VodDetailPreviewView: View {
             ZStack {
                 PlayerSurfaceView(engine: session.engine)
                     .playerAspect(aspectMode)
-                PlayerGestureOverlay(aspectMode: aspectMode)
+                    .scaleEffect(zoomScale)
+                PlayerGestureOverlay(
+                    aspectMode: aspectMode,
+                    position: session.time.position,
+                    duration: session.time.duration,
+                    zoomScale: $zoomScale,
+                    onSeek: session.seek,
+                    onTogglePlayback: session.togglePlayback
+                )
                 if model.danmakuEnabled, !danmakuCues.isEmpty {
                     DanmakuOverlayView(cues: danmakuCues, position: session.time.position)
                 }
@@ -161,6 +170,7 @@ struct VodDetailPreviewView: View {
                 }
                 playerOverlay
             }
+            .clipped()
             controls
         }
         .background(Color.black)
@@ -369,6 +379,13 @@ struct VodDetailPreviewView: View {
                 }
             } label: {
                 Label("画面比例：\(aspectMode.title)", systemImage: "aspectratio")
+            }
+            if zoomScale > 1 {
+                Button {
+                    zoomScale = 1
+                } label: {
+                    Label("重置缩放", systemImage: "arrow.counterclockwise")
+                }
             }
             Divider()
             Button {

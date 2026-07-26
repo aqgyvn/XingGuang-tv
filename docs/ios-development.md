@@ -2,7 +2,7 @@
 
 ## 当前阶段
 
-当前分支正在把已通过 CI 的 AVPlayer/VLC 版本替换为 MPV、MDK、AVPlayer 三播放核心；新内核版本尚待 macOS CI 和 TrollStore 真机验收。目标平台为 iOS/iPadOS 15.0 及以上，分发方式为 TrollStore 私人安装。
+当前分支使用 MPV、MDK、AVPlayer 三播放核心，已通过 macOS CI 的编译、测试、设备 Release、IPA 结构和签名检查；真实媒体兼容性仍须 TrollStore 真机验收。目标平台为 iOS/iPadOS 15.0 及以上，分发方式为 TrollStore 私人安装。
 
 已实现的代码能力：
 
@@ -196,7 +196,10 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 - 点播历史继续使用既有 `opening`、`ending`、`revSort` 和 `scale` 字段；周期性进度保存会读取并保留这些设置，不新增数据库字段。
 - 点播、直播和本地媒体均提供原始、16:9、4:3、填充和裁剪。默认比例与直播比例写入 iOS 偏好，并兼容 Android 备份的 `scale`、`scale_live`。
 - 三个播放页面的左侧纵向手势调用 `UIScreen.brightness`，右侧通过系统 `MPVolumeView` 修改媒体音量；水平拖动不触发亮度或音量修改。
+- 三个播放页面共用横向拖动跳转、双击播放/暂停和双指缩放手势。跳转目标限制在媒体有效时长内；缩放范围为 1x 到 5x，播放菜单可恢复为 1x。
 - `MediaPlayer` 为系统框架，仅用于系统音量控件，不引入第三方二进制。Windows 无法编译或模拟这些 UIKit/MediaPlayer 行为，本批次须通过新的 iPhone/iPad、Release、IPA 和签名 CI；真实亮度、音量和三内核裁剪效果仍需 TrollStore 真机验收。
+
+横向跳转与缩放边界已有纯逻辑单元测试；SwiftUI 多手势组合、双击命中以及 MPV/MDK/AVPlayer 三种画面承载视图的实际缩放仍须下一次 macOS CI 和 TrollStore 真机确认。
 
 运行 `30215168139` 已通过新增播放器会话、持久化和备份测试、全部 iPhone/iPad UI 测试、设备 Release、IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-33`（artifact ID `8635726897`，`22,866,630` 字节，保留至 2026-08-09）；亮度、系统音量、定时暂停和三内核画面比例仍需 TrollStore 真机逐项验收。
 

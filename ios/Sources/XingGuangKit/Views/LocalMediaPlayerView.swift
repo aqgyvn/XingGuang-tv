@@ -10,6 +10,7 @@ struct LocalMediaPlayerView: View {
     @State private var seeking = false
     @State private var speed: Double
     @State private var aspectMode: PlayerAspectMode
+    @State private var zoomScale: CGFloat = 1
 
     private let file: LocalMediaFile
     private let request: PlaybackRequest
@@ -34,9 +35,18 @@ struct LocalMediaPlayerView: View {
                 ZStack {
                     PlayerSurfaceView(engine: session.engine)
                         .playerAspect(aspectMode)
-                    PlayerGestureOverlay(aspectMode: aspectMode)
+                        .scaleEffect(zoomScale)
+                    PlayerGestureOverlay(
+                        aspectMode: aspectMode,
+                        position: session.time.position,
+                        duration: session.time.duration,
+                        zoomScale: $zoomScale,
+                        onSeek: session.seek,
+                        onTogglePlayback: session.togglePlayback
+                    )
                     playerOverlay
                 }
+                .clipped()
                 .background(Color.black)
 
                 VStack(spacing: 14) {
@@ -153,6 +163,13 @@ struct LocalMediaPlayerView: View {
                 }
             } label: {
                 Label("画面比例：\(aspectMode.title)", systemImage: "aspectratio")
+            }
+            if zoomScale > 1 {
+                Button {
+                    zoomScale = 1
+                } label: {
+                    Label("重置缩放", systemImage: "arrow.counterclockwise")
+                }
             }
         } label: {
             Image(systemName: session.sleepTimerRemaining > 0 ? "timer" : "ellipsis.circle")
