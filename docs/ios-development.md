@@ -201,6 +201,8 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 
 横向跳转与缩放边界已有纯逻辑单元测试；SwiftUI 多手势组合、双击命中以及 MPV/MDK/AVPlayer 三种画面承载视图的实际缩放仍须下一次 macOS CI 和 TrollStore 真机确认。
 
+运行 `30217502376` 已通过手势边界单元测试、全部 iPhone/iPad 单元与 UI 测试、设备 Release、TrollStore IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-37`（artifact ID `8636317881`，`22,918,293` 字节，保留至 2026-08-09）；多指识别、双击命中和三内核画面缩放仍需 TrollStore 真机逐项验收。
+
 运行 `30215168139` 已通过新增播放器会话、持久化和备份测试、全部 iPhone/iPad UI 测试、设备 Release、IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-33`（artifact ID `8635726897`，`22,866,630` 字节，保留至 2026-08-09）；亮度、系统音量、定时暂停和三内核画面比例仍需 TrollStore 真机逐项验收。
 
 ## 缓存与全局 User-Agent
