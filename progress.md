@@ -3412,3 +3412,19 @@
 - `docs/ios-development.md`: documents the current-site network boundary and verification gap.
 - `progress.md`: appends implementation, verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/Views/SearchPreviewView.swift ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md`; after this feature commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Record on-demand detail interaction CI verification
+
+### What was done
+- Recorded the completed macOS validation and installable TrollStore artifact for detail metadata, title search and description copying.
+
+### Testing
+- Passed: GitHub Actions run `30219170472` completed all iPhone and iPad unit/UI tests.
+- Passed: the same run completed the device Release build, TrollStore IPA packaging, structure validation and ad-hoc signature checks.
+- Artifact: `XingGuang-iOS-40`, ID `8636797938`, `23,009,399` bytes, retained through 2026-08-09.
+- Remaining device validation: real-source title search results and system clipboard behavior.
+
+### Notes
+- `docs/ios-development.md`: records the successful full CI run, artifact metadata and remaining device checks.
+- `progress.md`: appends final verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.

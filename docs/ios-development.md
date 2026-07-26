@@ -219,6 +219,8 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 - 片名提供当前站源再搜索入口，复用既有分页与搜索记录；简介提供系统剪贴板复制按钮。
 - 本批次不新增搜索服务或并发请求，仍只访问用户已配置的当前站源；SwiftUI 页面与预填搜索须由下一次 macOS CI 验证。
 
+运行 `30219170472` 已通过全部 iPhone/iPad 单元与 UI 测试、设备 Release、TrollStore IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-40`（artifact ID `8636797938`，`23,009,399` 字节，保留至 2026-08-09）；真实站源的片名再搜索结果和系统剪贴板行为仍需 TrollStore 真机验收。
+
 运行 `30215168139` 已通过新增播放器会话、持久化和备份测试、全部 iPhone/iPad UI 测试、设备 Release、IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-33`（artifact ID `8635726897`，`22,866,630` 字节，保留至 2026-08-09）；亮度、系统音量、定时暂停和三内核画面比例仍需 TrollStore 真机逐项验收。
 
 ## 缓存与全局 User-Agent
