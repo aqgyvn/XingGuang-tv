@@ -155,10 +155,11 @@ public final class LocalProxyServer: @unchecked Sendable {
             send(status: 400, body: Data(), headers: [:], headOnly: parts[0] == "HEAD", connection: connection)
             return
         }
-        Task {
+        Task.detached { [weak self] in
+            guard let self else { return }
             do {
-                let response = try await repository.proxy(parameters: parameters)
-                send(
+                let response = try await self.repository.proxy(parameters: parameters)
+                self.send(
                     status: min(max(response.statusCode, 100), 599),
                     body: response.data,
                     headers: response.headers.merging(["Content-Type": response.contentType]) { current, _ in current },
@@ -166,7 +167,7 @@ public final class LocalProxyServer: @unchecked Sendable {
                     connection: connection
                 )
             } catch {
-                send(status: 502, body: Data(error.localizedDescription.utf8), headers: ["Content-Type": "text/plain; charset=utf-8"], headOnly: parts[0] == "HEAD", connection: connection)
+                self.send(status: 502, body: Data(error.localizedDescription.utf8), headers: ["Content-Type": "text/plain; charset=utf-8"], headOnly: parts[0] == "HEAD", connection: connection)
             }
         }
     }

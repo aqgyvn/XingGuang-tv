@@ -34,7 +34,7 @@ private final class QuickJSHandleBox: @unchecked Sendable {
 public actor QuickJSRuntime {
     private let host: QuickJSHostBox
     private nonisolated let handleBox: QuickJSHandleBox
-    private let initialArgumentData: Data
+    private let initialArgumentJSON: String
     private var initialized = false
     private let timeout: TimeInterval
 
@@ -62,10 +62,10 @@ public actor QuickJSRuntime {
         if let data = try? JSONSerialization.data(
             withJSONObject: [host.initialArgument()],
             options: [.fragmentsAllowed]
-        ) {
-            self.initialArgumentData = data
+        ), let value = String(data: data, encoding: .utf8) {
+            self.initialArgumentJSON = value
         } else {
-            self.initialArgumentData = Data("[\"\"]".utf8)
+            self.initialArgumentJSON = "[\"\"]"
         }
     }
 
@@ -86,8 +86,11 @@ public actor QuickJSRuntime {
             throw JavaScriptRuntimeError.execution("JavaScript 参数无法编码")
         }
         let data = try JSONSerialization.data(withJSONObject: arguments, options: [.fragmentsAllowed])
+        guard let json = String(data: data, encoding: .utf8) else {
+            throw JavaScriptRuntimeError.execution("JavaScript 参数不是 UTF-8")
+        }
         return try await withTaskCancellationHandler(operation: {
-            try await self.callJSON(method, argumentsData: data)
+            try await self.callJSON(method, argumentsJSON: json)
         }, onCancel: {
             self.handleBox.interrupt()
         })
@@ -114,27 +117,17 @@ public actor QuickJSRuntime {
         if let bridgeError = host.consumeBridgeError() {
             throw JavaScriptRuntimeError.unsupported(bridgeError)
         }
-        _ = try callJSON("init", argumentsData: initialArgumentData)
+        _ = try callJSON("init", argumentsJSON: initialArgumentJSON)
         initialized = true
     }
 
-    private func callJSON(_ method: String, argumentsData: Data) throws -> String {
+    private func callJSON(_ method: String, argumentsJSON: String) throws -> String {
         guard let handle = handleBox.current() else {
             throw JavaScriptRuntimeError.execution("QuickJS context 已释放")
         }
         host.clearBridgeError()
         setDeadline(handle)
-        let result = method.withCString { methodPointer in
-            argumentsData.withUnsafeBytes { bytes in
-                xg_quickjs_call(
-                    handle,
-                    methodPointer,
-                    bytes.baseAddress?.assumingMemoryBound(to: CChar.self),
-                    bytes.count
-                )
-            }
-        }
-        guard let result else {
+        guard let result = xg_quickjs_call(handle, method, argumentsJSON) else {
             if let bridgeError = host.consumeBridgeError() {
                 throw JavaScriptRuntimeError.unsupported(bridgeError)
             }

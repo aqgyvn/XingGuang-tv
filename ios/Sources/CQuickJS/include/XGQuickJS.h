@@ -25,12 +25,7 @@ XGQuickJSContext *xg_quickjs_create(
 void xg_quickjs_destroy(XGQuickJSContext *context);
 
 int xg_quickjs_load_spider(XGQuickJSContext *context, const char *module_name);
-char *xg_quickjs_call(
-    XGQuickJSContext *context,
-    const char *method,
-    const char *arguments_json,
-    size_t arguments_length
-);
+char *xg_quickjs_call(XGQuickJSContext *context, const char *method, const char *arguments_json);
 
 void xg_quickjs_set_deadline(XGQuickJSContext *context, int64_t deadline_ms);
 void xg_quickjs_interrupt(XGQuickJSContext *context);

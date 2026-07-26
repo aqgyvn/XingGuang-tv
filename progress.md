@@ -2762,3 +2762,25 @@
 - `docs/ios-development.md`: records run `30196066791` and the remaining validation boundary.
 - `progress.md`: appends the failed-run evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Isolate local proxy execution from the Network callback context
+
+### What was done
+- Rejected and removed the explicit QuickJS JSON byte-length change after CI proved it caused two regressions without fixing the loopback failure.
+- Preserved the passing repeated async-call fixture and moved only local proxy repository work into an independent task.
+
+### Testing
+- Passed: run `30196244674` compiled the test correction and the direct repeated async QuickJS argument fixture did not fail.
+- Failed before fix: run `30196244674`, job `89778197134`, retained the loopback 502 and introduced two existing `xg-arguments` failures under the explicit-length interface.
+- Passed: source inspection confirms the native QuickJS call declaration and Swift bridge are restored to the previously passing contract.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after implementation.
+- Not run: isolated local proxy execution, iPad tests, device Release build, IPA packaging and signing require the next macOS CI run.
+
+### Notes
+- `ios/Sources/CQuickJS/include/XGQuickJS.h`: restores the original call declaration.
+- `ios/Sources/CQuickJS/XGQuickJS.c`: restores the previously passing JSON parse contract.
+- `ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift`: restores String-backed argument serialization.
+- `ios/Sources/XingGuangJavaScript/LocalProxyServer.swift`: dispatches repository work from an independent task.
+- `docs/ios-development.md`: records the rejected hypothesis and current repair boundary.
+- `progress.md`: appends CI evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/CQuickJS/include/XGQuickJS.h ios/Sources/CQuickJS/XGQuickJS.c ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift ios/Sources/XingGuangJavaScript/LocalProxyServer.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
