@@ -187,3 +187,5 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 运行 `30213000078` 已确认 iPhone 全部测试通过，iPad 仅本地 JavaScript 代理回环用例失败；五次请求均返回 502。原生诊断显示 QuickJS 收到的参数长度为 52、前缀为 `5b7b2276`（`[{"v`），因此输入并非空缓冲或截断。参数数组现改由 QuickJS 常规全局表达式求值生成，不再调用该场景下间歇失败的 `JS_ParseJSON`；Swift 侧的结构化 JSON 校验、数组检查和错误诊断保持不变。该修复必须通过新的 iPhone/iPad、设备 Release、IPA 和签名检查后才算完成。
 
 运行 `30213741191` 在 iPhone 的第 3 次回环代理请求上复现同一首字符异常，证明改用常规表达式求值没有解决问题，该方案已撤回。QuickJS 公共头文件明确要求 runtime 换线程后调用 `JS_UpdateStackTop`；Swift actor 虽然保证串行，但不保证每次恢复在同一系统线程。原生桥现于加载 Spider 和每次方法调用前更新栈顶，并恢复结构化 `JS_ParseJSON`。该线程切换修复仍须完整 macOS CI 验证。
+
+运行 `30214215174` 已通过五次连续本地代理请求、全部 iPhone/iPad 单元与 UI 测试、设备 Release 构建、TrollStore IPA 结构和 ad-hoc 签名检查，确认线程切换修复有效。产物为 `XingGuang-iOS-32`（artifact ID `8635451446`，`22,777,323` 字节，保留至 2026-08-09）；真实 JavaScript 来源及代理媒体仍需 TrollStore 真机验收。

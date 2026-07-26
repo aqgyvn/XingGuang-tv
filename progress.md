@@ -3097,6 +3097,22 @@
 - `progress.md`: appends implementation, verification evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/CQuickJS/XGQuickJS.c docs/ios-development.md progress.md`; after this repair commit is the branch tip, run `git revert HEAD`.
 
+## 2026-07-27 - Task: Record verified QuickJS thread-hop repair
+
+### What was done
+- Recorded the completed macOS verification for the QuickJS stack-top refresh and current installable artifact.
+
+### Testing
+- Passed: GitHub Actions run `30214215174` completed five sequential local-proxy requests and all iPhone/iPad unit and UI tests.
+- Passed: the same run completed the device Release build, TrollStore IPA packaging, structure validation and ad-hoc signature checks.
+- Artifact: `XingGuang-iOS-32`, ID `8635451446`, `22,777,323` bytes, retained through 2026-08-09.
+- Remaining device validation: real JavaScript sources and proxied media playback through TrollStore.
+
+### Notes
+- `docs/ios-development.md`: records the successful full CI run and artifact metadata.
+- `progress.md`: appends the final verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
+
 ## 2026-07-27 - Task: Update QuickJS stack state after Swift thread hops
 
 ### What was done
