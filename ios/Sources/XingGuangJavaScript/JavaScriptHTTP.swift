@@ -1,4 +1,5 @@
 import Foundation
+import XingGuangKit
 
 public struct JavaScriptHTTPRequest: Sendable {
     public var method: String

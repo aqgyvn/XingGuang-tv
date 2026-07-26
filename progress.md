@@ -2834,3 +2834,20 @@
 - `docs/ios-development.md`: documents behavior and DoH/player-core boundaries.
 - `progress.md`: appends implementation, verification evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/App/XingGuangApp.swift ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift ios/Sources/XingGuangKit/Models/CatalogModels.swift ios/Sources/XingGuangKit/Services/HTTPClient.swift ios/Sources/XingGuangKit/Services/HTTPNetworkPolicy.swift ios/Sources/XingGuangKit/Services/WebMediaSniffer.swift ios/Sources/XingGuangKit/State/XingGuangAppModel.swift ios/Tests/XingGuangKitTests/DomainModelsTests.swift ios/Tests/XingGuangKitTests/HTTPClientTests.swift ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift docs/ios-development.md progress.md`; after the feature commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Fix the JavaScript network-policy module import
+
+### What was done
+- Added the missing shared-module import to the JavaScript HTTP transport without changing policy behavior.
+
+### Testing
+- Passed: run `30197040000` compiled the `XingGuangKit` policy and WebKit sources before reaching the JavaScript target.
+- Failed before fix: run `30197040000`, job `89780267604`, reported that `HTTPNetworkPolicyStore` was not in scope in `JavaScriptHTTP.swift`.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after the import fix.
+- Not run: corrected JavaScript target compilation, iPhone/iPad tests, device Release build, IPA packaging and signing require the next macOS CI run.
+
+### Notes
+- `ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift`: imports `XingGuangKit` for the shared policy type.
+- `docs/ios-development.md`: records the failed run and pending validation boundary.
+- `progress.md`: appends CI evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
