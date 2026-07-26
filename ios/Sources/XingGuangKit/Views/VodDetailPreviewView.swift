@@ -155,7 +155,14 @@ struct VodDetailPreviewView: View {
                     duration: session.time.duration,
                     zoomScale: $zoomScale,
                     onSeek: session.seek,
-                    onTogglePlayback: session.togglePlayback
+                    onTogglePlayback: session.togglePlayback,
+                    speedBoostRate: isPlaying ? model.defaultPlaybackSpeed : nil,
+                    onSpeedBoostStart: { session.setRate(Float(model.defaultPlaybackSpeed)) },
+                    onSpeedBoostEnd: { session.setRate(Float(speed)) },
+                    swipeUpTitle: reverseSort ? "上一集" : "下一集",
+                    swipeDownTitle: reverseSort ? "下一集" : "上一集",
+                    onSwipeUp: { switchEpisode(forward: true) },
+                    onSwipeDown: { switchEpisode(forward: false) }
                 )
                 if model.danmakuEnabled, !danmakuCues.isEmpty {
                     DanmakuOverlayView(cues: danmakuCues, position: session.time.position)
@@ -698,6 +705,19 @@ struct VodDetailPreviewView: View {
         }
         let nextIndex = reverseSort ? selectedEpisode - 1 : selectedEpisode + 1
         guard let route = currentRoute, route.episodes.indices.contains(nextIndex) else { return }
+        selectedEpisode = nextIndex
+        resetPersistenceCheckpoint()
+        play(route: route, episode: route.episodes[nextIndex])
+    }
+
+    private func switchEpisode(forward: Bool) {
+        let offset = PlayerGestureMath.episodeOffset(forward: forward, reverse: reverseSort)
+        let nextIndex = selectedEpisode + offset
+        guard let route = currentRoute, route.episodes.indices.contains(nextIndex) else {
+            detailError = forward ? "已经是最后一集" : "已经是第一集"
+            return
+        }
+        persistPlayback()
         selectedEpisode = nextIndex
         resetPersistenceCheckpoint()
         play(route: route, episode: route.episodes[nextIndex])

@@ -3314,3 +3314,26 @@
 - `docs/ios-development.md`: records the successful full CI run, artifact metadata and remaining device checks.
 - `progress.md`: appends final verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Add Android-compatible playback navigation gestures
+
+### What was done
+- Added press-and-hold temporary playback speed with restoration on release for on-demand and local media, plus seekable live replay.
+- Split vertical gestures into outer brightness/volume zones and a center navigation zone matching Android mobile behavior.
+- Added current-route episode switching that respects normal/reverse sort and current-group live channel switching.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors.
+- Added unit coverage for gesture zones, vertical distance/direction and episode sort-order mapping.
+- Not available on this Windows host: Swift compilation and touch simulation; macOS CI must pass iPhone/iPad tests, device Release, IPA structure and ad-hoc signing.
+
+### Notes
+- `ios/Sources/XingGuangKit/Player/PlayerInteraction.swift`: adds long-press speed and center-zone vertical navigation to the shared gesture layer.
+- `ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift`: maps vertical gestures to adjacent episodes in displayed order and restores the selected speed after long press.
+- `ios/Sources/XingGuangKit/Views/LiveHomeView.swift`: maps vertical gestures to adjacent channels and limits speed boost to seekable playback.
+- `ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift`: adds temporary long-press speed without adding unsupported navigation.
+- `ios/Tests/XingGuangKitTests/PlayerGestureMathTests.swift`: verifies gesture partitioning and navigation calculations.
+- `docs/ios-compatibility-matrix.md`: records long-press speed and vertical navigation parity.
+- `docs/ios-development.md`: documents behavior and remaining verification.
+- `progress.md`: appends implementation, verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/Player/PlayerInteraction.swift ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift ios/Sources/XingGuangKit/Views/LiveHomeView.swift ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift ios/Tests/XingGuangKitTests/PlayerGestureMathTests.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md`; after this feature commit is the branch tip, run `git revert HEAD`.

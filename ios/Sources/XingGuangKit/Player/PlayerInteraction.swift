@@ -58,13 +58,23 @@ public struct PlayerGestureOverlay: View {
     private let duration: TimeInterval
     private let onSeek: ((TimeInterval) -> Void)?
     private let onTogglePlayback: (() -> Void)?
+    private let speedBoostRate: Double?
+    private let onSpeedBoostStart: (() -> Void)?
+    private let onSpeedBoostEnd: (() -> Void)?
+    private let swipeUpTitle: String
+    private let swipeDownTitle: String
+    private let onSwipeUp: (() -> Void)?
+    private let onSwipeDown: (() -> Void)?
     @Binding private var zoomScale: CGFloat
     @State private var gestureKind: GestureKind = .none
     @State private var initialValue: Float = 0
     @State private var displayedValue: Float?
     @State private var displayedSeek: TimeInterval?
     @State private var displayedZoom: CGFloat?
+    @State private var displayedSwipe: Int?
+    @State private var displayedSpeed: Double?
     @State private var lastMagnification: CGFloat = 1
+    @State private var speedBoostActive = false
 
     public init(
         aspectMode: PlayerAspectMode,
@@ -72,7 +82,14 @@ public struct PlayerGestureOverlay: View {
         duration: TimeInterval = 0,
         zoomScale: Binding<CGFloat> = .constant(1),
         onSeek: ((TimeInterval) -> Void)? = nil,
-        onTogglePlayback: (() -> Void)? = nil
+        onTogglePlayback: (() -> Void)? = nil,
+        speedBoostRate: Double? = nil,
+        onSpeedBoostStart: (() -> Void)? = nil,
+        onSpeedBoostEnd: (() -> Void)? = nil,
+        swipeUpTitle: String = "",
+        swipeDownTitle: String = "",
+        onSwipeUp: (() -> Void)? = nil,
+        onSwipeDown: (() -> Void)? = nil
     ) {
         self.aspectMode = aspectMode
         self.position = position
@@ -80,6 +97,13 @@ public struct PlayerGestureOverlay: View {
         self._zoomScale = zoomScale
         self.onSeek = onSeek
         self.onTogglePlayback = onTogglePlayback
+        self.speedBoostRate = speedBoostRate
+        self.onSpeedBoostStart = onSpeedBoostStart
+        self.onSpeedBoostEnd = onSpeedBoostEnd
+        self.swipeUpTitle = swipeUpTitle
+        self.swipeDownTitle = swipeDownTitle
+        self.onSwipeUp = onSwipeUp
+        self.onSwipeDown = onSwipeDown
     }
 
     public var body: some View {
@@ -93,12 +117,20 @@ public struct PlayerGestureOverlay: View {
                     .contentShape(Rectangle())
                     .gesture(dragGesture(size: proxy.size))
                     .simultaneousGesture(magnificationGesture)
+                    .simultaneousGesture(speedBoostGesture)
                     .onTapGesture(count: 2) { onTogglePlayback?() }
 
-                if let displayedSeek, gestureKind == .seek {
+                if let displayedSpeed {
+                    gestureIndicator(systemName: "forward.fill", text: String(format: "%.1fx", displayedSpeed))
+                } else if let displayedSeek, gestureKind == .seek {
                     gestureIndicator(
                         systemName: displayedSeek >= position ? "goforward" : "gobackward",
                         text: formatTime(displayedSeek)
+                    )
+                } else if let displayedSwipe, gestureKind == .verticalSwipe {
+                    gestureIndicator(
+                        systemName: displayedSwipe < 0 ? "arrow.up" : "arrow.down",
+                        text: displayedSwipe < 0 ? swipeUpTitle : swipeDownTitle
                     )
                 } else if let displayedZoom {
                     gestureIndicator(systemName: "plus.magnifyingglass", text: String(format: "%.1fx", displayedZoom))
@@ -120,6 +152,7 @@ public struct PlayerGestureOverlay: View {
         }
         .aspectRatio(aspectMode.viewportRatio, contentMode: .fit)
         .accessibilityHidden(true)
+        .onDisappear { finishSpeedBoost() }
     }
 
     private func dragGesture(size: CGSize) -> some Gesture {
@@ -136,6 +169,10 @@ public struct PlayerGestureOverlay: View {
                         initialValue = Float(position)
                         return
                     }
+                    if PlayerGestureMath.isCenter(startX: value.startLocation.x, width: size.width) {
+                        gestureKind = onSwipeUp != nil || onSwipeDown != nil ? .verticalSwipe : .ignored
+                        return
+                    }
                     gestureKind = value.startLocation.x < size.width / 2 ? .brightness : .volume
                     initialValue = gestureKind == .brightness
                         ? Float(UIScreen.main.brightness)
@@ -150,6 +187,10 @@ public struct PlayerGestureOverlay: View {
                     )
                     return
                 }
+                if gestureKind == .verticalSwipe {
+                    displayedSwipe = PlayerGestureMath.verticalSwipeDirection(translation: value.translation)
+                    return
+                }
                 let delta = Float(-value.translation.height / size.height * 1.5)
                 let value = min(max(initialValue + delta, 0), 1)
                 displayedValue = value
@@ -159,12 +200,46 @@ public struct PlayerGestureOverlay: View {
                     SystemVolumeController.shared.set(value)
                 }
             }
-            .onEnded { _ in
+            .onEnded { value in
                 if gestureKind == .seek, let displayedSeek { onSeek?(displayedSeek) }
+                if gestureKind == .verticalSwipe {
+                    if let direction = PlayerGestureMath.verticalSwipeDirection(translation: value.translation) {
+                        if direction < 0 { onSwipeUp?() }
+                        if direction > 0 { onSwipeDown?() }
+                    }
+                }
                 gestureKind = .none
                 displayedValue = nil
                 displayedSeek = nil
+                displayedSwipe = nil
             }
+    }
+
+    private var speedBoostGesture: some Gesture {
+        LongPressGesture(minimumDuration: 0.5)
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .onChanged { value in
+                guard case .second(true, _) = value,
+                      !speedBoostActive,
+                      let speedBoostRate,
+                      onSpeedBoostStart != nil else { return }
+                speedBoostActive = true
+                gestureKind = .ignored
+                displayedSpeed = speedBoostRate
+                displayedValue = nil
+                displayedSeek = nil
+                displayedSwipe = nil
+                onSpeedBoostStart?()
+            }
+            .onEnded { _ in finishSpeedBoost() }
+    }
+
+    private func finishSpeedBoost() {
+        guard speedBoostActive else { return }
+        speedBoostActive = false
+        displayedSpeed = nil
+        gestureKind = .none
+        onSpeedBoostEnd?()
     }
 
     private var magnificationGesture: some Gesture {
@@ -209,6 +284,7 @@ private enum GestureKind {
     case none
     case ignored
     case seek
+    case verticalSwipe
     case brightness
     case volume
 }
@@ -220,6 +296,20 @@ enum PlayerGestureMath {
 
     static func zoomScale(current: CGFloat, delta: CGFloat) -> CGFloat {
         min(max(current * delta, 1), 5)
+    }
+
+    static func isCenter(startX: CGFloat, width: CGFloat) -> Bool {
+        width > 0 && startX >= width / 4 && startX <= width * 3 / 4
+    }
+
+    static func verticalSwipeDirection(translation: CGSize) -> Int? {
+        guard abs(translation.height) >= 100,
+              abs(translation.height) > abs(translation.width) else { return nil }
+        return translation.height < 0 ? -1 : 1
+    }
+
+    static func episodeOffset(forward: Bool, reverse: Bool) -> Int {
+        forward == reverse ? -1 : 1
     }
 }
 

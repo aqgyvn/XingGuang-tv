@@ -42,7 +42,10 @@ struct LocalMediaPlayerView: View {
                         duration: session.time.duration,
                         zoomScale: $zoomScale,
                         onSeek: session.seek,
-                        onTogglePlayback: session.togglePlayback
+                        onTogglePlayback: session.togglePlayback,
+                        speedBoostRate: isPlaying ? model.defaultPlaybackSpeed : nil,
+                        onSpeedBoostStart: { session.setRate(Float(model.defaultPlaybackSpeed)) },
+                        onSpeedBoostEnd: { session.setRate(Float(speed)) }
                     )
                     playerOverlay
                 }

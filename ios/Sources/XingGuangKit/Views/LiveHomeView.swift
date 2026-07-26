@@ -181,7 +181,14 @@ public struct LiveHomeView: View {
                     duration: session.time.duration,
                     zoomScale: $zoomScale,
                     onSeek: session.seek,
-                    onTogglePlayback: session.togglePlayback
+                    onTogglePlayback: session.togglePlayback,
+                    speedBoostRate: isPlaying && session.time.duration > 0 ? model.defaultPlaybackSpeed : nil,
+                    onSpeedBoostStart: { session.setRate(Float(model.defaultPlaybackSpeed)) },
+                    onSpeedBoostEnd: { session.setRate(1) },
+                    swipeUpTitle: "上一频道",
+                    swipeDownTitle: "下一频道",
+                    onSwipeUp: { switchChannel(offset: -1) },
+                    onSwipeDown: { switchChannel(offset: 1) }
                 )
                 playerOverlay
             }
@@ -566,6 +573,16 @@ public struct LiveHomeView: View {
         } catch {
             playbackError = error.localizedDescription
         }
+    }
+
+    private func switchChannel(offset: Int) {
+        let nextIndex = selectedChannel + offset
+        guard channels.indices.contains(nextIndex) else {
+            playbackNotice = offset < 0 ? "已经是第一个频道" : "已经是最后一个频道"
+            return
+        }
+        selectedChannel = nextIndex
+        playCurrent(channel: channels[nextIndex], line: 0)
     }
 
     private func canReplay(_ programme: EpgData) -> Bool {
