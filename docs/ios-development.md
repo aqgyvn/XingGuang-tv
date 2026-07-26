@@ -143,3 +143,11 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 运行 `30197040000` 已通过 `XingGuangKit` 网络策略与 WebKit 源码编译，但 `XingGuangJavaScript` target 因 `JavaScriptHTTP.swift` 缺少共享模块导入而停止。现已补充 `import XingGuangKit`；该次运行未进入测试、iPad、Release 和 IPA 步骤。
 
 运行 `30197188009` 已通过 Header/广告策略批次的 iPhone/iPad 测试、设备 Release 构建、IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-23`（artifact ID `8630553500`，`21,265,946` 字节，保留至 2026-08-09）；真实来源规则和 Web 页面仍需 TrollStore 真机验收。
+
+## 配置文件与二维码
+
+- 设置页的点播和直播配置框均提供文件与二维码图标入口。二维码仅接受包含主机的 `http/https` 地址，扫描成功后直接保存并加载对应配置。
+- 文件入口先读取并验证内容：点播要求至少一个具有 `key/api` 的来源，直播要求 JSON/M3U/TXT 中至少一个可用频道；空文件、超过 10 MB 或格式无效时不改变当前配置。
+- 验证成功的文件会原子复制到 App `Application Support/ImportedConfigurations` 后再保存 `file://` 地址，不依赖 Files 临时安全作用域，重启后仍可读取。
+- App 声明相机用途仅用于配置二维码；无相机、拒绝权限和无效二维码均显示明确错误。模拟器只能验证界面和错误状态，实际摄像头扫描需 TrollStore 真机验收。
+- Android `.bk.gz` 备份入口与事务恢复逻辑保持独立：配置文件导入不会覆盖收藏、历史、偏好或数据库表。

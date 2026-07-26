@@ -2868,3 +2868,31 @@
 - `docs/ios-development.md`: records the successful policy run and artifact identity.
 - `progress.md`: appends complete CI evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after the validation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Add validated configuration file import and QR scanning on iOS
+
+### What was done
+- Added point-to-point file and QR commands beside both VOD and live configuration fields.
+- Added format-aware validation and atomic private copying so imported files remain readable after the Files security scope closes.
+- Added an AVFoundation QR scanner with camera permission, unavailable-camera, cancellation and invalid-address handling.
+- Kept ordinary configuration import isolated from the existing validated atomic Android backup restore.
+
+### Testing
+- Passed: fixed fixtures import valid VOD JSON and live M3U into a private directory.
+- Passed: invalid VOD input does not replace a previously imported valid file.
+- Passed: scanned-address fixture accepts HTTP(S) and rejects file or malformed values.
+- Passed: UI startup fixture checks all four configuration file/scan commands on iPhone.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after implementation.
+- Not run: Swift/AVFoundation compilation, iPhone/iPad tests, device Release build, IPA packaging and signing require the next macOS GitHub Actions run.
+- Not run: Files provider behavior, camera permission prompts and real QR recognition require TrollStore hardware acceptance.
+
+### Notes
+- `ios/Sources/XingGuangKit/Services/ConfigurationImportService.swift`: validates and atomically stores VOD/live configuration files and validates scanned addresses.
+- `ios/Sources/XingGuangKit/Views/Components/QRCodeScannerView.swift`: implements the AVFoundation scanner sheet and permission/error states.
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: adds file/scan commands and applies imported configuration addresses.
+- `ios/App/Info.plist`: declares the camera usage purpose.
+- `ios/Tests/XingGuangKitTests/ConfigurationImportServiceTests.swift`: covers valid, invalid, non-overwrite and address validation paths.
+- `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: checks the four configuration import commands.
+- `docs/ios-development.md`: documents validation, private storage and hardware boundaries.
+- `progress.md`: appends implementation, verification evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/App/Info.plist ios/Sources/XingGuangKit/Services/ConfigurationImportService.swift ios/Sources/XingGuangKit/Views/Components/QRCodeScannerView.swift ios/Sources/XingGuangKit/Views/SettingsView.swift ios/Tests/XingGuangKitTests/ConfigurationImportServiceTests.swift ios/Tests/XingGuangUITests/XingGuangUITests.swift docs/ios-development.md progress.md`; after the feature commit is the branch tip, run `git revert HEAD`.

@@ -10,21 +10,28 @@ public struct SettingsView: View {
     @State private var exportFileName = "tv-backup.bk.gz"
     @State private var backupImportState: BackupImportState = .idle
     @State private var backupExportState: BackupExportState = .idle
+    @State private var isImportingConfiguration = false
+    @State private var configurationKind: ConfigurationKind?
+    @State private var scannerKind: ConfigurationKind?
+    @State private var configurationImportState: ConfigurationImportState = .idle
 
     private let backupDestination: (any BackupDocumentApplying)?
     private let backupImportService: BackupImportService
     private let backupExportService: BackupExportService
+    private let configurationImportService: ConfigurationImportService
 
     public init(
         model: XingGuangAppModel,
         backupDestination: (any BackupDocumentApplying)? = nil,
         backupImportService: BackupImportService = BackupImportService(),
-        backupExportService: BackupExportService = BackupExportService()
+        backupExportService: BackupExportService = BackupExportService(),
+        configurationImportService: ConfigurationImportService = ConfigurationImportService()
     ) {
         self.model = model
         self.backupDestination = backupDestination
         self.backupImportService = backupImportService
         self.backupExportService = backupExportService
+        self.configurationImportService = configurationImportService
     }
 
     public var body: some View {
@@ -34,13 +41,15 @@ public struct SettingsView: View {
                     title: "点播配置",
                     systemName: "film",
                     placeholder: "https://example.com/vod.json",
-                    value: $model.vodConfigURL
+                    value: $model.vodConfigURL,
+                    kind: .vod
                 )
                 configurationPanel(
                     title: "直播配置",
                     systemName: "play.tv",
                     placeholder: "https://example.com/live.json",
-                    value: $model.liveConfigURL
+                    value: $model.liveConfigURL,
+                    kind: .live
                 )
 
                 Button {
@@ -56,6 +65,7 @@ public struct SettingsView: View {
                 .accessibilityIdentifier("settings.save")
 
                 configurationStatus
+                configurationImportStatus
 
                 VStack(alignment: .leading, spacing: 10) {
                     Label("播放内核", systemImage: "play.rectangle")
@@ -134,6 +144,12 @@ public struct SettingsView: View {
         .onChange(of: model.vodConfigURL) { _ in model.resetConfigurationSaveState() }
         .onChange(of: model.liveConfigURL) { _ in model.resetConfigurationSaveState() }
         .fileImporter(
+            isPresented: $isImportingConfiguration,
+            allowedContentTypes: configurationContentTypes,
+            allowsMultipleSelection: false,
+            onCompletion: handleConfigurationSelection
+        )
+        .fileImporter(
             isPresented: $isImportingBackup,
             allowedContentTypes: backupContentTypes,
             allowsMultipleSelection: false,
@@ -146,7 +162,17 @@ public struct SettingsView: View {
             defaultFilename: exportFileName,
             onCompletion: handleBackupExport
         )
+        .sheet(item: $scannerKind) { kind in
+            QRCodeScannerSheet(
+                onResult: { handleScannedConfiguration($0, kind: kind) },
+                onCancel: { scannerKind = nil }
+            )
+        }
         .accessibilityIdentifier("settings.home")
+    }
+
+    private var configurationContentTypes: [UTType] {
+        [.json, .plainText, .data]
     }
 
     private var backupContentTypes: [UTType] {
@@ -244,6 +270,50 @@ public struct SettingsView: View {
         }
     }
 
+    private func handleConfigurationSelection(_ result: Result<[URL], Error>) {
+        guard let kind = configurationKind else { return }
+        defer { configurationKind = nil }
+        guard case .success(let urls) = result, let url = urls.first else {
+            if case .failure(let error) = result {
+                configurationImportState = .failed(error.localizedDescription)
+            }
+            return
+        }
+
+        configurationImportState = .loading
+        let accessed = url.startAccessingSecurityScopedResource()
+        defer {
+            if accessed { url.stopAccessingSecurityScopedResource() }
+        }
+        do {
+            let importedURL = try configurationImportService.importFile(at: url, kind: kind)
+            applyConfigurationAddress(importedURL.absoluteString, kind: kind)
+            configurationImportState = .success(kind)
+        } catch {
+            configurationImportState = .failed(error.localizedDescription)
+        }
+    }
+
+    private func handleScannedConfiguration(_ value: String, kind: ConfigurationKind) {
+        do {
+            let url = try configurationImportService.scannedAddress(value)
+            scannerKind = nil
+            applyConfigurationAddress(url.absoluteString, kind: kind)
+            configurationImportState = .success(kind)
+        } catch {
+            scannerKind = nil
+            configurationImportState = .failed(error.localizedDescription)
+        }
+    }
+
+    private func applyConfigurationAddress(_ value: String, kind: ConfigurationKind) {
+        switch kind {
+        case .vod: model.vodConfigURL = value
+        case .live: model.liveConfigURL = value
+        }
+        model.saveConfiguration()
+    }
+
     private func startBackupExport() {
         backupExportState = .loading
         do {
@@ -286,17 +356,39 @@ public struct SettingsView: View {
         title: String,
         systemName: String,
         placeholder: String,
-        value: Binding<String>
+        value: Binding<String>,
+        kind: ConfigurationKind
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Label(title, systemImage: systemName)
                 .font(.headline)
                 .foregroundColor(XingGuangTheme.text)
-            TextField(placeholder, text: value)
-                .textFieldStyle(.roundedBorder)
-                .textInputAutocapitalization(.never)
-                .disableAutocorrection(true)
-                .accessibilityLabel(title)
+            HStack(spacing: 8) {
+                TextField(placeholder, text: value)
+                    .textFieldStyle(.roundedBorder)
+                    .textInputAutocapitalization(.never)
+                    .disableAutocorrection(true)
+                    .accessibilityLabel(title)
+                Button {
+                    configurationKind = kind
+                    isImportingConfiguration = true
+                } label: {
+                    Image(systemName: "folder")
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("导入\(title)文件")
+                .accessibilityIdentifier("settings.\(kind.rawValue).file")
+                Button {
+                    scannerKind = kind
+                } label: {
+                    Image(systemName: "qrcode.viewfinder")
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("扫描\(title)二维码")
+                .accessibilityIdentifier("settings.\(kind.rawValue).scan")
+            }
         }
         .padding(14)
         .xingGuangPanel()
@@ -329,6 +421,28 @@ public struct SettingsView: View {
                 .font(.subheadline.weight(.medium))
                 .foregroundColor(.red)
                 .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    @ViewBuilder
+    private var configurationImportStatus: some View {
+        switch configurationImportState {
+        case .idle:
+            EmptyView()
+        case .loading:
+            Label("正在导入配置", systemImage: "arrow.triangle.2.circlepath")
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(XingGuangTheme.secondaryText)
+        case .success(let kind):
+            Label(kind == .vod ? "点播配置已导入" : "直播配置已导入", systemImage: "checkmark.circle.fill")
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(.green)
+                .accessibilityIdentifier("settings.configurationImport.success")
+        case .failed(let message):
+            Label(message, systemImage: "xmark.octagon.fill")
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(.red)
+                .accessibilityIdentifier("settings.configurationImport.failed")
         }
     }
 
@@ -379,6 +493,13 @@ private enum BackupExportState: Equatable {
     case idle
     case loading
     case success
+    case failed(String)
+}
+
+private enum ConfigurationImportState: Equatable {
+    case idle
+    case loading
+    case success(ConfigurationKind)
     case failed(String)
 }
 
