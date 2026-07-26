@@ -181,3 +181,5 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 - 分类页和搜索页使用 Repository 已有页码接口连续加载，结果按影片 ID 去重，并以服务端 `pagecount` 决定是否继续。
 - 搜索关键词在提交时写入本地偏好，最近使用的记录置顶，大小写重复项合并，最多保留 20 条；搜索页支持再次发起、单条删除和全部清空。
 - Android 热搜和联想依赖 360、爱奇艺第三方接口，本轮不在 iOS 新增该外部依赖。分页与搜索记录改动仍须下一次 macOS CI 编译和测试。
+
+运行 `30212470946` 已进入完整 iPhone 测试阶段，但在该步骤失败，iPad、Release 和 IPA 未执行。为消除本地代理 detached task 与 QuickJS actor 之间的参数处理边界，参数校验、JSON 序列化和原生调用现统一在 `QuickJSRuntime` actor 内串行执行；JavaScript 方法和代理协议不变。该修复与分页功能须由下一次 macOS CI 一并验证。

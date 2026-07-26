@@ -3060,3 +3060,21 @@
 - `docs/ios-development.md`: records implementation behavior, CI boundary and the current three-core artifact.
 - `progress.md`: appends implementation, verification evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/State/XingGuangAppModel.swift ios/Sources/XingGuangKit/Views/VodHomeView.swift ios/Sources/XingGuangKit/Views/SearchPreviewView.swift ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md`; after this feature commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Confine QuickJS argument serialization to its actor
+
+### What was done
+- Moved argument validation, JSON serialization and native invocation onto the QuickJS runtime actor instead of beginning that work in the local proxy's detached task.
+- Preserved the existing cancellation handler, JavaScript method contract and local proxy routing.
+
+### Testing
+- Failed before fix: GitHub Actions run `30212470946`, job `89820927564`, reached the full iPhone test step and failed; iPad, Release and IPA steps were skipped.
+- Passed: source inspection confirms every repository call already awaits the actor-isolated initialize/call methods and the five-request real loopback regression remains enabled.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after implementation.
+- Not available on this Windows host: Swift concurrency compilation and Network.framework loopback execution. The fix requires the next macOS CI run.
+
+### Notes
+- `ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift`: serializes arguments and invokes QuickJS inside the runtime actor.
+- `docs/ios-development.md`: records the failed pagination run and the corrected isolation boundary.
+- `progress.md`: appends implementation, verification evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift docs/ios-development.md progress.md`; after this repair commit is the branch tip, run `git revert HEAD`.

@@ -73,15 +73,15 @@ public actor QuickJSRuntime {
         handleBox.dispose()
     }
 
-    public nonisolated func initialize() async throws {
+    public func initialize() async throws {
         try await withTaskCancellationHandler(operation: {
-            try await self.initializeIsolated()
+            try self.initializeIsolated()
         }, onCancel: {
             self.handleBox.interrupt()
         })
     }
 
-    public nonisolated func call(_ method: String, arguments: [Any]) async throws -> String {
+    public func call(_ method: String, arguments: [Any]) async throws -> String {
         guard JSONSerialization.isValidJSONObject(arguments) else {
             throw JavaScriptRuntimeError.execution("JavaScript 参数无法编码")
         }
@@ -90,7 +90,7 @@ public actor QuickJSRuntime {
             throw JavaScriptRuntimeError.execution("JavaScript 参数不是 UTF-8")
         }
         return try await withTaskCancellationHandler(operation: {
-            try await self.callJSON(method, argumentsJSON: json)
+            try self.callJSON(method, argumentsJSON: json)
         }, onCancel: {
             self.handleBox.interrupt()
         })
