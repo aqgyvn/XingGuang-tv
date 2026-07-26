@@ -3353,3 +3353,26 @@
 - `docs/ios-development.md`: records the successful full CI run, artifact metadata and remaining device checks.
 - `progress.md`: appends final verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Add iOS playback information and sharing
+
+### What was done
+- Added a playback information sheet for on-demand, live and local media with the active core, URL, format and request headers.
+- Added the iOS system share sheet for the current title and media URL without exporting request headers or Cookie values.
+- Kept Cookie and authorization values hidden in the information UI while exposing Cookie names for diagnostics.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors.
+- Added unit coverage for visible MPV/MDK/AVPlayer names, the system-share payload and authentication Header redaction.
+- Not available on this Windows host: Swift/UIKit compilation and share-sheet presentation; macOS CI must pass iPhone/iPad tests, device Release, IPA structure and ad-hoc signing.
+
+### Notes
+- `ios/Sources/XingGuangKit/Views/PlaybackUtilityViews.swift`: provides the shared information and system-share sheets.
+- `ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift`: exposes information and sharing for the resolved on-demand request.
+- `ios/Sources/XingGuangKit/Views/LiveHomeView.swift`: retains the active live request for explicit information and sharing actions.
+- `ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift`: exposes information and system file sharing for imported media.
+- `ios/Tests/XingGuangKitTests/PlaybackUtilityTests.swift`: verifies engine labels, share content and authentication redaction.
+- `docs/ios-compatibility-matrix.md`: records playback information and sharing parity.
+- `docs/ios-development.md`: documents privacy boundaries and remaining device validation.
+- `progress.md`: appends implementation, verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift ios/Sources/XingGuangKit/Views/LiveHomeView.swift ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md` and remove `ios/Sources/XingGuangKit/Views/PlaybackUtilityViews.swift` plus `ios/Tests/XingGuangKitTests/PlaybackUtilityTests.swift`; after this feature commit is the branch tip, run `git revert HEAD`.

@@ -209,6 +209,10 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 
 运行 `30218024066` 已通过新增手势分区与选集方向测试、全部 iPhone/iPad 单元与 UI 测试、设备 Release、TrollStore IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-38`（artifact ID `8636458699`，`22,930,634` 字节，保留至 2026-08-09）；长按释放、外侧亮度/音量与中间换台/换集的触控竞争仍需 TrollStore 真机验收。
 
+- 点播、直播和本地媒体的播放菜单提供播放信息与系统分享。信息页显示标题、实际内核、格式、URL 和请求头；Cookie 只列出名称，Cookie 与 Authorization 等鉴权 Header 不显示值。
+- 分享通过 iOS `UIActivityViewController` 执行，仅传递标题与当前媒体 URL，不附加 Header 或 Cookie。HTTP URL 可分享给其他 App，本地文件由系统分享其缓存文件 URL。
+- 三内核显示名称和分享载荷已有单元测试；iPad 分享面板锚点、外部 App 接收和本地大文件分享仍须下一次 macOS CI 与 TrollStore 真机确认。
+
 运行 `30215168139` 已通过新增播放器会话、持久化和备份测试、全部 iPhone/iPad UI 测试、设备 Release、IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-33`（artifact ID `8635726897`，`22,866,630` 字节，保留至 2026-08-09）；亮度、系统音量、定时暂停和三内核画面比例仍需 TrollStore 真机逐项验收。
 
 ## 缓存与全局 User-Agent

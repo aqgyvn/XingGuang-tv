@@ -38,6 +38,8 @@ struct VodDetailPreviewView: View {
     @State private var isImportingSubtitle = false
     @State private var isImportingDanmaku = false
     @State private var showsOverlaySettings = false
+    @State private var sharePayload: PlaybackSharePayload?
+    @State private var playbackInformation: PlaybackInformationPayload?
 
     init(vod: Vod, model: XingGuangAppModel) {
         self.model = model
@@ -139,6 +141,12 @@ struct VodDetailPreviewView: View {
                     danmakuEnabled: $model.danmakuEnabled
                 )
             }
+        }
+        .sheet(item: $sharePayload) { payload in
+            SystemShareSheet(items: payload.activityItems)
+        }
+        .sheet(item: $playbackInformation) { payload in
+            PlaybackInformationSheet(payload: payload)
         }
         .accessibilityIdentifier("vod.detail")
     }
@@ -394,6 +402,23 @@ struct VodDetailPreviewView: View {
                     Label("重置缩放", systemImage: "arrow.counterclockwise")
                 }
             }
+            if let request = currentPlaybackRequest {
+                Divider()
+                Button {
+                    playbackInformation = PlaybackInformationPayload(
+                        title: playbackTitle,
+                        request: request,
+                        engineName: session.kind.displayName
+                    )
+                } label: {
+                    Label("播放信息", systemImage: "info.circle")
+                }
+                Button {
+                    sharePayload = PlaybackSharePayload(title: playbackTitle, url: request.url)
+                } label: {
+                    Label("分享", systemImage: "square.and.arrow.up")
+                }
+            }
             Divider()
             Button {
                 opening = max(session.time.position, 0)
@@ -446,6 +471,11 @@ struct VodDetailPreviewView: View {
                 )
             }
         }
+    }
+
+    private var playbackTitle: String {
+        guard let episode = currentEpisode, !episode.name.isEmpty else { return vod.vodName }
+        return "\(vod.vodName) - \(episode.name)"
     }
 
     private func select(track: PlayerTrack) {

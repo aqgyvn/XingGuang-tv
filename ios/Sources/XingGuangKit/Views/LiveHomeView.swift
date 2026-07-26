@@ -21,6 +21,9 @@ public struct LiveHomeView: View {
     @State private var selectedAudioTrackID = ""
     @State private var selectedVideoTrackID = ""
     @State private var selectedSubtitleTrackID = ""
+    @State private var currentPlaybackRequest: PlaybackRequest?
+    @State private var sharePayload: PlaybackSharePayload?
+    @State private var playbackInformation: PlaybackInformationPayload?
 
     public init(model: XingGuangAppModel) {
         self.model = model
@@ -126,6 +129,12 @@ public struct LiveHomeView: View {
             lineFallbackTask?.cancel()
             session.cancelSleepTimer()
             session.stop()
+        }
+        .sheet(item: $sharePayload) { payload in
+            SystemShareSheet(items: payload.activityItems)
+        }
+        .sheet(item: $playbackInformation) { payload in
+            PlaybackInformationSheet(payload: payload)
         }
         .accessibilityIdentifier("live.home")
     }
@@ -460,6 +469,23 @@ public struct LiveHomeView: View {
                     Label("重置缩放", systemImage: "arrow.counterclockwise")
                 }
             }
+            if let request = currentPlaybackRequest {
+                Divider()
+                Button {
+                    playbackInformation = PlaybackInformationPayload(
+                        title: currentChannel?.name ?? "直播",
+                        request: request,
+                        engineName: session.kind.displayName
+                    )
+                } label: {
+                    Label("播放信息", systemImage: "info.circle")
+                }
+                Button {
+                    sharePayload = PlaybackSharePayload(title: currentChannel?.name ?? "直播", url: request.url)
+                } label: {
+                    Label("分享", systemImage: "square.and.arrow.up")
+                }
+            }
         } label: {
             Image(systemName: session.sleepTimerRemaining > 0 ? "timer" : "ellipsis.circle")
         }
@@ -557,6 +583,7 @@ public struct LiveHomeView: View {
         attemptedLines = []
         playbackError = ""
         playbackNotice = ""
+        currentPlaybackRequest = nil
         session.stop()
         loadEPG()
     }
@@ -564,11 +591,13 @@ public struct LiveHomeView: View {
     private func playCurrent(programme: EpgData? = nil, channel: Channel? = nil, line: Int? = nil) {
         guard let source, let channel = channel ?? currentChannel else { return }
         let playbackLine = line ?? selectedLine
+        currentPlaybackRequest = nil
         do {
             let request = try model.livePlaybackRequest(live: source, channel: channel, line: playbackLine, programme: programme)
             playbackError = ""
             playbackNotice = ""
             attemptedLines.insert(playbackLine)
+            currentPlaybackRequest = request
             session.load(request)
         } catch {
             playbackError = error.localizedDescription

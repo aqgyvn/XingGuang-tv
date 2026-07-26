@@ -11,6 +11,8 @@ struct LocalMediaPlayerView: View {
     @State private var speed: Double
     @State private var aspectMode: PlayerAspectMode
     @State private var zoomScale: CGFloat = 1
+    @State private var sharePayload: PlaybackSharePayload?
+    @State private var playbackInformation: PlaybackInformationPayload?
 
     private let file: LocalMediaFile
     private let request: PlaybackRequest
@@ -124,15 +126,17 @@ struct LocalMediaPlayerView: View {
             session.cancelSleepTimer()
             session.stop()
         }
+        .sheet(item: $sharePayload) { payload in
+            SystemShareSheet(items: payload.activityItems)
+        }
+        .sheet(item: $playbackInformation) { payload in
+            PlaybackInformationSheet(payload: payload)
+        }
         .accessibilityIdentifier("localMedia.player")
     }
 
     private var engineName: String {
-        switch session.kind {
-        case .mpv: return "MPV"
-        case .mdk: return "MDK"
-        case .avPlayer: return "AVPlayer"
-        }
+        session.kind.displayName
     }
 
     private var playbackOptionsMenu: some View {
@@ -173,6 +177,21 @@ struct LocalMediaPlayerView: View {
                 } label: {
                     Label("重置缩放", systemImage: "arrow.counterclockwise")
                 }
+            }
+            Divider()
+            Button {
+                playbackInformation = PlaybackInformationPayload(
+                    title: file.displayName,
+                    request: request,
+                    engineName: session.kind.displayName
+                )
+            } label: {
+                Label("播放信息", systemImage: "info.circle")
+            }
+            Button {
+                sharePayload = PlaybackSharePayload(title: file.displayName, url: request.url)
+            } label: {
+                Label("分享", systemImage: "square.and.arrow.up")
             }
         } label: {
             Image(systemName: session.sleepTimerRemaining > 0 ? "timer" : "ellipsis.circle")
