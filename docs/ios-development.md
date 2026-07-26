@@ -185,3 +185,5 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 运行 `30212470946` 已进入完整 iPhone 测试阶段，但在该步骤失败，iPad、Release 和 IPA 未执行。为消除本地代理 detached task 与 QuickJS actor 之间的参数处理边界，参数校验、JSON 序列化和原生调用现统一在 `QuickJSRuntime` actor 内串行执行；JavaScript 方法和代理协议不变。该修复与分页功能须由下一次 macOS CI 一并验证。
 
 运行 `30213000078` 已确认 iPhone 全部测试通过，iPad 仅本地 JavaScript 代理回环用例失败；五次请求均返回 502。原生诊断显示 QuickJS 收到的参数长度为 52、前缀为 `5b7b2276`（`[{"v`），因此输入并非空缓冲或截断。参数数组现改由 QuickJS 常规全局表达式求值生成，不再调用该场景下间歇失败的 `JS_ParseJSON`；Swift 侧的结构化 JSON 校验、数组检查和错误诊断保持不变。该修复必须通过新的 iPhone/iPad、设备 Release、IPA 和签名检查后才算完成。
+
+运行 `30213741191` 在 iPhone 的第 3 次回环代理请求上复现同一首字符异常，证明改用常规表达式求值没有解决问题，该方案已撤回。QuickJS 公共头文件明确要求 runtime 换线程后调用 `JS_UpdateStackTop`；Swift actor 虽然保证串行，但不保证每次恢复在同一系统线程。原生桥现于加载 Spider 和每次方法调用前更新栈顶，并恢复结构化 `JS_ParseJSON`。该线程切换修复仍须完整 macOS CI 验证。

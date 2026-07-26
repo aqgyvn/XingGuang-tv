@@ -3096,3 +3096,22 @@
 - `docs/ios-development.md`: records the iPad-only failure evidence, repair boundary and required verification.
 - `progress.md`: appends implementation, verification evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/CQuickJS/XGQuickJS.c docs/ios-development.md progress.md`; after this repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Update QuickJS stack state after Swift thread hops
+
+### What was done
+- Rejected the regular-expression-evaluation workaround after it reproduced the same first-character failure.
+- Updated QuickJS's stack top before loading a Spider and before every method call, as required when a runtime changes system threads.
+- Restored `JS_ParseJSON` for structured argument decoding; the JavaScript protocol and actor serialization remain unchanged.
+
+### Testing
+- Failed before fix: GitHub Actions run `30213741191` compiled successfully and passed all UI tests, but the iPhone local-proxy regression returned 502 on its third request with valid 52-byte input.
+- Confirmed from vendored QuickJS API documentation: `JS_UpdateStackTop` "should be called when changing thread" because the stored value is used for stack-overflow checks.
+- Passed: source inspection confirms both externally resumed JavaScript execution entries refresh the runtime stack top before parsing or evaluation.
+- Not available on this Windows host: QuickJS/iOS execution. A new macOS CI run must pass iPhone, iPad, Release, IPA and signing checks.
+
+### Notes
+- `ios/Sources/CQuickJS/XGQuickJS.c`: refreshes QuickJS thread stack state and restores structured JSON parsing.
+- `docs/ios-development.md`: records the rejected parser hypothesis, confirmed thread requirement and verification boundary.
+- `progress.md`: appends implementation, evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/CQuickJS/XGQuickJS.c docs/ios-development.md progress.md`; after this repair commit is the branch tip, run `git revert HEAD`.
