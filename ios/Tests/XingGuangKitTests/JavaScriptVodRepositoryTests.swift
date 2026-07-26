@@ -215,17 +215,20 @@ final class JavaScriptVodRepositoryTests: XCTestCase {
         let server = LocalProxyServer(repository: repository)
         let endpoint = try await server.start()
         defer { server.stop() }
-        var components = URLComponents(url: endpoint, resolvingAgainstBaseURL: false)!
-        components.queryItems = [
-            URLQueryItem(name: "do", value: "js"),
-            URLQueryItem(name: "siteKey", value: site.key),
-            URLQueryItem(name: "value", value: "ok")
-        ]
+        for index in 0..<5 {
+            let value = "ok-\(index)"
+            var components = URLComponents(url: endpoint, resolvingAgainstBaseURL: false)!
+            components.queryItems = [
+                URLQueryItem(name: "do", value: "js"),
+                URLQueryItem(name: "siteKey", value: site.key),
+                URLQueryItem(name: "value", value: value)
+            ]
 
-        let (data, response) = try await URLSession.shared.data(from: try XCTUnwrap(components.url))
+            let (data, response) = try await URLSession.shared.data(from: try XCTUnwrap(components.url))
 
-        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
-        XCTAssertEqual(String(data: data, encoding: .utf8), "proxied:ok")
+            XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
+            XCTAssertEqual(String(data: data, encoding: .utf8), "proxied:\(value)")
+        }
     }
 
     func testQuickJSArgumentsRemainValidAcrossRepeatedAsyncCalls() async throws {

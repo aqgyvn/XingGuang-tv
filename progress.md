@@ -2999,3 +2999,22 @@
 - `docs/ios-compatibility-matrix.md`: replaces all current VLC/automatic behavior with the three requested cores and their platform boundaries.
 - `progress.md`: appends this implementation, verification gap, changed-file list and rollback point.
 - Rollback method: before committing, run `git restore -- .github/workflows/ios.yml docs/ios-development.md docs/ios-compatibility-matrix.md ios progress.md`, then `Remove-Item -LiteralPath ios/App/MDKPlayerEngineAdapter.swift,ios/App/MPVPlayerEngineAdapter.swift,ios/App/UnavailablePlayerEngine.swift,ios/Sources/XingGuangKit/Player/PlayerEngineFactory.swift,ios/Tests/XingGuangKitTests/PlayerEngineFactoryTests.swift`; after the implementation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Stabilize QuickJS arguments used by the local proxy
+
+### What was done
+- Pinned QuickJS method arguments as an explicit NUL-terminated UTF-8 buffer for the complete synchronous Swift-to-C call instead of relying on implicit String bridging.
+- Strengthened the real loopback proxy regression from one request to five sequential requests with distinct values.
+
+### Testing
+- Passed: `git diff --check -- ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift`.
+- Passed: source inspection confirms the C function is called only while the explicit UTF-8 buffer is in scope and the native function signature remains unchanged.
+- Failed before fix: GitHub Actions run `30209861414`, attempts 1 and 2, returned HTTP 502 with `xg-arguments:1:1` in `testLocalProxyServerRoutesOnlyRegisteredJavaScriptSite`; MPV/MDK compilation and the preceding iPhone player/UI tests passed.
+- Not available on this Windows host: Swift/Xcode compilation and the strengthened Network.framework loopback test. A new macOS CI run must pass before this repair is considered verified.
+
+### Notes
+- `ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift`: keeps serialized arguments alive as a stable UTF-8 C buffer during each QuickJS call.
+- `ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift`: exercises five sequential requests through the actual local HTTP proxy.
+- `docs/ios-development.md`: records the three-core CI blocker, repair boundary and pending verification.
+- `progress.md`: appends implementation, verification evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift docs/ios-development.md progress.md`; after this repair commit is the branch tip, run `git revert HEAD`.

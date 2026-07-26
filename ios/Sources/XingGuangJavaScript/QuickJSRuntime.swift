@@ -127,7 +127,13 @@ public actor QuickJSRuntime {
         }
         host.clearBridgeError()
         setDeadline(handle)
-        guard let result = xg_quickjs_call(handle, method, argumentsJSON) else {
+        let arguments = argumentsJSON.utf8CString
+        let result = method.withCString { methodPointer in
+            arguments.withUnsafeBufferPointer { argumentsPointer in
+                xg_quickjs_call(handle, methodPointer, argumentsPointer.baseAddress)
+            }
+        }
+        guard let result else {
             if let bridgeError = host.consumeBridgeError() {
                 throw JavaScriptRuntimeError.unsupported(bridgeError)
             }
