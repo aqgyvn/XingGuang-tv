@@ -32,6 +32,9 @@ public final class XingGuangAppModel: ObservableObject {
     @Published public private(set) var filters: [String: [VodFilter]]
     @Published public var selectedFilters: [String: String]
     @Published public private(set) var catalogState: CatalogState
+    @Published public private(set) var catalogLoadingMore = false
+    @Published public private(set) var catalogCanLoadMore = false
+    @Published public private(set) var searchHistory: [String]
     @Published public var vodConfigURL: String
     @Published public var liveConfigURL: String
     @Published public private(set) var configurationSaveState: ConfigurationSaveState = .idle
@@ -77,6 +80,8 @@ public final class XingGuangAppModel: ObservableObject {
     private var configurationTask: Task<Void, Never>?
     private var catalogTask: Task<Void, Never>?
     private var liveTask: Task<Void, Never>?
+    private var catalogPage = 1
+    private var catalogPageCount = 1
 
     public init(
         selectedSite: Site = PreviewFixtures.site,
@@ -119,6 +124,7 @@ public final class XingGuangAppModel: ObservableObject {
         let storedSubtitleOffset = defaults.object(forKey: "ios.subtitleBottomOffset") as? Double ?? 24
         self.subtitleBottomOffset = min(max(storedSubtitleOffset, 8), 120)
         self.danmakuEnabled = defaults.object(forKey: "ios.danmakuEnabled") as? Bool ?? true
+        self.searchHistory = Array((defaults.stringArray(forKey: "ios.searchHistory") ?? []).prefix(20))
 
         if usePreviewData {
             self.configuration = PreviewFixtures.config
@@ -171,6 +177,42 @@ public final class XingGuangAppModel: ObservableObject {
         loadCategory(selectedCategory)
     }
 
+    public func loadNextCategoryPage() {
+        guard let repository,
+              !catalogLoadingMore,
+              catalogCanLoadMore,
+              case .loaded(let currentItems) = catalogState else { return }
+        let site = selectedSite
+        let category = selectedCategory
+        let filters = selectedFilters
+        let nextPage = catalogPage + 1
+        catalogLoadingMore = true
+        catalogTask = Task { [weak self] in
+            guard let self else { return }
+            defer { catalogLoadingMore = false }
+            do {
+                let result = try await repository.category(
+                    site: site,
+                    typeID: category.typeID,
+                    page: nextPage,
+                    filters: filters
+                )
+                try Task.checkCancellation()
+                guard selectedSite.key == site.key,
+                      selectedCategory.typeID == category.typeID,
+                      selectedFilters == filters else { return }
+                var identifiers = Set(currentItems.map(\.id))
+                let appended = result.list.filter { identifiers.insert($0.id).inserted }
+                catalogPage = nextPage
+                catalogPageCount = max(result.pageCount, nextPage)
+                catalogCanLoadMore = nextPage < catalogPageCount
+                catalogState = .loaded(currentItems + appended)
+            } catch is CancellationError {
+            } catch {
+            }
+        }
+    }
+
     public func selectSite(_ site: Site) {
         guard selectedSite.key != site.key else { return }
         selectedSite = site
@@ -211,8 +253,31 @@ public final class XingGuangAppModel: ObservableObject {
     }
 
     public func search(keyword: String, page: Int = 1) async throws -> [Vod] {
-        guard let repository, !selectedSite.key.isEmpty else { return [] }
-        return try await repository.search(site: selectedSite, keyword: keyword, page: page).list
+        try await searchPage(keyword: keyword, page: page).list
+    }
+
+    public func searchPage(keyword: String, page: Int = 1) async throws -> VodResult {
+        guard let repository, !selectedSite.key.isEmpty else { return VodResult() }
+        return try await repository.search(site: selectedSite, keyword: keyword, page: page)
+    }
+
+    public func recordSearch(_ keyword: String) {
+        let value = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return }
+        searchHistory.removeAll { $0.caseInsensitiveCompare(value) == .orderedSame }
+        searchHistory.insert(value, at: 0)
+        if searchHistory.count > 20 { searchHistory.removeLast(searchHistory.count - 20) }
+        defaults.set(searchHistory, forKey: "ios.searchHistory")
+    }
+
+    public func removeSearchHistory(_ keyword: String) {
+        searchHistory.removeAll { $0 == keyword }
+        defaults.set(searchHistory, forKey: "ios.searchHistory")
+    }
+
+    public func clearSearchHistory() {
+        searchHistory = []
+        defaults.removeObject(forKey: "ios.searchHistory")
     }
 
     public func detail(for vod: Vod) async throws -> Vod {
@@ -467,6 +532,10 @@ public final class XingGuangAppModel: ObservableObject {
     private func loadHome() {
         guard let repository, !selectedSite.key.isEmpty else { return }
         catalogTask?.cancel()
+        catalogLoadingMore = false
+        catalogCanLoadMore = false
+        catalogPage = 1
+        catalogPageCount = 1
         catalogState = .loading
         catalogTask = Task { [weak self] in
             guard let self else { return }
@@ -548,6 +617,10 @@ public final class XingGuangAppModel: ObservableObject {
     private func loadCategory(_ category: VodClass) {
         guard let repository, !category.typeID.isEmpty else { return }
         catalogTask?.cancel()
+        catalogLoadingMore = false
+        catalogCanLoadMore = false
+        catalogPage = 1
+        catalogPageCount = 1
         catalogState = .loading
         catalogTask = Task { [weak self] in
             guard let self else { return }
@@ -555,6 +628,8 @@ public final class XingGuangAppModel: ObservableObject {
                 let result = try await repository.category(site: selectedSite, typeID: category.typeID, page: 1, filters: selectedFilters)
                 try Task.checkCancellation()
                 if !result.filters.isEmpty { filters = result.filters }
+                catalogPageCount = max(result.pageCount, 1)
+                catalogCanLoadMore = catalogPage < catalogPageCount
                 catalogState = result.list.isEmpty ? .empty : .loaded(result.list)
             } catch is CancellationError {
             } catch {

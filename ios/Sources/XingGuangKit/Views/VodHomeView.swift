@@ -215,7 +215,17 @@ public struct VodHomeView: View {
                         VodPosterCard(vod: vod, index: index)
                     }
                     .buttonStyle(.plain)
+                    .onAppear {
+                        if vod.id == items.last?.id {
+                            model.loadNextCategoryPage()
+                        }
+                    }
                 }
+            }
+            if model.catalogLoadingMore {
+                ProgressView("正在加载更多")
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
             }
         }
     }

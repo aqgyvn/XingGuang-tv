@@ -6,8 +6,12 @@ struct SearchPreviewView: View {
     @State private var query = ""
     @State private var items: [Vod] = []
     @State private var loading = false
+    @State private var loadingMore = false
     @State private var errorMessage = ""
     @State private var searchTask: Task<Void, Never>?
+    @State private var page = 1
+    @State private var pageCount = 1
+    @State private var activeKeyword = ""
 
     var body: some View {
         NavigationView {
@@ -20,6 +24,8 @@ struct SearchPreviewView: View {
                         Text(errorMessage)
                     }
                     .foregroundColor(XingGuangTheme.secondaryText)
+                } else if items.isEmpty, query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, !model.searchHistory.isEmpty {
+                    searchHistory
                 } else if items.isEmpty {
                     VStack(spacing: 12) {
                         Image(systemName: "magnifyingglass")
@@ -27,21 +33,35 @@ struct SearchPreviewView: View {
                     }
                     .foregroundColor(XingGuangTheme.secondaryText)
                 } else {
-                    List(items) { vod in
-                        NavigationLink(destination: VodDetailPreviewView(vod: vod, model: model)) {
-                            HStack(spacing: 12) {
-                                poster(vod)
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text(vod.vodName)
-                                        .font(.headline)
-                                        .foregroundColor(XingGuangTheme.text)
-                                    Text([vod.typeName, vod.vodRemarks].filter { !$0.isEmpty }.joined(separator: " · "))
-                                        .font(.subheadline)
-                                        .foregroundColor(XingGuangTheme.secondaryText)
-                                        .lineLimit(1)
+                    List {
+                        ForEach(items) { vod in
+                            NavigationLink(destination: VodDetailPreviewView(vod: vod, model: model)) {
+                                HStack(spacing: 12) {
+                                    poster(vod)
+                                    VStack(alignment: .leading, spacing: 5) {
+                                        Text(vod.vodName)
+                                            .font(.headline)
+                                            .foregroundColor(XingGuangTheme.text)
+                                        Text([vod.typeName, vod.vodRemarks].filter { !$0.isEmpty }.joined(separator: " · "))
+                                            .font(.subheadline)
+                                            .foregroundColor(XingGuangTheme.secondaryText)
+                                            .lineLimit(1)
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                            .onAppear {
+                                if vod.id == items.last?.id {
+                                    loadNextPage()
                                 }
                             }
-                            .padding(.vertical, 4)
+                        }
+                        if loadingMore {
+                            HStack {
+                                Spacer()
+                                ProgressView("正在加载更多")
+                                Spacer()
+                            }
                         }
                     }
                     .listStyle(.plain)
@@ -83,16 +103,52 @@ struct SearchPreviewView: View {
             .overlay(Image(systemName: "play.rectangle.fill").foregroundColor(XingGuangTheme.primary))
     }
 
+    private var searchHistory: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("搜索记录")
+                    .font(.headline)
+                    .foregroundColor(XingGuangTheme.text)
+                Spacer()
+                Button("清空") { model.clearSearchHistory() }
+                    .font(.subheadline)
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(model.searchHistory, id: \.self) { keyword in
+                        Button(keyword) {
+                            query = keyword
+                            performSearch()
+                        }
+                        .buttonStyle(.bordered)
+                        .contextMenu {
+                            Button("删除") { model.removeSearchHistory(keyword) }
+                        }
+                    }
+                }
+            }
+            Spacer()
+        }
+        .padding(20)
+    }
+
     private func performSearch() {
         let keyword = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !keyword.isEmpty else { return }
         searchTask?.cancel()
         loading = true
+        loadingMore = false
         errorMessage = ""
+        activeKeyword = keyword
+        page = 1
+        pageCount = 1
+        model.recordSearch(keyword)
         searchTask = Task {
             do {
                 if model.repositoryAvailable {
-                    items = try await model.search(keyword: keyword)
+                    let result = try await model.searchPage(keyword: keyword)
+                    items = result.list
+                    pageCount = max(result.pageCount, 1)
                 } else {
                     items = PreviewFixtures.vods.filter { $0.vodName.localizedCaseInsensitiveContains(keyword) }
                 }
@@ -102,6 +158,27 @@ struct SearchPreviewView: View {
                 items = []
             }
             loading = false
+        }
+    }
+
+    private func loadNextPage() {
+        guard model.repositoryAvailable, !loading, !loadingMore, page < pageCount else { return }
+        let keyword = activeKeyword
+        let nextPage = page + 1
+        loadingMore = true
+        searchTask = Task {
+            defer { loadingMore = false }
+            do {
+                let result = try await model.searchPage(keyword: keyword, page: nextPage)
+                try Task.checkCancellation()
+                guard activeKeyword == keyword else { return }
+                var identifiers = Set(items.map(\.id))
+                items.append(contentsOf: result.list.filter { identifiers.insert($0.id).inserted })
+                page = nextPage
+                pageCount = max(result.pageCount, nextPage)
+            } catch is CancellationError {
+            } catch {
+            }
         }
     }
 }

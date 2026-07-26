@@ -77,6 +77,51 @@ final class XingGuangAppModelTests: XCTestCase {
         XCTAssertEqual(repository.receivedFilters, ["year": "2026", "area": "CN"])
     }
 
+    func testCategoryPaginationAppendsUniqueItemsAndStopsAtLastPage() async {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let repository = PagingVodRepository()
+        let category = VodClass(typeID: "movie", typeName: "电影")
+        let model = XingGuangAppModel(
+            selectedSite: Site(key: "api", name: "API", api: "https://example.com", type: 1),
+            categories: [category],
+            defaults: defaults,
+            repository: repository
+        )
+
+        model.selectCategory(category)
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(model.catalogCanLoadMore)
+
+        model.loadNextCategoryPage()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        guard case .loaded(let items) = model.catalogState else {
+            return XCTFail("Expected paginated catalog")
+        }
+        XCTAssertEqual(items.map(\.vodID), ["1", "2"])
+        XCTAssertEqual(repository.pages, [1, 2])
+        XCTAssertFalse(model.catalogCanLoadMore)
+    }
+
+    func testSearchHistoryPersistsMostRecentTwentyWithoutCaseDuplicates() {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let model = XingGuangAppModel(defaults: defaults)
+
+        for index in 0..<22 { model.recordSearch("影片 \(index)") }
+        model.recordSearch("影片 5")
+
+        XCTAssertEqual(model.searchHistory.count, 20)
+        XCTAssertEqual(model.searchHistory.first, "影片 5")
+        XCTAssertEqual(model.searchHistory.filter { $0 == "影片 5" }.count, 1)
+        XCTAssertEqual(defaults.stringArray(forKey: "ios.searchHistory"), model.searchHistory)
+
+        model.clearSearchHistory()
+        XCTAssertTrue(model.searchHistory.isEmpty)
+        XCTAssertNil(defaults.stringArray(forKey: "ios.searchHistory"))
+    }
+
     func testIncognitoSkipsPlaybackHistoryAndPreferencesPersist() throws {
         let (defaults, suiteName) = makeDefaults()
         defer { defaults.removePersistentDomain(forName: suiteName) }
@@ -245,6 +290,39 @@ private final class DelayedVodRepository: VodRepository, @unchecked Sendable {
 
     func category(site: Site, typeID: String, page: Int, filters: [String: String]) async throws -> VodResult {
         VodResult()
+    }
+
+    func search(site: Site, keyword: String, page: Int) async throws -> VodResult { VodResult() }
+    func detail(site: Site, vodID: String) async throws -> VodResult { VodResult() }
+    func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest {
+        PlaybackRequest(url: episodeURL)
+    }
+}
+
+private final class PagingVodRepository: VodRepository, @unchecked Sendable {
+    private let lock = NSLock()
+    private var storedPages: [Int] = []
+
+    var pages: [Int] {
+        lock.lock()
+        defer { lock.unlock() }
+        return storedPages
+    }
+
+    func loadConfig(from url: URL) async throws -> VodConfigDocument { VodConfigDocument() }
+    func home(site: Site, includeFilters: Bool) async throws -> VodResult { VodResult() }
+
+    func category(site: Site, typeID: String, page: Int, filters: [String: String]) async throws -> VodResult {
+        lock.lock()
+        storedPages.append(page)
+        lock.unlock()
+        if page == 1 {
+            return VodResult(list: [Vod(vodID: "1", vodName: "第一页")], pageCount: 2)
+        }
+        return VodResult(
+            list: [Vod(vodID: "1", vodName: "重复"), Vod(vodID: "2", vodName: "第二页")],
+            pageCount: 2
+        )
     }
 
     func search(site: Site, keyword: String, page: Int) async throws -> VodResult { VodResult() }

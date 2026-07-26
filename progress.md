@@ -3037,3 +3037,26 @@
 - `docs/ios-development.md`: records the rejected hypothesis and diagnostic boundary.
 - `progress.md`: appends the failed CI evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift ios/Sources/CQuickJS/XGQuickJS.c docs/ios-development.md progress.md`; after this diagnostic commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Add VOD pagination and persistent search history
+
+### What was done
+- Added continuous category and search pagination using the existing repository page contract, with duplicate suppression and server page-count termination.
+- Added a recent-search list that persists the latest 20 unique keywords and supports reuse, individual removal and clearing.
+- Kept Android hot and suggested searches excluded because they require unrelated 360 and iQIYI services rather than repository data.
+
+### Testing
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after implementation.
+- Added model coverage for page 1/page 2 requests, unique append order, final-page termination, search-history ordering, duplicate removal, cap and persistence.
+- Passed before this batch: GitHub Actions run `30211833730` completed iPhone/iPad tests, device Release, IPA structure and signing checks and produced `XingGuang-iOS-28`; its five-request QuickJS loopback regression passed.
+- Not available on this Windows host: SwiftUI compilation and the new pagination/history tests. This batch requires the next macOS CI run.
+
+### Notes
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: adds catalog page state, next-page loading and recent-search persistence.
+- `ios/Sources/XingGuangKit/Views/VodHomeView.swift`: requests the next category page when the final poster becomes visible.
+- `ios/Sources/XingGuangKit/Views/SearchPreviewView.swift`: adds recent searches and paginated search results.
+- `ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift`: covers pagination and search-history behavior.
+- `docs/ios-compatibility-matrix.md`: separates completed search records from excluded third-party hot/suggestion services.
+- `docs/ios-development.md`: records implementation behavior, CI boundary and the current three-core artifact.
+- `progress.md`: appends implementation, verification evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/State/XingGuangAppModel.swift ios/Sources/XingGuangKit/Views/VodHomeView.swift ios/Sources/XingGuangKit/Views/SearchPreviewView.swift ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md`; after this feature commit is the branch tip, run `git revert HEAD`.
