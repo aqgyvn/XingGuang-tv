@@ -3078,3 +3078,21 @@
 - `docs/ios-development.md`: records the failed pagination run and the corrected isolation boundary.
 - `progress.md`: appends implementation, verification evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift docs/ios-development.md progress.md`; after this repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Replace unstable QuickJS argument parsing
+
+### What was done
+- Replaced `JS_ParseJSON` for validated method arguments with normal QuickJS expression evaluation of the same JSON array.
+- Preserved array validation, bounded failure diagnostics and the existing JavaScript method contract.
+
+### Testing
+- Failed before fix: GitHub Actions run `30213000078` passed all iPhone tests but failed only the iPad local-proxy regression; all five proxy requests returned 502.
+- Confirmed by native diagnostics: QuickJS received 52 bytes beginning with `5b7b2276` (`[{"v`), excluding an empty or truncated Swift buffer as the cause.
+- Passed: source inspection confirms the evaluated source is the already validated JSON array wrapped as an expression and all allocated native memory is released on success and failure paths.
+- Not available on this Windows host: QuickJS/iOS compilation and the Network.framework loopback test. A new macOS CI run must pass before the repair is considered verified.
+
+### Notes
+- `ios/Sources/CQuickJS/XGQuickJS.c`: evaluates validated argument JSON through the regular QuickJS parser instead of `JS_ParseJSON`.
+- `docs/ios-development.md`: records the iPad-only failure evidence, repair boundary and required verification.
+- `progress.md`: appends implementation, verification evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/CQuickJS/XGQuickJS.c docs/ios-development.md progress.md`; after this repair commit is the branch tip, run `git revert HEAD`.

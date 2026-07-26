@@ -426,6 +426,8 @@ char *xg_quickjs_call(XGQuickJSContext *context, const char *method, const char 
     JSValue resolve;
     JSValue reject;
     JSValue callbacks[2];
+    char *argument_expression;
+    size_t argument_length;
     uint32_t length;
     uint32_t index;
     JSValue length_value;
@@ -452,10 +454,29 @@ char *xg_quickjs_call(XGQuickJSContext *context, const char *method, const char 
         JS_FreeValue(context->context, spider);
         return xg_strdup("null");
     }
-    arguments = JS_ParseJSON(context->context, arguments_json ? arguments_json : "[]", arguments_json ? strlen(arguments_json) : 2, "xg-arguments");
+    if (!arguments_json) arguments_json = "[]";
+    argument_length = strlen(arguments_json);
+    argument_expression = (char *)malloc(argument_length + 3);
+    if (!argument_expression) {
+        xg_set_error(context, "JavaScript 鍙傛暟鍐呭瓨涓嶈冻");
+        JS_FreeValue(context->context, function);
+        JS_FreeValue(context->context, spider);
+        return NULL;
+    }
+    argument_expression[0] = '(';
+    memcpy(argument_expression + 1, arguments_json, argument_length);
+    argument_expression[argument_length + 1] = ')';
+    argument_expression[argument_length + 2] = '\0';
+    arguments = JS_Eval(
+        context->context,
+        argument_expression,
+        argument_length + 2,
+        "xg-arguments",
+        JS_EVAL_TYPE_GLOBAL
+    );
+    free(argument_expression);
     if (JS_IsException(arguments) || !JS_IsArray(context->context, arguments)) {
         if (JS_IsException(arguments)) {
-            size_t argument_length = arguments_json ? strlen(arguments_json) : 0;
             unsigned int byte0 = argument_length > 0 ? (unsigned char)arguments_json[0] : 0;
             unsigned int byte1 = argument_length > 1 ? (unsigned char)arguments_json[1] : 0;
             unsigned int byte2 = argument_length > 2 ? (unsigned char)arguments_json[2] : 0;
