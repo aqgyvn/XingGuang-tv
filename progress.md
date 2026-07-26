@@ -3145,6 +3145,22 @@
 - `progress.md`: appends implementation, verification evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Package.swift ios/Sources/XingGuangKit/Player/PlayerInteraction.swift ios/Sources/XingGuangKit/Player/PlayerSession.swift ios/Sources/XingGuangKit/State/XingGuangAppModel.swift ios/Sources/XingGuangKit/Persistence/AppDatabase.swift ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift ios/Sources/XingGuangKit/Views/LiveHomeView.swift ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift ios/Sources/XingGuangKit/Views/SettingsView.swift ios/Tests/XingGuangKitTests/PlayerSessionTests.swift ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift docs/ios-development.md docs/ios-compatibility-matrix.md progress.md`; after this feature commit is the branch tip, run `git revert HEAD`.
 
+## 2026-07-27 - Task: Record playback experience CI verification
+
+### What was done
+- Recorded the successful full macOS validation and installable artifact for the playback experience batch.
+
+### Testing
+- Passed: GitHub Actions run `30215168139` completed the new loop, timer, history-option and aspect-preference tests on iPhone and iPad.
+- Passed: the same run completed all UI tests, device Release, TrollStore IPA structure and ad-hoc signature checks.
+- Artifact: `XingGuang-iOS-33`, ID `8635726897`, `22,866,630` bytes, retained through 2026-08-09.
+- Remaining device validation: brightness, system volume, timer pause and MPV/MDK/AVPlayer aspect behavior.
+
+### Notes
+- `docs/ios-development.md`: records the successful full CI run and artifact metadata.
+- `progress.md`: appends final verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
+
 ## 2026-07-27 - Task: Update QuickJS stack state after Swift thread hops
 
 ### What was done
