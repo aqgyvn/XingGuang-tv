@@ -454,8 +454,32 @@ char *xg_quickjs_call(XGQuickJSContext *context, const char *method, const char 
     }
     arguments = JS_ParseJSON(context->context, arguments_json ? arguments_json : "[]", arguments_json ? strlen(arguments_json) : 2, "xg-arguments");
     if (JS_IsException(arguments) || !JS_IsArray(context->context, arguments)) {
-        if (JS_IsException(arguments)) xg_set_exception(context);
-        else xg_set_error(context, "JavaScript 参数必须是数组");
+        if (JS_IsException(arguments)) {
+            size_t argument_length = arguments_json ? strlen(arguments_json) : 0;
+            unsigned int byte0 = argument_length > 0 ? (unsigned char)arguments_json[0] : 0;
+            unsigned int byte1 = argument_length > 1 ? (unsigned char)arguments_json[1] : 0;
+            unsigned int byte2 = argument_length > 2 ? (unsigned char)arguments_json[2] : 0;
+            unsigned int byte3 = argument_length > 3 ? (unsigned char)arguments_json[3] : 0;
+            char diagnostic[256];
+            char *exception_message;
+            xg_set_exception(context);
+            exception_message = xg_strdup(context->last_error);
+            snprintf(
+                diagnostic,
+                sizeof(diagnostic),
+                "%s [arguments length=%zu prefix=%02x%02x%02x%02x]",
+                exception_message ? exception_message : "JavaScript 参数解析失败",
+                argument_length,
+                byte0,
+                byte1,
+                byte2,
+                byte3
+            );
+            free(exception_message);
+            xg_set_error(context, diagnostic);
+        } else {
+            xg_set_error(context, "JavaScript 参数必须是数组");
+        }
         JS_FreeValue(context->context, arguments);
         JS_FreeValue(context->context, function);
         JS_FreeValue(context->context, spider);

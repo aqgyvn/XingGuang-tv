@@ -3018,3 +3018,22 @@
 - `docs/ios-development.md`: records the three-core CI blocker, repair boundary and pending verification.
 - `progress.md`: appends implementation, verification evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift docs/ios-development.md progress.md`; after this repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Diagnose the remaining QuickJS local proxy failure
+
+### What was done
+- Rejected and removed the explicit Swift UTF-8 buffer hypothesis after it reproduced the same local proxy failure on macOS CI.
+- Added bounded native error metadata containing the received argument length and first four bytes while preserving the original QuickJS exception.
+- Kept the strengthened five-request loopback regression so a single successful request cannot hide the failure.
+
+### Testing
+- Failed before diagnosis: GitHub Actions run `30211242453`, job `89817709468`, still failed only `JavaScriptVodRepositoryTests.testLocalProxyServerRoutesOnlyRegisteredJavaScriptSite`; all three iPhone UI tests passed.
+- Passed: source inspection confirms the rejected Swift bridge change is removed and the diagnostic does not change the QuickJS call signature or proxy routing.
+- Not available on this Windows host: C/Swift compilation and the Network.framework loopback test. The diagnostic requires the next macOS CI run.
+
+### Notes
+- `ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift`: restores the previously established String-backed native call.
+- `ios/Sources/CQuickJS/XGQuickJS.c`: appends bounded argument metadata only when JSON parsing fails.
+- `docs/ios-development.md`: records the rejected hypothesis and diagnostic boundary.
+- `progress.md`: appends the failed CI evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift ios/Sources/CQuickJS/XGQuickJS.c docs/ios-development.md progress.md`; after this diagnostic commit is the branch tip, run `git revert HEAD`.

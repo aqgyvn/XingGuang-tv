@@ -172,4 +172,4 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 
 运行 `30209861414` 的两次尝试均已完成 MPVKit、swift-mdk、GRDB 解析和 iPhone 编译，三个播放核心的适配器、动态框架嵌入、播放器单元测试及 iPhone UI 测试均通过。当前流水线只阻塞在既有本地 JavaScript 代理回环测试：代理返回 HTTP 502，QuickJS 报告 `xg-arguments:1:1`，因此 iPad、Release 和 IPA 步骤尚未执行。
 
-当前修复在 Swift/C 调用边界显式固定 NUL 结尾的 UTF-8 参数缓冲区，并把真实 `127.0.0.1` 回环用例扩展为连续五次请求。该修复尚待新的 macOS CI 验证；通过前仍没有包含 MPV、MDK、AVPlayer 三内核的可安装 IPA。
+运行 `30211242453` 证明显式固定 UTF-8 参数缓冲区仍会在同一回环用例失败，因此该实现已撤回，连续五次回环回归保留。当前原生桥会在解析失败时附带实际参数长度和前四个字节，用于区分空缓冲、截断和执行上下文问题；这只是诊断信息，不改变 JavaScript 协议。通过最终修复的 macOS CI 前，仍没有包含 MPV、MDK、AVPlayer 三内核的可安装 IPA。
