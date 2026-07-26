@@ -3376,3 +3376,19 @@
 - `docs/ios-development.md`: documents privacy boundaries and remaining device validation.
 - `progress.md`: appends implementation, verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift ios/Sources/XingGuangKit/Views/LiveHomeView.swift ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md` and remove `ios/Sources/XingGuangKit/Views/PlaybackUtilityViews.swift` plus `ios/Tests/XingGuangKitTests/PlaybackUtilityTests.swift`; after this feature commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Record playback information and sharing CI verification
+
+### What was done
+- Recorded the completed macOS validation and installable TrollStore artifact for playback information and iOS system sharing.
+
+### Testing
+- Passed: GitHub Actions run `30218561934` completed engine-label, share-payload and authentication-redaction tests plus all iPhone/iPad unit/UI tests.
+- Passed: the same run completed the device Release build, TrollStore IPA packaging, structure validation and ad-hoc signature checks.
+- Artifact: `XingGuang-iOS-39`, ID `8636645112`, `22,992,050` bytes, retained through 2026-08-09.
+- Remaining device validation: iPad share presentation, external App receiving and large local-file sharing.
+
+### Notes
+- `docs/ios-development.md`: records the successful full CI run, artifact metadata and remaining device checks.
+- `progress.md`: appends final verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
