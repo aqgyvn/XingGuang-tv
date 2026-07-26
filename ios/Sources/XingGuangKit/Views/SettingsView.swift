@@ -272,6 +272,7 @@ public struct SettingsView: View {
         model.liveConfigURL = liveURL
         UserDefaults.standard.set(vodURL, forKey: "ios.vodConfigURL")
         UserDefaults.standard.set(liveURL, forKey: "ios.liveConfigURL")
+        model.reloadPreferences()
         model.bootstrap()
     }
 
@@ -418,6 +419,19 @@ private struct PlayerSettingsPreviewView: View {
                 Slider(value: $model.defaultPlaybackSpeed, in: 0.5...2.0, step: 0.25)
                 Text("\(model.defaultPlaybackSpeed, specifier: "%.2g")x")
                     .foregroundColor(XingGuangTheme.primary)
+            }
+
+            Section("字幕") {
+                Slider(value: $model.subtitleTextSize, in: 14...42, step: 1)
+                Text("字号 \(Int(model.subtitleTextSize))")
+                    .foregroundColor(XingGuangTheme.primary)
+                Slider(value: $model.subtitleBottomOffset, in: 8...120, step: 4)
+                Text("底部位置 \(Int(model.subtitleBottomOffset))")
+                    .foregroundColor(XingGuangTheme.primary)
+            }
+
+            Section("弹幕") {
+                Toggle("显示弹幕", isOn: $model.danmakuEnabled)
             }
         }
         .navigationTitle("播放器设置")

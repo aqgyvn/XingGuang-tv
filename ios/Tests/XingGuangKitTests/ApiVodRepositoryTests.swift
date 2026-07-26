@@ -34,7 +34,7 @@ final class ApiVodRepositoryTests: XCTestCase {
     }
 
     func testTypeFourPlaybackUsesResolvedURL() async throws {
-        let data = Data(#"{"url":"https://cdn.example.com/video.m3u8","list":[{"vod_play_url":"https://cdn.example.com/video.m3u8$$$https://cdn.example.com/fallback.m3u8"}],"format":"application/x-mpegURL","artwork":"https://cdn.example.com/poster.jpg","header":{"Referer":"https://video.example.com"},"subs":[{"url":"https://cdn.example.com/sub.vtt","name":"中文","lang":"zh-CN","format":"text/vtt"}],"drm":{"type":"widevine","key":"https://license.example.com","header":{"Authorization":"Bearer token"}}}"#.utf8)
+        let data = Data(#"{"url":"https://cdn.example.com/video.m3u8","list":[{"vod_play_url":"https://cdn.example.com/video.m3u8$$$https://cdn.example.com/fallback.m3u8"}],"format":"application/x-mpegURL","artwork":"https://cdn.example.com/poster.jpg","header":{"Referer":"https://video.example.com"},"subs":[{"url":"https://cdn.example.com/sub.vtt","name":"中文","lang":"zh-CN","format":"text/vtt"}],"danmaku":[{"url":"https://cdn.example.com/danmaku.xml","name":"弹幕"}],"drm":{"type":"widevine","key":"https://license.example.com","header":{"Authorization":"Bearer token"}}}"#.utf8)
         let repository = ApiVodRepository(client: HTTPClientStub(data: data))
         var site = Site(key: "drpy", name: "扩展", api: "https://example.com/api", type: 4)
         site.header = ["User-Agent": "XingGuang"]
@@ -47,6 +47,7 @@ final class ApiVodRepositoryTests: XCTestCase {
         XCTAssertEqual(request.headers["Referer"], "https://video.example.com")
         XCTAssertEqual(request.artwork, "https://cdn.example.com/poster.jpg")
         XCTAssertEqual(request.subtitles.first?.language, "zh-CN")
+        XCTAssertEqual(request.danmaku.first?.url, "https://cdn.example.com/danmaku.xml")
         XCTAssertEqual(request.drm?.headers["Authorization"], "Bearer token")
         XCTAssertEqual(request.timeout, 30)
     }

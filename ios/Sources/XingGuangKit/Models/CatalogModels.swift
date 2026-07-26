@@ -196,6 +196,7 @@ public struct VodResult: Codable, Equatable {
     public var playURL: String
     public var artwork: String
     public var subtitles: [SubtitleResource]
+    public var danmaku: [DanmakuResource]
     public var drm: PlaybackDRM?
     public var flag: String
     public var format: String
@@ -204,7 +205,7 @@ public struct VodResult: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case classes = "class"
-        case list, filters, url, header, flag, format, parse, artwork, drm
+        case list, filters, url, header, flag, format, parse, artwork, drm, danmaku
         case message = "msg"
         case playURL = "playUrl"
         case pageCount = "pagecount"
@@ -221,6 +222,7 @@ public struct VodResult: Codable, Equatable {
         playURL: String = "",
         artwork: String = "",
         subtitles: [SubtitleResource] = [],
+        danmaku: [DanmakuResource] = [],
         drm: PlaybackDRM? = nil,
         flag: String = "",
         format: String = "",
@@ -236,6 +238,7 @@ public struct VodResult: Codable, Equatable {
         self.playURL = playURL
         self.artwork = artwork
         self.subtitles = subtitles
+        self.danmaku = danmaku
         self.drm = drm
         self.flag = flag
         self.format = format
@@ -262,6 +265,7 @@ public struct VodResult: Codable, Equatable {
         playURL = container.string(.playURL)
         artwork = container.string(.artwork)
         subtitles = container.array(SubtitleResource.self, .subtitles)
+        danmaku = container.array(DanmakuResource.self, .danmaku)
         drm = try? container.decodeIfPresent(PlaybackDRM.self, forKey: .drm)
         flag = container.string(.flag)
         format = container.string(.format)
@@ -518,6 +522,36 @@ public struct SubtitleResource: Codable, Equatable, Identifiable {
     }
 }
 
+public struct DanmakuResource: Codable, Equatable, Identifiable {
+    public var id: String { url }
+    public var url: String
+    public var name: String
+    public var format: String
+
+    enum CodingKeys: String, CodingKey {
+        case url, name, format
+    }
+
+    public init(url: String, name: String = "", format: String = "") {
+        self.url = url
+        self.name = name
+        self.format = format
+    }
+
+    public init(from decoder: Decoder) throws {
+        if let value = try? decoder.singleValueContainer().decode(String.self) {
+            url = value
+            name = ""
+            format = ""
+            return
+        }
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        url = container.string(.url)
+        name = container.string(.name)
+        format = container.string(.format)
+    }
+}
+
 public struct PlaybackDRM: Codable, Equatable {
     public var type: String
     public var key: String
@@ -550,6 +584,7 @@ public struct PlaybackRequest: Codable, Equatable {
     public var artwork: String
     public var mediaType: String
     public var subtitles: [SubtitleResource]
+    public var danmaku: [DanmakuResource]
     public var drm: PlaybackDRM?
     public var timeout: TimeInterval
     public var enginePreference: PlayerEnginePreference
@@ -562,6 +597,7 @@ public struct PlaybackRequest: Codable, Equatable {
         artwork: String = "",
         mediaType: String = "",
         subtitles: [SubtitleResource] = [],
+        danmaku: [DanmakuResource] = [],
         drm: PlaybackDRM? = nil,
         timeout: TimeInterval = 15,
         enginePreference: PlayerEnginePreference = .automatic
@@ -573,6 +609,7 @@ public struct PlaybackRequest: Codable, Equatable {
         self.artwork = artwork
         self.mediaType = mediaType
         self.subtitles = subtitles
+        self.danmaku = danmaku
         self.drm = drm
         self.timeout = timeout
         self.enginePreference = enginePreference

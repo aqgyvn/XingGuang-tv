@@ -2642,3 +2642,35 @@
 - `docs/ios-development.md`: replaces the stale pending-CI boundary with run `30179725200` and current artifact details.
 - `progress.md`: appends the complete CI evidence, remaining real-device boundary, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after the documentation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Add external subtitles and synchronized danmaku on iOS
+
+### What was done
+- Added Android-compatible `danmaku` playback fields and propagated them through API and JavaScript playback results.
+- Added SRT, WebVTT, ASS/SSA, Bilibili XML, and bracket-timed text parsing with authenticated remote loading and local file import.
+- Added time-driven subtitle and danmaku overlays that follow pause and seek state without modifying AVPlayer or VLC internals.
+- Added persisted subtitle size/position and danmaku visibility controls, including Android backup preference aliases.
+
+### Testing
+- Passed: fixed parser fixtures cover SRT/VTT timing, ASS dialogue, Bilibili placements/colors, text danmaku, and playback Header/Cookie forwarding.
+- Passed: model and API fixtures cover Android `danmaku` string/object forms and propagation into `PlaybackRequest`.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` before commit.
+- Not run: Swift compilation, parser tests, iPhone/iPad UI tests, device build, IPA packaging and signing require the next macOS GitHub Actions run; this Windows host has no Swift/Xcode toolchain.
+- Not run: visual timing, local Files security scope, VLC playback overlay, orientation changes and background restoration still require real-device acceptance.
+
+### Notes
+- `ios/Sources/XingGuangKit/Models/CatalogModels.swift`: adds Android-compatible danmaku resources to playback results and requests.
+- `ios/Sources/XingGuangKit/Services/TimedTextService.swift`: loads and parses external subtitle and danmaku formats.
+- `ios/Sources/XingGuangKit/Services/ApiVodRepository.swift`: propagates API danmaku resources.
+- `ios/Sources/XingGuangJavaScript/JavaScriptVodRepository.swift`: propagates JavaScript danmaku resources.
+- `ios/Sources/XingGuangKit/Views/Components/TimedOverlayViews.swift`: renders synchronized subtitle and danmaku overlays.
+- `ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift`: adds source selection, file import, overlay controls and playback integration.
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: persists overlay settings and exposes authenticated text loading.
+- `ios/Sources/XingGuangKit/Persistence/AppDatabase.swift`: maps Android subtitle/danmaku preference aliases during restore.
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: exposes player-level subtitle and danmaku preferences.
+- `ios/Tests/XingGuangKitTests/TimedTextServiceTests.swift`: covers parsing and remote request behavior.
+- `ios/Tests/XingGuangKitTests/DomainModelsTests.swift`: covers danmaku Codable compatibility.
+- `ios/Tests/XingGuangKitTests/ApiVodRepositoryTests.swift`: covers playback danmaku propagation.
+- `docs/ios-development.md`: records the new capability and remaining advanced-feature boundary.
+- `progress.md`: appends implementation, validation, file list and rollback point.
+- Rollback method: before committing, run `git restore -- ios docs/ios-development.md progress.md`; after the feature commit is the branch tip, run `git revert HEAD`.

@@ -51,6 +51,15 @@ public final class XingGuangAppModel: ObservableObject {
     @Published public var playerPreference: PlayerEnginePreference {
         didSet { defaults.set(playerPreference.rawValue, forKey: "ios.playerEngine") }
     }
+    @Published public var subtitleTextSize: Double {
+        didSet { defaults.set(subtitleTextSize, forKey: "ios.subtitleTextSize") }
+    }
+    @Published public var subtitleBottomOffset: Double {
+        didSet { defaults.set(subtitleBottomOffset, forKey: "ios.subtitleBottomOffset") }
+    }
+    @Published public var danmakuEnabled: Bool {
+        didSet { defaults.set(danmakuEnabled, forKey: "ios.danmakuEnabled") }
+    }
 
     public var continueWatching: History? { histories.first }
     public var repositoryAvailable: Bool { repository != nil }
@@ -61,6 +70,7 @@ public final class XingGuangAppModel: ObservableObject {
     private let liveRepository: LiveRepository?
     private let persistence: PersistenceStore?
     private let playerFactory: PlayerEngineFactory
+    private let timedTextLoader: any TimedTextLoading
     private let defaults: UserDefaults
     private var configurationTask: Task<Void, Never>?
     private var catalogTask: Task<Void, Never>?
@@ -78,12 +88,14 @@ public final class XingGuangAppModel: ObservableObject {
         liveRepository: LiveRepository? = nil,
         persistence: PersistenceStore? = nil,
         playerFactory: PlayerEngineFactory = PreviewPlayerEngineFactory(),
+        timedTextLoader: any TimedTextLoading = TimedTextLoader(),
         usePreviewData: Bool = true
     ) {
         self.repository = repository
         self.liveRepository = liveRepository
         self.persistence = persistence
         self.playerFactory = playerFactory
+        self.timedTextLoader = timedTextLoader
         self.defaults = defaults
         self.vodConfigURL = defaults.string(forKey: "ios.vodConfigURL") ?? ""
         self.liveConfigURL = defaults.string(forKey: "ios.liveConfigURL") ?? ""
@@ -92,6 +104,11 @@ public final class XingGuangAppModel: ObservableObject {
         let storedSpeed = defaults.object(forKey: "ios.defaultPlaybackSpeed") as? Double ?? 1
         self.defaultPlaybackSpeed = min(max(storedSpeed, 0.5), 2)
         self.playerPreference = PlayerEnginePreference(rawValue: defaults.string(forKey: "ios.playerEngine") ?? "") ?? .automatic
+        let storedSubtitleSize = defaults.object(forKey: "ios.subtitleTextSize") as? Double ?? 22
+        self.subtitleTextSize = min(max(storedSubtitleSize, 14), 42)
+        let storedSubtitleOffset = defaults.object(forKey: "ios.subtitleBottomOffset") as? Double ?? 24
+        self.subtitleBottomOffset = min(max(storedSubtitleOffset, 8), 120)
+        self.danmakuEnabled = defaults.object(forKey: "ios.danmakuEnabled") as? Bool ?? true
 
         if usePreviewData {
             self.configuration = PreviewFixtures.config
@@ -173,6 +190,16 @@ public final class XingGuangAppModel: ObservableObject {
         configurationSaveState = .idle
     }
 
+    public func reloadPreferences() {
+        incognito = defaults.object(forKey: "ios.incognito") as? Bool ?? incognito
+        automaticLineChange = defaults.object(forKey: "ios.automaticLineChange") as? Bool ?? automaticLineChange
+        defaultPlaybackSpeed = min(max(defaults.object(forKey: "ios.defaultPlaybackSpeed") as? Double ?? defaultPlaybackSpeed, 0.5), 2)
+        playerPreference = PlayerEnginePreference(rawValue: defaults.string(forKey: "ios.playerEngine") ?? "") ?? playerPreference
+        subtitleTextSize = min(max(defaults.object(forKey: "ios.subtitleTextSize") as? Double ?? subtitleTextSize, 14), 42)
+        subtitleBottomOffset = min(max(defaults.object(forKey: "ios.subtitleBottomOffset") as? Double ?? subtitleBottomOffset, 8), 120)
+        danmakuEnabled = defaults.object(forKey: "ios.danmakuEnabled") as? Bool ?? danmakuEnabled
+    }
+
     public func search(keyword: String, page: Int = 1) async throws -> [Vod] {
         guard let repository, !selectedSite.key.isEmpty else { return [] }
         return try await repository.search(site: selectedSite, keyword: keyword, page: page).list
@@ -192,6 +219,14 @@ public final class XingGuangAppModel: ObservableObject {
 
     public func makePlayerSession() -> PlayerSession {
         PlayerSession(engine: playerFactory.makePlayer(preference: playerPreference))
+    }
+
+    public func loadSubtitle(_ resource: SubtitleResource, request: PlaybackRequest) async throws -> [TimedTextCue] {
+        try await timedTextLoader.loadSubtitle(resource, headers: request.headers, cookies: request.cookies)
+    }
+
+    public func loadDanmaku(_ resource: DanmakuResource, request: PlaybackRequest) async throws -> [DanmakuCue] {
+        try await timedTextLoader.loadDanmaku(resource, headers: request.headers, cookies: request.cookies)
     }
 
     public func makeBackupDocument() throws -> BackupDocument {
@@ -233,9 +268,15 @@ public final class XingGuangAppModel: ObservableObject {
                 "ios.incognito": .bool(incognito),
                 "ios.automaticLineChange": .bool(automaticLineChange),
                 "ios.defaultPlaybackSpeed": .number(defaultPlaybackSpeed),
+                "ios.subtitleTextSize": .number(subtitleTextSize),
+                "ios.subtitleBottomOffset": .number(subtitleBottomOffset),
+                "ios.danmakuEnabled": .bool(danmakuEnabled),
                 "player_engine": .number(playerPreference == .vlc ? 2 : 0),
                 "incognito": .bool(incognito),
-                "change": .bool(automaticLineChange)
+                "change": .bool(automaticLineChange),
+                "subtitle_text_size": .number(subtitleTextSize),
+                "subtitle_position": .number(subtitleBottomOffset),
+                "danmaku_show": .bool(danmakuEnabled)
             ]
         )
     }

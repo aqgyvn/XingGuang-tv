@@ -297,6 +297,15 @@ public final class AppDatabase: PersistenceStore, BackupDocumentApplying, @unche
             let preference = value == 0 ? PlayerEnginePreference.avPlayer : PlayerEnginePreference.vlc
             UserDefaults.standard.set(preference.rawValue, forKey: "ios.playerEngine")
         }
+        if preferences["ios.subtitleTextSize"] == nil, let value = doubleValue(preferences["subtitle_text_size"]), value > 0 {
+            UserDefaults.standard.set(value, forKey: "ios.subtitleTextSize")
+        }
+        if preferences["ios.subtitleBottomOffset"] == nil, let value = doubleValue(preferences["subtitle_position"]), value > 0 {
+            UserDefaults.standard.set(value, forKey: "ios.subtitleBottomOffset")
+        }
+        if preferences["ios.danmakuEnabled"] == nil, let value = boolValue(preferences["danmaku_show"]) {
+            UserDefaults.standard.set(value, forKey: "ios.danmakuEnabled")
+        }
     }
 
     private func boolValue(_ value: JSONValue?) -> Bool? {
@@ -314,6 +323,16 @@ public final class AppDatabase: PersistenceStore, BackupDocumentApplying, @unche
         switch value {
         case .number(let value): return Int(value)
         case .string(let value): return Int(value)
+        case .bool(let value): return value ? 1 : 0
+        default: return nil
+        }
+    }
+
+    private func doubleValue(_ value: JSONValue?) -> Double? {
+        guard let value else { return nil }
+        switch value {
+        case .number(let value): return value
+        case .string(let value): return Double(value)
         case .bool(let value): return value ? 1 : 0
         default: return nil
         }

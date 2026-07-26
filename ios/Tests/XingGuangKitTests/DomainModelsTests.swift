@@ -86,11 +86,22 @@ final class DomainModelsTests: XCTestCase {
     }
 
     func testVodResultEncodesSubtitlesWithAndroidFieldName() throws {
-        let result = VodResult(subtitles: [SubtitleResource(url: "https://a.example/subtitle.vtt", name: "中文")])
+        let result = VodResult(
+            subtitles: [SubtitleResource(url: "https://a.example/subtitle.vtt", name: "中文")],
+            danmaku: [DanmakuResource(url: "https://a.example/danmaku.xml", name: "弹幕")]
+        )
         let object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(result)) as? [String: Any]
         let subtitles = object?["subs"] as? [[String: String]]
+        let danmaku = object?["danmaku"] as? [[String: String]]
 
         XCTAssertEqual(subtitles?.first?["url"], "https://a.example/subtitle.vtt")
+        XCTAssertEqual(danmaku?.first?["url"], "https://a.example/danmaku.xml")
         XCTAssertNil(object?["subtitles"])
+    }
+
+    func testDanmakuResourceAcceptsAndroidStringForm() throws {
+        let result = try JSONDecoder().decode(VodResult.self, from: Data(#"{"danmaku":["https://a.example/danmaku.xml"]}"#.utf8))
+
+        XCTAssertEqual(result.danmaku.first?.url, "https://a.example/danmaku.xml")
     }
 }

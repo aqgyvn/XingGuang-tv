@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 @MainActor
 struct VodDetailPreviewView: View {
@@ -20,6 +21,17 @@ struct VodDetailPreviewView: View {
     @State private var selectedAudioTrackID = ""
     @State private var selectedVideoTrackID = ""
     @State private var selectedSubtitleTrackID = ""
+    @State private var currentPlaybackRequest: PlaybackRequest?
+    @State private var subtitleResources: [SubtitleResource] = []
+    @State private var danmakuResources: [DanmakuResource] = []
+    @State private var subtitleCues: [TimedTextCue] = []
+    @State private var danmakuCues: [DanmakuCue] = []
+    @State private var selectedSubtitleResourceID = ""
+    @State private var selectedDanmakuResourceID = ""
+    @State private var overlayTask: Task<Void, Never>?
+    @State private var isImportingSubtitle = false
+    @State private var isImportingDanmaku = false
+    @State private var showsOverlaySettings = false
 
     init(vod: Vod, model: XingGuangAppModel) {
         self.model = model
@@ -88,8 +100,30 @@ struct VodDetailPreviewView: View {
         }
         .onDisappear {
             playbackTask?.cancel()
+            overlayTask?.cancel()
             persistPlayback()
             session.stop()
+        }
+        .fileImporter(
+            isPresented: $isImportingSubtitle,
+            allowedContentTypes: [.plainText, .data],
+            allowsMultipleSelection: false,
+            onCompletion: handleSubtitleSelection
+        )
+        .fileImporter(
+            isPresented: $isImportingDanmaku,
+            allowedContentTypes: [.plainText, .xml, .data],
+            allowsMultipleSelection: false,
+            onCompletion: handleDanmakuSelection
+        )
+        .sheet(isPresented: $showsOverlaySettings) {
+            NavigationView {
+                TimedOverlaySettingsView(
+                    subtitleTextSize: $model.subtitleTextSize,
+                    subtitleBottomOffset: $model.subtitleBottomOffset,
+                    danmakuEnabled: $model.danmakuEnabled
+                )
+            }
         }
         .accessibilityIdentifier("vod.detail")
     }
@@ -99,6 +133,17 @@ struct VodDetailPreviewView: View {
             ZStack {
                 PlayerSurfaceView(engine: session.engine)
                     .aspectRatio(16.0 / 9.0, contentMode: .fit)
+                if model.danmakuEnabled, !danmakuCues.isEmpty {
+                    DanmakuOverlayView(cues: danmakuCues, position: session.time.position)
+                }
+                if !subtitleCues.isEmpty {
+                    TimedSubtitleOverlayView(
+                        cues: subtitleCues,
+                        position: session.time.position,
+                        fontSize: model.subtitleTextSize,
+                        bottomOffset: model.subtitleBottomOffset
+                    )
+                }
                 playerOverlay
             }
             controls
@@ -162,9 +207,7 @@ struct VodDetailPreviewView: View {
                 Text("\(formatTime(seekPosition)) / \(formatTime(session.time.duration))")
                     .font(.caption.monospacedDigit())
                 Spacer()
-                if session.capabilities.contains(.trackSelection), !session.tracks.isEmpty {
-                    trackMenu
-                }
+                trackMenu
                 if session.capabilities.contains(.pictureInPicture), canRequestPictureInPicture {
                     Button {
                         if !session.startPictureInPicture() {
@@ -235,6 +278,42 @@ struct VodDetailPreviewView: View {
                     }
                     trackButtons(subtitleTracks)
                 }
+            }
+            Section(header: Text("外置字幕")) {
+                if !subtitleCues.isEmpty {
+                    Button {
+                        selectedSubtitleResourceID = ""
+                        subtitleCues = []
+                    } label: {
+                        Label("关闭外置字幕", systemImage: selectedSubtitleResourceID.isEmpty ? "checkmark" : "captions.bubble")
+                    }
+                }
+                ForEach(subtitleResources) { resource in
+                    Button { loadSubtitle(resource) } label: {
+                        Label(resource.name.isEmpty ? resource.url : resource.name, systemImage: selectedSubtitleResourceID == resource.id ? "checkmark" : "circle")
+                    }
+                }
+                Button { isImportingSubtitle = true } label: {
+                    Label("选择字幕文件", systemImage: "doc.badge.plus")
+                }
+            }
+            Section(header: Text("弹幕")) {
+                if !danmakuCues.isEmpty {
+                    Button { model.danmakuEnabled.toggle() } label: {
+                        Label(model.danmakuEnabled ? "关闭弹幕" : "开启弹幕", systemImage: model.danmakuEnabled ? "text.bubble.fill" : "text.bubble")
+                    }
+                }
+                ForEach(danmakuResources) { resource in
+                    Button { loadDanmaku(resource) } label: {
+                        Label(resource.name.isEmpty ? resource.url : resource.name, systemImage: selectedDanmakuResourceID == resource.id ? "checkmark" : "circle")
+                    }
+                }
+                Button { isImportingDanmaku = true } label: {
+                    Label("选择弹幕文件", systemImage: "doc.badge.plus")
+                }
+            }
+            Button { showsOverlaySettings = true } label: {
+                Label("字幕与弹幕设置", systemImage: "textformat.size")
             }
         } label: {
             Image(systemName: "captions.bubble")
@@ -419,6 +498,7 @@ struct VodDetailPreviewView: View {
                 expectedResumePosition = resume
                 session.load(request, resumeAt: resume)
                 session.setRate(Float(speed))
+                configureOverlays(for: request)
                 playingEpisodeURL = episode.url
                 lastPersistedPosition = resume
                 lastPersistedEpisodeURL = episode.url
@@ -446,11 +526,118 @@ struct VodDetailPreviewView: View {
 
     private func resetPersistenceCheckpoint() {
         playbackTask?.cancel()
+        overlayTask?.cancel()
         session.stop()
         lastPersistedPosition = 0
         lastPersistedEpisodeURL = currentEpisode?.url ?? ""
         playingEpisodeURL = ""
         expectedResumePosition = 0
+        currentPlaybackRequest = nil
+        subtitleResources = []
+        danmakuResources = []
+        subtitleCues = []
+        danmakuCues = []
+        selectedSubtitleResourceID = ""
+        selectedDanmakuResourceID = ""
+    }
+
+    private func configureOverlays(for request: PlaybackRequest) {
+        overlayTask?.cancel()
+        currentPlaybackRequest = request
+        subtitleResources = request.subtitles
+        danmakuResources = request.danmaku
+        subtitleCues = []
+        danmakuCues = []
+        selectedSubtitleResourceID = ""
+        selectedDanmakuResourceID = ""
+        overlayTask = Task { @MainActor in
+            if let subtitle = request.subtitles.first {
+                await loadSubtitle(subtitle, request: request)
+            }
+            guard !Task.isCancelled else { return }
+            if let danmaku = request.danmaku.first {
+                await loadDanmaku(danmaku, request: request)
+            }
+        }
+    }
+
+    private func loadSubtitle(_ resource: SubtitleResource) {
+        guard let request = currentPlaybackRequest else { return }
+        overlayTask?.cancel()
+        overlayTask = Task { @MainActor in
+            await loadSubtitle(resource, request: request)
+        }
+    }
+
+    private func loadSubtitle(_ resource: SubtitleResource, request: PlaybackRequest) async {
+        do {
+            let cues = try await model.loadSubtitle(resource, request: request)
+            try Task.checkCancellation()
+            subtitleCues = cues
+            selectedSubtitleResourceID = resource.id
+        } catch is CancellationError {
+        } catch {
+            detailError = error.localizedDescription
+        }
+    }
+
+    private func loadDanmaku(_ resource: DanmakuResource) {
+        guard let request = currentPlaybackRequest else { return }
+        overlayTask?.cancel()
+        overlayTask = Task { @MainActor in
+            await loadDanmaku(resource, request: request)
+        }
+    }
+
+    private func loadDanmaku(_ resource: DanmakuResource, request: PlaybackRequest) async {
+        do {
+            let cues = try await model.loadDanmaku(resource, request: request)
+            try Task.checkCancellation()
+            danmakuCues = cues
+            selectedDanmakuResourceID = resource.id
+        } catch is CancellationError {
+        } catch {
+            detailError = error.localizedDescription
+        }
+    }
+
+    private func handleSubtitleSelection(_ result: Result<[URL], Error>) {
+        guard case .success(let urls) = result, let url = urls.first else {
+            if case .failure(let error) = result { detailError = error.localizedDescription }
+            return
+        }
+        let accessed = url.startAccessingSecurityScopedResource()
+        defer { if accessed { url.stopAccessingSecurityScopedResource() } }
+        do {
+            let cues = try TimedTextParser.subtitles(data: Data(contentsOf: url), url: url.absoluteString)
+            let resource = SubtitleResource(url: url.absoluteString, name: url.lastPathComponent, format: url.pathExtension)
+            subtitleResources.removeAll { $0.id == resource.id }
+            subtitleResources.insert(resource, at: 0)
+            subtitleCues = cues
+            selectedSubtitleResourceID = resource.id
+        } catch {
+            detailError = error.localizedDescription
+        }
+    }
+
+    private func handleDanmakuSelection(_ result: Result<[URL], Error>) {
+        guard case .success(let urls) = result, let url = urls.first else {
+            if case .failure(let error) = result { detailError = error.localizedDescription }
+            return
+        }
+        let accessed = url.startAccessingSecurityScopedResource()
+        defer { if accessed { url.stopAccessingSecurityScopedResource() } }
+        do {
+            let cues = try TimedTextParser.danmaku(data: Data(contentsOf: url), url: url.absoluteString)
+            let resource = DanmakuResource(url: url.absoluteString, name: url.lastPathComponent, format: url.pathExtension)
+            danmakuResources.removeAll { $0.id == resource.id }
+            danmakuResources.insert(resource, at: 0)
+            danmakuCues = cues
+            selectedDanmakuResourceID = resource.id
+            model.danmakuEnabled = true
+        } catch {
+            detailError = error.localizedDescription
+        }
     }
 
     private func badge(_ text: String) -> some View {
@@ -478,5 +665,41 @@ struct VodDetailPreviewView: View {
         guard value.isFinite else { return "00:00" }
         let total = max(Int(value), 0)
         return String(format: "%02d:%02d", total / 60, total % 60)
+    }
+}
+
+private struct TimedOverlaySettingsView: View {
+    @Binding var subtitleTextSize: Double
+    @Binding var subtitleBottomOffset: Double
+    @Binding var danmakuEnabled: Bool
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        Form {
+            Section("字幕") {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("字号 \(Int(subtitleTextSize))")
+                    Slider(value: $subtitleTextSize, in: 14...42, step: 1)
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("底部位置 \(Int(subtitleBottomOffset))")
+                    Slider(value: $subtitleBottomOffset, in: 8...120, step: 4)
+                }
+                Button("恢复默认") {
+                    subtitleTextSize = 22
+                    subtitleBottomOffset = 24
+                }
+            }
+            Section("弹幕") {
+                Toggle("显示弹幕", isOn: $danmakuEnabled)
+            }
+        }
+        .navigationTitle("字幕与弹幕")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("完成") { dismiss() }
+            }
+        }
     }
 }

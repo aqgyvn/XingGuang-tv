@@ -15,14 +15,15 @@
 - 配置切换会取消旧配置与片库请求，UI 状态只在主线程更新。
 - JavaScript `type 3` 已接入官方 QuickJS C runtime、按来源串行 context、模块加载、`init/home/homeVod/category/detail/search/play`、`proxy/live/action/sniffer/isVideo`、`req/http`、`local`、console、URL 合并、MD5、AES/RSA、GBK 和繁简转换桥；正式 App 已按来源类型路由 API 与 JavaScript 实现。
 - 直播已支持 JSON/M3U/TXT、分组、频道备用线路、请求头继承、JavaScript `liveContent(url)` 动态源、JSON/XMLTV/XMLTV.gz EPG、日期切换、当前节目和 Android 兼容回看/时移模板；备份已支持 Android 字段 JSON 与 `.bk.gz` 导入/导出，并在校验后事务替换本地数据。
+- 外置字幕支持远程或文件导入的 SRT、WebVTT、ASS/SSA，弹幕支持 Android 对齐的 Bilibili XML 与 `[时间]文本`；两者以播放器时间驱动覆盖层，支持跳转同步、弹幕开关、字幕字号和底部位置持久化。
 
 尚未完成或尚未验收：
 
 - GitHub Actions 运行 `30179725200` 已通过完整的 iPhone/iPad 测试、设备 Release 构建、IPA 打包、IPA 结构和 ad-hoc 签名检查，并上传了 `XingGuang-iOS-16` artifact。仍未完成 TrollStore 真机安装与功能验收，因此不能宣称媒体播放和设备兼容性已经在真实设备上验证。
 - JavaScript 仍不能运行依赖 Android JAR 的扩展函数；Android JAR、Python Spider 和部分来源专用 `playUrl` 解析链会返回明确的不兼容错误。
-- WebView 媒体嗅探、外置字幕文件、弹幕显示、二维码扫描、DoH/广告规则代理和完整文件打开流程仍在后续阶段，当前不能宣称已移植。
+- WebView 媒体嗅探、二维码扫描、DoH/广告规则代理和完整配置文件打开流程仍在后续阶段，当前不能宣称已移植。
 - HLS AES 等由系统播放核心原生处理；传入 Widevine、PlayReady、ClearKey 或其他外置 DRM 描述时会给出 DRM 错误。当前没有 FairPlay 许可证代理实现。
-- VLC 路径不承诺 AirPlay、系统画中画、任意自定义 Header 或外置字幕行为与 Android 完全一致；AVPlayer 的外置字幕资源也尚未接入播放器。
+- VLC 路径不承诺 AirPlay、系统画中画或任意自定义 Header 与 Android 完全一致；外置字幕采用播放器上层同步渲染，不依赖 AVPlayer/VLC 的内置字幕实现。
 
 本阶段是在用户明确要求下提前启动的；第一阶段真机验收仍是发布门槛，第二阶段完成后必须重新通过完整 CI，再进行真机验收，不能把模拟器通过当作设备功能通过。
 

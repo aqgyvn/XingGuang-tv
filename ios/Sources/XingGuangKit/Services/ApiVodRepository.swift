@@ -152,6 +152,7 @@ public final class ApiVodRepository: VodRepository, @unchecked Sendable {
             format: result.format,
             artwork: result.artwork,
             subtitles: result.subtitles,
+            danmaku: result.danmaku,
             drm: result.drm,
             timeout: TimeInterval(site.timeout > 0 ? site.timeout : 15)
         )
