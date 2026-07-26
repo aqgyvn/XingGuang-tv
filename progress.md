@@ -2851,3 +2851,20 @@
 - `docs/ios-development.md`: records the failed run and pending validation boundary.
 - `progress.md`: appends CI evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift docs/ios-development.md progress.md`; after the repair commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Validate iOS configuration network policies on macOS CI
+
+### What was done
+- Confirmed Android-compatible Header injection, ad blocking, configuration policy replacement and the JavaScript/WebKit integrations on both simulator families and the device build path.
+- Preserved the explicit DoH platform limitation and separate real-source acceptance boundary.
+
+### Testing
+- Passed: GitHub Actions run `30197188009`, job `89780680638`, completed successfully.
+- Passed: all iPhone and iPad unit/UI tests, device Release build, IPA structure check, embedded/app ad-hoc signing checks and artifact upload.
+- Passed: artifact `XingGuang-iOS-23`, ID `8630553500`, size `21,265,946` bytes, expires 2026-08-09.
+- Not run: real configuration Header rules, Web ad filtering and media playback require TrollStore hardware acceptance.
+
+### Notes
+- `docs/ios-development.md`: records the successful policy run and artifact identity.
+- `progress.md`: appends complete CI evidence, changed files and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after the validation commit is the branch tip, run `git revert HEAD`.

@@ -141,3 +141,5 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 - 本批次已添加配置解码、Header 注入、广告阻止和配置切换更新策略的固定测试；Swift/WebKit 编译与完整 IPA 仍须下一次 macOS CI 确认。
 
 运行 `30197040000` 已通过 `XingGuangKit` 网络策略与 WebKit 源码编译，但 `XingGuangJavaScript` target 因 `JavaScriptHTTP.swift` 缺少共享模块导入而停止。现已补充 `import XingGuangKit`；该次运行未进入测试、iPad、Release 和 IPA 步骤。
+
+运行 `30197188009` 已通过 Header/广告策略批次的 iPhone/iPad 测试、设备 Release 构建、IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-23`（artifact ID `8630553500`，`21,265,946` 字节，保留至 2026-08-09）；真实来源规则和 Web 页面仍需 TrollStore 真机验收。
