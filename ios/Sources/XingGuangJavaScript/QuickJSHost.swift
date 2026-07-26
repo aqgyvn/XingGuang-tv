@@ -7,11 +7,11 @@ final class QuickJSHostBox: @unchecked Sendable {
     let site: Site
     let transport: JavaScriptHTTPTransport
     let defaults: UserDefaults
-    let proxyEndpoint: URL?
+    let proxyEndpoint: JavaScriptProxyEndpoint
     private var sourceCache: [String: String] = [:]
     private var bridgeError: String?
 
-    init(site: Site, transport: JavaScriptHTTPTransport, defaults: UserDefaults, proxyEndpoint: URL? = nil) {
+    init(site: Site, transport: JavaScriptHTTPTransport, defaults: UserDefaults, proxyEndpoint: JavaScriptProxyEndpoint = JavaScriptProxyEndpoint()) {
         self.site = site
         self.transport = transport
         self.defaults = defaults
@@ -149,14 +149,14 @@ final class QuickJSHostBox: @unchecked Sendable {
         case "t2s":
             return json(ChineseTextConverter.traditionalToSimplified(object["value"] as? String ?? ""))
         case "getProxy":
-            guard let endpoint = proxyEndpoint,
+            guard let endpoint = proxyEndpoint.value,
                   let value = proxyURL(endpoint: endpoint, local: object["local"] as? Bool ?? false) else {
                 bridgeError = "本地代理服务尚未配置；请注入 proxyEndpoint"
                 return "null"
             }
             return json(value)
         case "js2Proxy":
-            guard let endpoint = proxyEndpoint,
+            guard let endpoint = proxyEndpoint.value,
                   let value = jsProxyURL(endpoint: endpoint, object: object) else {
                 bridgeError = "本地代理服务尚未配置；请注入 proxyEndpoint"
                 return "null"

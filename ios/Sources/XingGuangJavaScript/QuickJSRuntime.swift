@@ -42,7 +42,7 @@ public actor QuickJSRuntime {
         site: Site,
         transport: JavaScriptHTTPTransport,
         defaults: UserDefaults = .standard,
-        proxyEndpoint: URL? = nil
+        proxyEndpoint: JavaScriptProxyEndpoint = JavaScriptProxyEndpoint()
     ) {
         let host = QuickJSHostBox(
             site: site,

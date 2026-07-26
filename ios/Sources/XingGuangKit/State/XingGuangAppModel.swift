@@ -71,6 +71,7 @@ public final class XingGuangAppModel: ObservableObject {
     private let persistence: PersistenceStore?
     private let playerFactory: PlayerEngineFactory
     private let timedTextLoader: any TimedTextLoading
+    private let webMediaSniffer: (any WebMediaSniffing)?
     private let defaults: UserDefaults
     private var configurationTask: Task<Void, Never>?
     private var catalogTask: Task<Void, Never>?
@@ -89,6 +90,7 @@ public final class XingGuangAppModel: ObservableObject {
         persistence: PersistenceStore? = nil,
         playerFactory: PlayerEngineFactory = PreviewPlayerEngineFactory(),
         timedTextLoader: any TimedTextLoading = TimedTextLoader(),
+        webMediaSniffer: (any WebMediaSniffing)? = nil,
         usePreviewData: Bool = true
     ) {
         self.repository = repository
@@ -96,6 +98,7 @@ public final class XingGuangAppModel: ObservableObject {
         self.persistence = persistence
         self.playerFactory = playerFactory
         self.timedTextLoader = timedTextLoader
+        self.webMediaSniffer = webMediaSniffer
         self.defaults = defaults
         self.vodConfigURL = defaults.string(forKey: "ios.vodConfigURL") ?? ""
         self.liveConfigURL = defaults.string(forKey: "ios.liveConfigURL") ?? ""
@@ -213,6 +216,12 @@ public final class XingGuangAppModel: ObservableObject {
     public func resolvePlayback(route: PlaybackRoute, episode: PlaybackEpisode) async throws -> PlaybackRequest {
         guard let repository else { return PlaybackRequest(url: episode.url) }
         var request = try await repository.resolvePlayback(site: selectedSite, flag: route.name, episodeURL: episode.url)
+        if request.requiresSniffing {
+            guard let webMediaSniffer else {
+                throw VodRepositoryError.unsupportedPlayback("当前运行环境未配置网页媒体嗅探器")
+            }
+            request = try await webMediaSniffer.resolve(request, site: selectedSite)
+        }
         request.enginePreference = playerPreference
         return request
     }

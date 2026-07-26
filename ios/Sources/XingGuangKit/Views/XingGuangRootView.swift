@@ -3,13 +3,16 @@ import SwiftUI
 @MainActor
 public struct XingGuangRootView: View {
     @StateObject private var model: XingGuangAppModel
+    private let prepare: @MainActor () async -> Void
 
     public init() {
         _model = StateObject(wrappedValue: XingGuangAppModel())
+        prepare = {}
     }
 
-    public init(model: XingGuangAppModel) {
+    public init(model: XingGuangAppModel, prepare: @escaping @MainActor () async -> Void = {}) {
         _model = StateObject(wrappedValue: model)
+        self.prepare = prepare
     }
 
     public var body: some View {
@@ -41,6 +44,7 @@ public struct XingGuangRootView: View {
         .accentColor(XingGuangTheme.primary)
         .accessibilityIdentifier("xingguang.root.tabs")
         .task {
+            await prepare()
             model.bootstrap()
         }
     }

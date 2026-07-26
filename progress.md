@@ -2691,3 +2691,34 @@
 - `docs/ios-development.md`: records the successful subtitle/danmaku CI run and artifact identity.
 - `progress.md`: appends CI evidence, the first-attempt classification and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after the documentation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-26 - Task: Add WebView media sniffing and controlled JavaScript local proxy
+
+### What was done
+- Replaced the type 3/type 4 `parse != 0` rejection with a structured Web sniffing request that preserves source headers, cookies, timeout and click script.
+- Added an isolated WKWebView media resolver covering fetch, XHR, media elements, resource timing, MIME/extension detection, JavaScript `isVideo`, timeout, cancellation and WebKit cookie propagation.
+- Added a loopback-only JavaScript proxy that selects ports 9978-9998, restricts methods/path/size/concurrency, and routes only to registered JavaScript sites.
+- Started the proxy before production configuration bootstrap and injected both the proxy endpoint and Web resolver without changing Android sources or player-engine responsibilities.
+
+### Testing
+- Passed: source-level tests cover JavaScript `parse=1` request creation, App-model resolution before player load, and loopback proxy routing through a registered JavaScript site.
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'` after implementation.
+- Not run: Swift compilation, WebKit/Network.framework tests, iPhone/iPad suites, device build, IPA packaging and signing require macOS GitHub Actions; this Windows host has no Swift/Xcode toolchain.
+- Not run: real protected pages, Cookie/UA/Referer behavior, site click scripts and final AVPlayer/VLC playback require TrollStore hardware acceptance.
+
+### Notes
+- `ios/Sources/XingGuangKit/Models/CatalogModels.swift`: adds Web sniffing metadata to playback requests.
+- `ios/Sources/XingGuangKit/Services/WebMediaSniffer.swift`: resolves page URLs into final media requests with WKWebView.
+- `ios/Sources/XingGuangKit/Services/ApiVodRepository.swift`: propagates type 4 parse requirements.
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: resolves sniffing requests before player creation.
+- `ios/Sources/XingGuangKit/Views/XingGuangRootView.swift`: supports asynchronous production preparation before bootstrap.
+- `ios/Sources/XingGuangJavaScript/JavaScriptVodRepository.swift`: propagates type 3 parse requests and routes proxy calls to registered sites.
+- `ios/Sources/XingGuangJavaScript/QuickJSHost.swift`: reads a dynamically injected local proxy endpoint.
+- `ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift`: shares the endpoint holder with each runtime.
+- `ios/Sources/XingGuangJavaScript/LocalProxyServer.swift`: implements the controlled loopback HTTP server.
+- `ios/App/XingGuangApp.swift`: wires proxy startup and JavaScript video validation into the production environment.
+- `ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift`: covers parse propagation and local proxy routing.
+- `ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift`: covers pre-player Web resolution.
+- `docs/ios-development.md`: documents behavior, security boundary and remaining hardware validation.
+- `progress.md`: appends implementation, validation evidence, file list and rollback point.
+- Rollback method: before committing, run `git restore -- ios docs/ios-development.md progress.md`; after the feature commit is the branch tip, run `git revert HEAD`.

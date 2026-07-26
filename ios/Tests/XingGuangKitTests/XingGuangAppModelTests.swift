@@ -120,9 +120,51 @@ final class XingGuangAppModelTests: XCTestCase {
         XCTAssertEqual(backup.preferences["change"], .bool(false))
     }
 
+    func testPlaybackRequiringSniffingIsResolvedBeforePlayerLoad() async throws {
+        let repository = SniffingVodRepository()
+        let sniffer = MockWebMediaSniffer()
+        let model = XingGuangAppModel(
+            selectedSite: Site(key: "sniff", name: "Sniff", api: "https://example.com", type: 3),
+            repository: repository,
+            webMediaSniffer: sniffer
+        )
+        let episode = PlaybackEpisode(name: "正片", url: "https://example.com/player")
+        let route = PlaybackRoute(name: "线路", episodes: [episode])
+
+        let request = try await model.resolvePlayback(route: route, episode: episode)
+
+        XCTAssertEqual(request.url, "https://cdn.example/video.m3u8")
+        XCTAssertFalse(request.requiresSniffing)
+        XCTAssertEqual(sniffer.receivedSite?.key, "sniff")
+    }
+
     private func makeDefaults() -> (UserDefaults, String) {
         let suiteName = "XingGuangAppModelTests.\(UUID().uuidString)"
         return (UserDefaults(suiteName: suiteName)!, suiteName)
+    }
+}
+
+@MainActor
+private final class MockWebMediaSniffer: WebMediaSniffing {
+    private(set) var receivedSite: Site?
+
+    func resolve(_ request: PlaybackRequest, site: Site) async throws -> PlaybackRequest {
+        receivedSite = site
+        var result = request
+        result.url = "https://cdn.example/video.m3u8"
+        result.requiresSniffing = false
+        return result
+    }
+}
+
+private final class SniffingVodRepository: VodRepository, @unchecked Sendable {
+    func loadConfig(from url: URL) async throws -> VodConfigDocument { VodConfigDocument() }
+    func home(site: Site, includeFilters: Bool) async throws -> VodResult { VodResult() }
+    func category(site: Site, typeID: String, page: Int, filters: [String: String]) async throws -> VodResult { VodResult() }
+    func search(site: Site, keyword: String, page: Int) async throws -> VodResult { VodResult() }
+    func detail(site: Site, vodID: String) async throws -> VodResult { VodResult() }
+    func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest {
+        PlaybackRequest(url: episodeURL, requiresSniffing: true)
     }
 }
 

@@ -154,7 +154,9 @@ public final class ApiVodRepository: VodRepository, @unchecked Sendable {
             subtitles: result.subtitles,
             danmaku: result.danmaku,
             drm: result.drm,
-            timeout: TimeInterval(site.timeout > 0 ? site.timeout : 15)
+            timeout: TimeInterval(site.timeout > 0 ? site.timeout : 15),
+            requiresSniffing: result.parse != 0,
+            sniffScript: site.click
         )
     }
 }

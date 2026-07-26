@@ -109,6 +109,15 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 
 后续运行 `30177937138` 已通过 `CGzip` 编译，并将下一处失败定位到 `QuickJSHost.swift`：可选的 `site.ext` 使用了非可选枚举模式匹配。现已先解包可选值再匹配字符串扩展，行为保持不变。该修复仍需新的 macOS CI 运行确认；iPad 测试、设备 Release 构建和 IPA 打包在这次失败运行中均未执行。
 
+## Web 媒体嗅探与本地代理
+
+- API type 4 和 JavaScript type 3 播放结果中的 `parse != 0` 不再直接返回“不支持”。播放请求会保留页面 URL、Header、Cookie、超时及来源 `click` 脚本，由正式 App 注入的 `WKWebView` 嗅探器解析真实媒体 URL 后再交给 AVPlayer/VLC。
+- 嗅探器观察 `fetch`、`XMLHttpRequest`、`video/audio/source`、Performance Resource 和页面媒体事件；优先按媒体 MIME/扩展名识别，并可调用来源的 JavaScript `isVideo` 协议补充判断。每次任务最多检查 128 个 URL，支持超时和任务取消。
+- 成功解析后会合并 WebKit Cookie，并清除嗅探标记，播放器仍只接收最终 `PlaybackRequest`，不承载网页生命周期。
+- 正式 App 在读取配置前启动本地代理。代理仅绑定 `127.0.0.1`，在 9978-9998 中选择可用端口，只接受 `/proxy?do=js` 的 GET/HEAD 请求，限制请求头、参数长度和同时连接数，并只路由到已经初始化的 JavaScript 来源。
+- `getProxy/js2Proxy` 使用可动态注入的回环端点；带 `siteKey` 的请求按来源路由，无 `siteKey` 时仅回退到最近初始化的 JavaScript 来源。代理不提供任意文件访问或通用外网转发。
+- Windows 主机无法编译 WebKit/Network.framework。本批次必须由 macOS GitHub Actions 完成 iPhone/iPad 测试、设备构建、IPA 和签名检查；真实网页兼容性、Cookie 鉴权及媒体播放仍需 TrollStore 真机验收。
+
 运行 `30178184218` 继续通过上述两处编译点，并将下一处失败定位到 `JavaScriptBridgeCompatibility.swift`：字符集局部变量与同名解析函数发生遮蔽。现已将局部值明确命名为 `charsetName`，字符集解析行为不变。该修复仍需新的 macOS CI 运行确认；本次运行同样未进入 iPad、设备 Release 和 IPA 步骤。
 
 运行 `30178314318` 已完成 Swift 编译和全部 iPhone UI 测试，但单元测试仍有 14 个失败：13 个 JavaScript 用例无法在 SwiftPM 平铺后的 bundle 根目录找到内置模块，1 个播放器恢复进度用例在主队列异步回调前提前断言。资源加载现按原子目录优先并兼容 bundle 根目录，播放器测试改为等待恢复回调；生产播放器时序未改变。上述修复仍需新的 macOS CI 运行确认，iPad、设备 Release 和 IPA 步骤在该失败运行中未执行。

@@ -48,6 +48,26 @@ final class JavaScriptVodRepositoryTests: XCTestCase {
         XCTAssertEqual(playback.headers["Referer"], "https://example.com")
     }
 
+    func testParsedPlaybackReturnsWebSniffingRequest() async throws {
+        let script = """
+        export default {
+          init: function() {},
+          play: function() { return JSON.stringify({"url":"https://example.com/player","parse":1}); }
+        };
+        """
+        let repository = JavaScriptVodRepository(transport: ScriptTransport(sources: [
+            "https://example.com/sniff.js": Data(script.utf8)
+        ]))
+        var site = Site(key: "sniff", name: "Sniff", api: "https://example.com/sniff.js", type: 3)
+        site.click = "document.querySelector('video')?.play();"
+
+        let playback = try await repository.resolvePlayback(site: site, flag: "线路", episodeURL: "https://example.com/player")
+
+        XCTAssertTrue(playback.requiresSniffing)
+        XCTAssertEqual(playback.url, "https://example.com/player")
+        XCTAssertEqual(playback.sniffScript, site.click)
+    }
+
     func testTypeThreeLocalAndMD5BridgesWork() async throws {
         let script = """
         export default {
@@ -177,6 +197,35 @@ final class JavaScriptVodRepositoryTests: XCTestCase {
             "header": #"{"Mode":"raw"}"#
         ])
         XCTAssertEqual(rawCatVod.data, Data("plain".utf8))
+    }
+
+    func testLocalProxyServerRoutesOnlyRegisteredJavaScriptSite() async throws {
+        let script = """
+        export default {
+          init: function() {},
+          action: function() { return 'ready'; },
+          proxy: function(params) { return [200, 'text/plain', 'proxied:' + params.value, {}, 0]; }
+        };
+        """
+        let repository = JavaScriptVodRepository(transport: ScriptTransport(sources: [
+            "https://example.com/local-proxy.js": Data(script.utf8)
+        ]))
+        let site = Site(key: "local-proxy", name: "Local Proxy", api: "https://example.com/local-proxy.js", type: 3)
+        _ = try await repository.action(site: site, value: "")
+        let server = LocalProxyServer(repository: repository)
+        let endpoint = try await server.start()
+        defer { server.stop() }
+        var components = URLComponents(url: endpoint, resolvingAgainstBaseURL: false)!
+        components.queryItems = [
+            URLQueryItem(name: "do", value: "js"),
+            URLQueryItem(name: "siteKey", value: site.key),
+            URLQueryItem(name: "value", value: "ok")
+        ]
+
+        let (data, response) = try await URLSession.shared.data(from: try XCTUnwrap(components.url))
+
+        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
+        XCTAssertEqual(String(data: data, encoding: .utf8), "proxied:ok")
     }
 
     func testLiveContentUsesAndroidLiveProtocol() async throws {

@@ -588,6 +588,8 @@ public struct PlaybackRequest: Codable, Equatable {
     public var drm: PlaybackDRM?
     public var timeout: TimeInterval
     public var enginePreference: PlayerEnginePreference
+    public var requiresSniffing: Bool
+    public var sniffScript: String
 
     public init(
         url: String,
@@ -600,7 +602,9 @@ public struct PlaybackRequest: Codable, Equatable {
         danmaku: [DanmakuResource] = [],
         drm: PlaybackDRM? = nil,
         timeout: TimeInterval = 15,
-        enginePreference: PlayerEnginePreference = .automatic
+        enginePreference: PlayerEnginePreference = .automatic,
+        requiresSniffing: Bool = false,
+        sniffScript: String = ""
     ) {
         self.url = url
         self.headers = headers
@@ -613,5 +617,7 @@ public struct PlaybackRequest: Codable, Equatable {
         self.drm = drm
         self.timeout = timeout
         self.enginePreference = enginePreference
+        self.requiresSniffing = requiresSniffing
+        self.sniffScript = sniffScript
     }
 }

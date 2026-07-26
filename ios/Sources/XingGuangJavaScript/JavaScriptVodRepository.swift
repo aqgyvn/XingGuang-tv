@@ -60,9 +60,6 @@ public final class JavaScriptVodRepository: VodRepository, @unchecked Sendable {
         let runtime = try await runtime(for: site)
         let raw = try await runtime.call("play", arguments: [flag, episodeURL, []])
         let result = try decodeResult(raw)
-        if result.parse != 0 {
-            throw VodRepositoryError.unsupportedPlayback("此 JavaScript 来源要求 WebView 解析，iOS 当前阶段尚未接入")
-        }
         let url = result.url.isEmpty ? result.list.first?.playbackRoutes.first?.episodes.first?.url ?? "" : result.url
         guard !url.isEmpty, URL(string: url)?.scheme != nil else {
             throw VodRepositoryError.invalidResponse
@@ -75,7 +72,9 @@ public final class JavaScriptVodRepository: VodRepository, @unchecked Sendable {
             subtitles: result.subtitles,
             danmaku: result.danmaku,
             drm: result.drm,
-            timeout: TimeInterval(site.timeout > 0 ? site.timeout : 15)
+            timeout: TimeInterval(site.timeout > 0 ? site.timeout : 15),
+            requiresSniffing: result.parse != 0,
+            sniffScript: site.click
         )
     }
 
@@ -126,6 +125,17 @@ public final class JavaScriptVodRepository: VodRepository, @unchecked Sendable {
             throw JavaScriptSpiderProtocolError.unsupportedMethod("proxy")
         }
         return try JavaScriptSpiderProtocolCodec.proxy(raw)
+    }
+
+    public func proxy(parameters: [String: String]) async throws -> JavaScriptProxyResponse {
+        guard let site = await store.site(key: parameters["siteKey"]) else {
+            throw JavaScriptSpiderProtocolError.invalidResponse("proxy site")
+        }
+        return try await proxy(site: site, parameters: parameters)
+    }
+
+    public func setProxyEndpoint(_ endpoint: URL) {
+        store.endpoint.value = endpoint
     }
 
     public func invalidate(site: Site) {
@@ -181,25 +191,35 @@ public final class JavaScriptVodRepository: VodRepository, @unchecked Sendable {
 private actor JavaScriptRuntimeStore {
     private let transport: JavaScriptHTTPTransport
     private let defaults: UserDefaults
-    private let proxyEndpoint: URL?
+    nonisolated let endpoint: JavaScriptProxyEndpoint
     private var runtimes: [String: QuickJSRuntime] = [:]
+    private var sites: [String: Site] = [:]
+    private var recentSiteKey: String?
 
     init(transport: JavaScriptHTTPTransport, defaults: UserDefaults, proxyEndpoint: URL?) {
         self.transport = transport
         self.defaults = defaults
-        self.proxyEndpoint = proxyEndpoint
+        self.endpoint = JavaScriptProxyEndpoint(value: proxyEndpoint)
     }
 
     func runtime(for site: Site, key: String) -> QuickJSRuntime {
+        sites[site.key] = site
+        recentSiteKey = site.key
         if let runtime = runtimes[key] { return runtime }
         let runtime = QuickJSRuntime(
             site: site,
             transport: transport,
             defaults: defaults,
-            proxyEndpoint: proxyEndpoint
+            proxyEndpoint: endpoint
         )
         runtimes[key] = runtime
         return runtime
+    }
+
+    func site(key: String?) -> Site? {
+        if let key, let site = sites[key] { return site }
+        guard let recentSiteKey else { return nil }
+        return sites[recentSiteKey]
     }
 
     func remove(key: String) async {

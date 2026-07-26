@@ -5,10 +5,12 @@ import XingGuangJavaScript
 @main
 struct XingGuangApp: App {
     @StateObject private var model: XingGuangAppModel
+    private let proxyServer: LocalProxyServer?
 
     init() {
         if ProcessInfo.processInfo.arguments.contains("-ui-testing") {
             _model = StateObject(wrappedValue: XingGuangAppModel())
+            proxyServer = nil
             return
         }
         let store = try? AppDatabase.live()
@@ -17,6 +19,8 @@ struct XingGuangApp: App {
             vlc: { VLCPlayerEngineAdapter() }
         )
         let javascript = JavaScriptVodRepository()
+        let proxyServer = LocalProxyServer(repository: javascript)
+        self.proxyServer = proxyServer
         let repository = RoutingVodRepository(
             api: ApiVodRepository(),
             javascript: javascript
@@ -34,13 +38,18 @@ struct XingGuangApp: App {
             liveRepository: liveRepository,
             persistence: store,
             playerFactory: factory,
+            webMediaSniffer: WebMediaSniffer(validator: { site, url in
+                try await javascript.isVideo(site: site, url: url)
+            }),
             usePreviewData: false
         ))
     }
 
     var body: some Scene {
         WindowGroup {
-            XingGuangRootView(model: model)
+            XingGuangRootView(model: model, prepare: {
+                _ = try? await proxyServer?.start()
+            })
         }
     }
 }
