@@ -2803,6 +2803,29 @@
 - `progress.md`: appends the complete CI evidence, changed files and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after the validation commit is the branch tip, run `git revert HEAD`.
 
+## 2026-07-26 - Task: Complete the iOS plan with local media playback and compatibility audit
+
+### What was done
+- Added a system Files entry for local audio/video, copied selected media into the App cache while its security scope was active, and opened it through the existing automatic AVPlayer/VLC routing.
+- Added a focused local-media player with play/pause, seek, speed and active-engine status, plus import service and UI coverage.
+- Completed the Android mobile versus iOS compatibility matrix, explicitly separating aligned features, iOS equivalents, platform limits and items outside this plan.
+
+### Testing
+- Passed: `git diff --check -- . ':(exclude)ios/Sources/CQuickJS/quickjs/**'`.
+- Passed: source-reference inspection confirms the Settings entry, importer, playback sheet, service tests and UI accessibility assertion are connected.
+- Not available on this Windows host: Swift/Xcode/XcodeGen/CocoaPods compilation. The branch must pass the macOS GitHub Actions iPhone/iPad tests, device Release build, IPA structure and signing checks before this batch is called installable.
+
+### Notes
+- `ios/Sources/XingGuangKit/Services/LocalMediaImportService.swift`: validates supported extensions and copies security-scoped media into the App cache without loading the whole file into memory.
+- `ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift`: adds the local-media playback surface and essential controls on the shared player session.
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: adds the Files picker entry, import state and local player presentation.
+- `ios/Tests/XingGuangKitTests/LocalMediaImportServiceTests.swift`: covers supported-file copying and unsupported-file rejection.
+- `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: confirms the local-media action is exposed from Settings on iPhone.
+- `docs/ios-development.md`: documents local media storage, player routing, verification boundaries and the compatibility audit link.
+- `docs/ios-compatibility-matrix.md`: records Android mobile page, data-source, player and setting parity without treating platform exclusions as completed features.
+- `progress.md`: appends this implementation and validation record.
+- Rollback method: before committing, restore the seven iOS/docs files listed above and remove this appended entry; after the feature commit is the branch tip, run `git revert HEAD`.
+
 ## 2026-07-26 - Task: Apply Android-compatible Header and ad policies to iOS networking
 
 ### What was done

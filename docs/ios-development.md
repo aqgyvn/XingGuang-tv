@@ -153,3 +153,14 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 - Android `.bk.gz` 备份入口与事务恢复逻辑保持独立：配置文件导入不会覆盖收藏、历史、偏好或数据库表。
 
 运行 `30197705390` 第 2 次尝试已通过 iPhone/iPad 测试、设备 Release 构建、IPA 结构和 ad-hoc 签名检查。可安装产物是 artifact ID `8630820708` 的 `XingGuang-iOS-24`（`21,312,143` 字节，保留至 2026-08-09）；同名 artifact ID `8630678736` 仅 `52,450` 字节，是第 1 次 UI runner 初始化失败时上传的日志，不包含可安装 IPA。
+
+## 本地媒体文件
+
+- 设置页的“打开本地媒体”通过系统 Files 选择器接收常用视频和音频格式。所选文件会在安全作用域有效期间复制到 App 的 `Caches/ImportedMedia`，播放器不依赖 Files 提供方的临时授权。
+- 本地媒体复用正式双内核路由：MP4/MOV/M4V 和常用系统音频优先 AVPlayer；MKV/FLV/WebM/AVI 等非系统封装按扩展名预先交给 VLC，未知的播放格式仍遵守一次格式/解码错误回退规则。
+- 页面提供播放暂停、进度跳转、倍速和实际内核状态。缓存目录可能由系统回收，当前不提供媒体库或长期收藏语义。
+- 文件复制、SwiftUI 播放页和 MobileVLCKit 链接仍须 macOS CI；真实大文件、外部 Files 提供方及格式兼容性须 TrollStore 真机验收。
+
+## Android / iOS 兼容审计
+
+完整页面、数据源、播放器和设置项审计见 [`ios-compatibility-matrix.md`](ios-compatibility-matrix.md)。矩阵明确区分已对齐、iOS 等效、平台限制和不在本轮范围；CI 通过与 TrollStore 真机通过分别记录，不互相替代。

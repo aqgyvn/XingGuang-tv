@@ -14,24 +14,31 @@ public struct SettingsView: View {
     @State private var configurationKind: ConfigurationKind?
     @State private var scannerKind: ConfigurationKind?
     @State private var configurationImportState: ConfigurationImportState = .idle
+    @State private var isImportingLocalMedia = false
+    @State private var localMediaFile: LocalMediaFile?
+    @State private var localMediaError = ""
+    @State private var localMediaLoading = false
 
     private let backupDestination: (any BackupDocumentApplying)?
     private let backupImportService: BackupImportService
     private let backupExportService: BackupExportService
     private let configurationImportService: ConfigurationImportService
+    private let localMediaImportService: LocalMediaImportService
 
     public init(
         model: XingGuangAppModel,
         backupDestination: (any BackupDocumentApplying)? = nil,
         backupImportService: BackupImportService = BackupImportService(),
         backupExportService: BackupExportService = BackupExportService(),
-        configurationImportService: ConfigurationImportService = ConfigurationImportService()
+        configurationImportService: ConfigurationImportService = ConfigurationImportService(),
+        localMediaImportService: LocalMediaImportService = LocalMediaImportService()
     ) {
         self.model = model
         self.backupDestination = backupDestination
         self.backupImportService = backupImportService
         self.backupExportService = backupExportService
         self.configurationImportService = configurationImportService
+        self.localMediaImportService = localMediaImportService
     }
 
     public var body: some View {
@@ -82,6 +89,32 @@ public struct SettingsView: View {
                 .xingGuangPanel()
 
                 VStack(spacing: 0) {
+                    Button {
+                        localMediaError = ""
+                        isImportingLocalMedia = true
+                    } label: {
+                        settingsRow(title: "打开本地媒体", value: "选择文件", systemName: "folder.badge.play")
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("settings.localMedia.open")
+
+                    if localMediaLoading {
+                        Label("正在准备本地媒体", systemImage: "arrow.triangle.2.circlepath")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundColor(XingGuangTheme.secondaryText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                    } else if !localMediaError.isEmpty {
+                        Label(localMediaError, systemImage: "xmark.octagon.fill")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundColor(.red)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .accessibilityIdentifier("settings.localMedia.failed")
+                    }
+
+                    Divider().padding(.leading, 48)
+
                     NavigationLink(destination: PlayerSettingsPreviewView(model: model)) {
                         settingsRow(title: "播放器设置", value: "进入", systemName: "slider.horizontal.3")
                     }
@@ -144,6 +177,12 @@ public struct SettingsView: View {
         .onChange(of: model.vodConfigURL) { _ in model.resetConfigurationSaveState() }
         .onChange(of: model.liveConfigURL) { _ in model.resetConfigurationSaveState() }
         .fileImporter(
+            isPresented: $isImportingLocalMedia,
+            allowedContentTypes: LocalMediaImportService.contentTypes,
+            allowsMultipleSelection: false,
+            onCompletion: handleLocalMediaSelection
+        )
+        .fileImporter(
             isPresented: $isImportingConfiguration,
             allowedContentTypes: configurationContentTypes,
             allowsMultipleSelection: false,
@@ -168,6 +207,9 @@ public struct SettingsView: View {
                 onCancel: { scannerKind = nil }
             )
         }
+        .sheet(item: $localMediaFile) { file in
+            LocalMediaPlayerView(file: file, model: model)
+        }
         .accessibilityIdentifier("settings.home")
     }
 
@@ -185,6 +227,28 @@ public struct SettingsView: View {
 
     private var backupGzipType: UTType {
         UTType(filenameExtension: "gz") ?? .data
+    }
+
+    private func handleLocalMediaSelection(_ result: Result<[URL], Error>) {
+        guard case .success(let urls) = result, let url = urls.first else {
+            if case .failure(let error) = result { localMediaError = error.localizedDescription }
+            return
+        }
+
+        localMediaLoading = true
+        localMediaError = ""
+        let accessed = url.startAccessingSecurityScopedResource()
+        Task {
+            defer {
+                if accessed { url.stopAccessingSecurityScopedResource() }
+                localMediaLoading = false
+            }
+            do {
+                localMediaFile = try await localMediaImportService.importFile(at: url)
+            } catch {
+                localMediaError = error.localizedDescription
+            }
+        }
     }
 
     @ViewBuilder
