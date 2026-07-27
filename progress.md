@@ -3572,3 +3572,28 @@
 - `docs/ios-development.md`: records the successful full CI run, artifact metadata and remaining device checks.
 - `progress.md`: appends final verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Harden iOS ad filtering across redirects
+
+### What was done
+- Revalidated every App and JavaScript HTTP redirect target against the shared configuration ad policy before following it.
+- Returned a dedicated blocked-host error when a cancelled redirect response points to an ad host.
+- Restricted WKWebView content rules to URL authorities so matching text in a path or query cannot block a legitimate host.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors.
+- Added unit coverage for literal and Android-compatible full-regex host matching, host-versus-path boundaries, relative redirect resolution, App/JavaScript redirect decisions and WKWebView authority filters.
+- Verified by source search that the App has only the policy-aware HTTP and JavaScript URLSession instances; WKWebView uses the same live policy store.
+- Not available on this Windows host: Swift/WebKit compilation and iPhone/iPad execution. macOS CI must pass unit/UI tests, device Release, IPA structure and ad-hoc signing before this task is complete.
+
+### Notes
+- `ios/Sources/XingGuangKit/Services/HTTPNetworkPolicy.swift`: centralizes URL validation, redirect target parsing and host-only WKWebView rules.
+- `ios/Sources/XingGuangKit/Services/HTTPClient.swift`: blocks policy-matched redirect targets in the App HTTP client.
+- `ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift`: applies the same redirect policy to JavaScript `req/http` traffic.
+- `ios/Sources/XingGuangKit/Services/WebMediaSniffer.swift`: consumes host-only content blocker rules from the shared policy.
+- `ios/Tests/XingGuangKitTests/HTTPClientTests.swift`: verifies host matching, redirect parsing/decisions and WebKit filters.
+- `ios/Tests/XingGuangKitTests/JavaScriptHTTPTests.swift`: verifies JavaScript redirect follow and blocking decisions.
+- `docs/ios-compatibility-matrix.md`: records redirect coverage and playback-core limits.
+- `docs/ios-development.md`: documents policy semantics, coverage and HLS/core boundaries.
+- `progress.md`: appends implementation evidence and rollback instructions.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/Services/HTTPNetworkPolicy.swift ios/Sources/XingGuangKit/Services/HTTPClient.swift ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift ios/Sources/XingGuangKit/Services/WebMediaSniffer.swift ios/Tests/XingGuangKitTests/HTTPClientTests.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md` and remove `ios/Tests/XingGuangKitTests/JavaScriptHTTPTests.swift`; after this feature commit is the branch tip, run `git revert HEAD`.

@@ -40,9 +40,7 @@ public final class HTTPNetworkPolicyStore: @unchecked Sendable {
     }
 
     public func prepare(_ request: HTTPRequest) throws -> HTTPRequest {
-        guard !isBlocked(request.url) else {
-            throw HTTPClientError.blocked(request.url.host ?? request.url.absoluteString)
-        }
+        try validate(request.url)
         var prepared = request
         for rule in snapshot().headers where Self.matches(request.url.host ?? "", pattern: rule.host) {
             for (key, value) in rule.header {
@@ -53,6 +51,12 @@ public final class HTTPNetworkPolicyStore: @unchecked Sendable {
             }
         }
         return prepared
+    }
+
+    public func validate(_ url: URL) throws {
+        guard !isBlocked(url) else {
+            throw HTTPClientError.blocked(url.host ?? url.absoluteString)
+        }
     }
 
     public func isBlocked(_ url: URL) -> Bool {
@@ -68,6 +72,21 @@ public final class HTTPNetworkPolicyStore: @unchecked Sendable {
         snapshot().ads
     }
 
+    func webKitContentBlockerRules() -> String? {
+        let rules: [[String: Any]] = adPatterns().map { pattern in
+            let escaped = NSRegularExpression.escapedPattern(for: pattern)
+            return [
+                "trigger": [
+                    "url-filter": "^[a-zA-Z][a-zA-Z0-9+.-]*://[^/?#]*\(escaped)[^/?#]*([/?#]|$)",
+                    "url-filter-is-case-sensitive": false
+                ],
+                "action": ["type": "block"]
+            ]
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: rules) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
     private func snapshot() -> (headers: [HTTPHeaderRule], ads: [String], doh: [DoHServer]) {
         lock.lock()
         defer { lock.unlock() }
@@ -81,5 +100,16 @@ public final class HTTPNetworkPolicyStore: @unchecked Sendable {
         let range = NSRange(value.startIndex..., in: value)
         guard let match = expression.firstMatch(in: value, range: range) else { return false }
         return match.range == range
+    }
+}
+
+public enum HTTPRedirectPolicy {
+    public static func targetURL(from response: HTTPURLResponse, originalURL: URL) -> URL? {
+        guard (300..<400).contains(response.statusCode),
+              let location = response.allHeaderFields.first(where: {
+                  String(describing: $0.key).caseInsensitiveCompare("Location") == .orderedSame
+              }).map({ String(describing: $0.value) }),
+              !location.isEmpty else { return nil }
+        return URL(string: location, relativeTo: response.url ?? originalURL)?.absoluteURL
     }
 }

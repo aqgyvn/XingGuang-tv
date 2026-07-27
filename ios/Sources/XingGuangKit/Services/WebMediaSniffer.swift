@@ -82,7 +82,7 @@ private final class WebMediaSniffSession: NSObject, WKNavigationDelegate, WKScri
 
     private func start(url: URL) {
         let patterns = policyStore?.adPatterns() ?? []
-        guard !patterns.isEmpty, let rules = Self.contentBlockerRules(patterns) else {
+        guard !patterns.isEmpty, let rules = policyStore?.webKitContentBlockerRules() else {
             startWebView(url: url)
             return
         }
@@ -230,17 +230,6 @@ private final class WebMediaSniffSession: NSObject, WKNavigationDelegate, WKScri
         let extensionName = url.pathExtension.lowercased()
         return ["m3u8", "mpd", "mp4", "m4v", "mov", "mkv", "flv", "webm", "avi", "ts", "m2ts", "mp3", "aac", "m4a"].contains(extensionName)
             || ["rtsp", "rtmp"].contains(url.scheme?.lowercased() ?? "")
-    }
-
-    private static func contentBlockerRules(_ patterns: [String]) -> String? {
-        let rules: [[String: Any]] = patterns.map { pattern in
-            [
-                "trigger": ["url-filter": NSRegularExpression.escapedPattern(for: pattern)],
-                "action": ["type": "block"]
-            ]
-        }
-        guard let data = try? JSONSerialization.data(withJSONObject: rules) else { return nil }
-        return String(data: data, encoding: .utf8)
     }
 
     private static let observerScript = #"""

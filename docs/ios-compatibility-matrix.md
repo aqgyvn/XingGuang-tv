@@ -51,7 +51,7 @@ CI 通过只证明编译、测试、IPA 结构和签名有效；真机媒体、�
 | WebView 媒体嗅探 | iOS 等效实现 | WKWebView 观察网页媒体请求并合并 Cookie 后生成播放请求。 |
 | JavaScript 本地代理 | iOS 等效实现 | 只绑定 `127.0.0.1`，仅向已初始化的 JS 来源路由受控请求。 |
 | 配置 Header 注入 | 已对齐 | 覆盖 API、直播、EPG、字幕、弹幕和 JavaScript HTTP。 |
-| 广告规则 | iOS 等效实现 | 覆盖 App 请求和 WKWebView；三种播放内核内部的媒体请求无法保证完全复现。 |
+| 广告规则 | iOS 等效实现 | App 与 JavaScript HTTP 在初始请求和每次重定向前按主机拦截；WKWebView 同样只过滤匹配主机，不因路径或查询文本误拦。三种播放内核内部的媒体请求无法保证完全复现。 |
 | DoH | 平台限制 | 保留配置字段；iOS 15 URLSession 无逐 App DNS 注入 API，使用设备系统 DNS/加密 DNS。 |
 
 ## 播放器

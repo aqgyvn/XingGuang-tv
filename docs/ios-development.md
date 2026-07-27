@@ -137,13 +137,16 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 
 - iOS 现保留 Android 配置中的 `headers`、`ads` 和 `doh` 字段。配置加载成功后才替换共享网络策略，旧请求仍由原任务取消机制结束。
 - `headers` 按 Android 的“主机包含或完整正则匹配”语义注入，并覆盖同名请求头；覆盖 API、扩展配置、直播/EPG、字幕弹幕及 JavaScript `req/http`。
-- `ads` 在 App 自有 HTTP 发出前阻止匹配主机，并在 WKWebView 嗅探中同时过滤页面导航、媒体候选和内容子资源。MPV、MDK、AVPlayer 内部媒体请求不经过该策略，不能保证与 Android 完全一致。
+- `ads` 按 Android 的“主机包含或完整正则匹配”语义工作。App 与 JavaScript HTTP 会在初始请求和每次重定向前重新校验目标，WKWebView 的页面导航、媒体候选和内容子资源也只按主机过滤，不会因路径或查询参数出现规则文本而误拦。
+- MPV、MDK、AVPlayer 内部媒体请求不经过共享 URLSession/WKWebView 策略，不能保证拦截；Android 本地代理的 HLS 片段净化属于不同能力，本轮没有将其冒充为主机广告规则。
 - `doh` 服务器配置会被兼容解码和保留，但 iOS/iPadOS 15 的公开 `URLSession` API 不允许 App 为单次请求替换 DNS 解析器。当前使用设备系统 DNS/加密 DNS 设置；未使用会破坏 HTTPS SNI/证书校验的 IP 替换方案，也不把仅预查询 DoH 冒充为生效。
 - 本批次已添加配置解码、Header 注入、广告阻止和配置切换更新策略的固定测试；Swift/WebKit 编译与完整 IPA 仍须下一次 macOS CI 确认。
 
 运行 `30197040000` 已通过 `XingGuangKit` 网络策略与 WebKit 源码编译，但 `XingGuangJavaScript` target 因 `JavaScriptHTTP.swift` 缺少共享模块导入而停止。现已补充 `import XingGuangKit`；该次运行未进入测试、iPad、Release 和 IPA 步骤。
 
 运行 `30197188009` 已通过 Header/广告策略批次的 iPhone/iPad 测试、设备 Release 构建、IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-23`（artifact ID `8630553500`，`21,265,946` 字节，保留至 2026-08-09）；真实来源规则和 Web 页面仍需 TrollStore 真机验收。
+
+本轮进一步补齐重定向策略：普通 App HTTP 和 JavaScript HTTP 的重定向代理会在访问目标前阻止匹配主机；若服务端返回被阻止的 `Location`，调用方收到明确广告拦截错误。新增测试覆盖主机/路径边界、Android 完整正则语义、相对重定向解析、两种传输代理以及 WKWebView 内容规则。当前 Windows 主机无 Swift 工具链，仍须下一次 macOS CI 验证编译、iPhone/iPad 测试、设备 Release、IPA 与签名。
 
 ## 配置文件与二维码
 

@@ -94,7 +94,31 @@ public enum HTTPUserAgent {
 }
 
 public final class URLSessionHTTPClient: HTTPClient, @unchecked Sendable {
+    final class RedirectDelegate: NSObject, URLSessionTaskDelegate {
+        private let policyStore: HTTPNetworkPolicyStore?
+
+        init(policyStore: HTTPNetworkPolicyStore?) {
+            self.policyStore = policyStore
+        }
+
+        func redirectedRequest(_ request: URLRequest) -> URLRequest? {
+            guard let url = request.url, policyStore?.isBlocked(url) != true else { return nil }
+            return request
+        }
+
+        func urlSession(
+            _ session: URLSession,
+            task: URLSessionTask,
+            willPerformHTTPRedirection response: HTTPURLResponse,
+            newRequest request: URLRequest,
+            completionHandler: @escaping (URLRequest?) -> Void
+        ) {
+            completionHandler(redirectedRequest(request))
+        }
+    }
+
     private let session: URLSession
+    private let redirectDelegate: RedirectDelegate
     private let policyStore: HTTPNetworkPolicyStore?
     private let globalUserAgent: @Sendable () -> String
 
@@ -107,7 +131,9 @@ public final class URLSessionHTTPClient: HTTPClient, @unchecked Sendable {
         sessionConfiguration.httpCookieStorage = HTTPCookieStorage.shared
         sessionConfiguration.httpShouldSetCookies = true
         sessionConfiguration.httpCookieAcceptPolicy = .always
-        self.session = URLSession(configuration: sessionConfiguration)
+        let redirectDelegate = RedirectDelegate(policyStore: policyStore)
+        self.redirectDelegate = redirectDelegate
+        self.session = URLSession(configuration: sessionConfiguration, delegate: redirectDelegate, delegateQueue: nil)
         self.policyStore = policyStore
         self.globalUserAgent = globalUserAgent
     }
@@ -142,6 +168,12 @@ public final class URLSessionHTTPClient: HTTPClient, @unchecked Sendable {
         try Task.checkCancellation()
         guard let httpResponse = response as? HTTPURLResponse else {
             throw HTTPClientError.invalidResponse
+        }
+        if let finalURL = httpResponse.url {
+            try policyStore?.validate(finalURL)
+        }
+        if let redirectURL = HTTPRedirectPolicy.targetURL(from: httpResponse, originalURL: request.url) {
+            try policyStore?.validate(redirectURL)
         }
         let responseHeaders = httpResponse.allHeaderFields.reduce(into: [String: String]()) { result, item in
             result[String(describing: item.key)] = String(describing: item.value)

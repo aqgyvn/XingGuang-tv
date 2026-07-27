@@ -74,6 +74,60 @@ final class HTTPClientTests: XCTestCase {
         }
     }
 
+    func testAdPolicyMatchesHostsWithoutBlockingPathOrQueryText() throws {
+        let policy = HTTPNetworkPolicyStore()
+        policy.apply(VodConfigDocument(ads: ["ads.example", #"(^|.*\.)tracker[0-9]+\.example$"#]))
+
+        XCTAssertTrue(policy.isBlocked(URL(string: "https://video.ads.example/banner")!))
+        XCTAssertTrue(policy.isBlocked(URL(string: "https://cdn.tracker12.example/script.js")!))
+        XCTAssertFalse(policy.isBlocked(URL(string: "https://good.example/path/ads.example?next=tracker12.example")!))
+        XCTAssertNoThrow(try policy.validate(URL(string: "https://good.example/content")!))
+        XCTAssertThrowsError(try policy.validate(URL(string: "https://video.ads.example/content")!)) { error in
+            XCTAssertEqual(error as? HTTPClientError, .blocked("video.ads.example"))
+        }
+    }
+
+    func testRedirectDelegateRejectsBlockedTargetBeforeFollowing() {
+        let policy = HTTPNetworkPolicyStore()
+        policy.apply(VodConfigDocument(ads: ["ads.example"]))
+        let delegate = URLSessionHTTPClient.RedirectDelegate(policyStore: policy)
+
+        XCTAssertNil(delegate.redirectedRequest(URLRequest(url: URL(string: "https://video.ads.example/landing")!)))
+        XCTAssertNotNil(delegate.redirectedRequest(URLRequest(url: URL(string: "https://video.example/landing")!)))
+    }
+
+    func testRedirectPolicyResolvesRelativeLocationForPolicyValidation() throws {
+        let source = URL(string: "https://source.example/start")!
+        let response = HTTPURLResponse(
+            url: source,
+            statusCode: 302,
+            httpVersion: nil,
+            headerFields: ["Location": "//ads.example/landing"]
+        )!
+
+        XCTAssertEqual(
+            HTTPRedirectPolicy.targetURL(from: response, originalURL: source)?.absoluteString,
+            "https://ads.example/landing"
+        )
+    }
+
+    func testWebKitContentRulesLimitLiteralMatchesToURLAuthority() throws {
+        let policy = HTTPNetworkPolicyStore()
+        policy.apply(VodConfigDocument(ads: ["ads.example"]))
+        let data = try XCTUnwrap(policy.webKitContentBlockerRules()?.data(using: .utf8))
+        let rules = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+        let trigger = try XCTUnwrap(rules.first?["trigger"] as? [String: Any])
+        let filter = try XCTUnwrap(trigger["url-filter"] as? String)
+        let expression = try NSRegularExpression(pattern: filter, options: [.caseInsensitive])
+
+        func matches(_ value: String) -> Bool {
+            expression.firstMatch(in: value, range: NSRange(value.startIndex..., in: value)) != nil
+        }
+
+        XCTAssertTrue(matches("https://video.ads.example/banner"))
+        XCTAssertFalse(matches("https://good.example/path/ads.example?target=ads.example"))
+    }
+
     func testGlobalUserAgentIsDefaultAndDoesNotOverrideRequestOrPolicy() async throws {
         URLProtocolStub.handler = { request in
             URLProtocolStub.lastRequest = request

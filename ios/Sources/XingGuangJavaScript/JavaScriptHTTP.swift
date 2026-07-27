@@ -45,11 +45,20 @@ public protocol JavaScriptHTTPTransport: Sendable {
 }
 
 public final class URLSessionJavaScriptHTTPTransport: NSObject, JavaScriptHTTPTransport, @unchecked Sendable {
-    private final class RedirectDelegate: NSObject, URLSessionTaskDelegate {
+    final class RedirectDelegate: NSObject, URLSessionTaskDelegate {
         let followsRedirects: Bool
+        private let policyStore: HTTPNetworkPolicyStore?
 
-        init(followsRedirects: Bool) {
+        init(followsRedirects: Bool, policyStore: HTTPNetworkPolicyStore?) {
             self.followsRedirects = followsRedirects
+            self.policyStore = policyStore
+        }
+
+        func redirectedRequest(_ request: URLRequest) -> URLRequest? {
+            guard followsRedirects,
+                  let url = request.url,
+                  policyStore?.isBlocked(url) != true else { return nil }
+            return request
         }
 
         func urlSession(
@@ -59,7 +68,7 @@ public final class URLSessionJavaScriptHTTPTransport: NSObject, JavaScriptHTTPTr
             newRequest request: URLRequest,
             completionHandler: @escaping (URLRequest?) -> Void
         ) {
-            completionHandler(followsRedirects ? request : nil)
+            completionHandler(redirectedRequest(request))
         }
     }
 
@@ -94,7 +103,7 @@ public final class URLSessionJavaScriptHTTPTransport: NSObject, JavaScriptHTTPTr
             urlRequest.setValue(value, forHTTPHeaderField: key)
         }
 
-        let delegate = RedirectDelegate(followsRedirects: request.followsRedirects)
+        let delegate = RedirectDelegate(followsRedirects: request.followsRedirects, policyStore: policyStore)
         let configuration = URLSessionConfiguration.ephemeral
         configuration.httpCookieStorage = HTTPCookieStorage.shared
         configuration.httpShouldSetCookies = true
@@ -125,6 +134,13 @@ public final class URLSessionJavaScriptHTTPTransport: NSObject, JavaScriptHTTPTr
         }
         guard let response = receivedResponse as? HTTPURLResponse else {
             throw JavaScriptRuntimeError.network("网络响应无效")
+        }
+        if let finalURL = response.url {
+            try policyStore?.validate(finalURL)
+        }
+        if request.followsRedirects,
+           let redirectURL = HTTPRedirectPolicy.targetURL(from: response, originalURL: request.url) {
+            try policyStore?.validate(redirectURL)
         }
 
         let headers = response.allHeaderFields.reduce(into: [String: String]()) { result, item in
