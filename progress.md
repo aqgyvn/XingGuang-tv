@@ -3515,3 +3515,19 @@
 - `docs/ios-development.md`: records the failed run, skipped stages and correction rationale.
 - `progress.md`: appends failure evidence, correction and rollback instructions.
 - Rollback method: before committing, run `git restore -- ios/Tests/XingGuangKitTests/PlaybackParseResolverTests.swift docs/ios-development.md progress.md`; after this fix commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Record playback parse chain CI verification
+
+### What was done
+- Recorded the completed macOS validation and installable TrollStore artifact for API/JavaScript playback parse directives and supported parser types.
+
+### Testing
+- Passed: GitHub Actions run `30257596430` completed parser-chain tests and all iPhone/iPad unit/UI tests.
+- Passed: the same run completed the device Release build, TrollStore IPA packaging, structure validation and ad-hoc signature checks.
+- Artifact: `XingGuang-iOS-43`.
+- Remaining device validation: real JSON parse services, WKWebView sniffing, type 4 fallback and parser-provided playback headers.
+
+### Notes
+- `docs/ios-development.md`: records the successful full CI run, artifact name and remaining device checks.
+- `progress.md`: appends final verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.

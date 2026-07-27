@@ -240,6 +240,8 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 
 首次验证运行 `30248524082` 在 iPhone 测试步骤以 exit code 65 失败，后续 iPad、设备 Release 和 IPA 步骤均被跳过。静态复核发现线路匹配聚合测试错误地用 `parse=0` 构造了预期需要解析的结果；测试输入已改为 Android 语义要求的 `parse=1`，生产解析逻辑未改变，须通过下一次完整 CI 确认。
 
+修复后运行 `30257596430` 已通过解析链测试、全部 iPhone/iPad 单元与 UI 测试、设备 Release、TrollStore IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-43`；真实 JSON 解析服务、Web 嗅探和 type 4 回退仍需 TrollStore 真机验收。
+
 运行 `30215168139` 已通过新增播放器会话、持久化和备份测试、全部 iPhone/iPad UI 测试、设备 Release、IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-33`（artifact ID `8635726897`，`22,866,630` 字节，保留至 2026-08-09）；亮度、系统音量、定时暂停和三内核画面比例仍需 TrollStore 真机逐项验收。
 
 ## 缓存与全局 User-Agent
