@@ -4,14 +4,17 @@ import XingGuangKit
 public final class JavaScriptVodRepository: VodRepository, @unchecked Sendable {
     private let configRepository: ApiVodRepository
     private let store: JavaScriptRuntimeStore
+    private let parseResolver: PlaybackParseResolving
 
     public init(
         configRepository: ApiVodRepository = ApiVodRepository(),
         transport: JavaScriptHTTPTransport = URLSessionJavaScriptHTTPTransport(),
         defaults: UserDefaults = .standard,
-        proxyEndpoint: URL? = nil
+        proxyEndpoint: URL? = nil,
+        parseResolver: PlaybackParseResolving = PlaybackParseResolver()
     ) {
         self.configRepository = configRepository
+        self.parseResolver = parseResolver
         self.store = JavaScriptRuntimeStore(
             transport: transport,
             defaults: defaults,
@@ -57,24 +60,26 @@ public final class JavaScriptVodRepository: VodRepository, @unchecked Sendable {
     }
 
     public func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest {
+        try await resolvePlayback(context: VodPlaybackContext(), site: site, flag: flag, episodeURL: episodeURL)
+    }
+
+    public func resolvePlayback(context: VodPlaybackContext, site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest {
         let runtime = try await runtime(for: site)
-        let raw = try await runtime.call("play", arguments: [flag, episodeURL, []])
+        let raw = try await runtime.call("play", arguments: [flag, episodeURL, context.flags])
         let result = try decodeResult(raw)
         let url = result.url.isEmpty ? result.list.first?.playbackRoutes.first?.episodes.first?.url ?? "" : result.url
         guard !url.isEmpty, URL(string: url)?.scheme != nil else {
             throw VodRepositoryError.invalidResponse
         }
-        return PlaybackRequest(
-            url: url,
-            headers: site.header.merging(result.header) { _, new in new },
-            format: result.format,
-            artwork: result.artwork,
-            subtitles: result.subtitles,
-            danmaku: result.danmaku,
-            drm: result.drm,
-            timeout: TimeInterval(site.timeout > 0 ? site.timeout : 15),
-            requiresSniffing: result.parse != 0,
-            sniffScript: site.click
+        var resolvedResult = result
+        resolvedResult.url = url
+        return try await parseResolver.resolve(
+            result: resolvedResult,
+            site: site,
+            context: context,
+            originalURL: episodeURL,
+            flag: flag,
+            inferParsingForUnknownURL: false
         )
     }
 
@@ -259,6 +264,10 @@ public final class RoutingVodRepository: VodRepository, @unchecked Sendable {
 
     public func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest {
         try await repository(for: site).resolvePlayback(site: site, flag: flag, episodeURL: episodeURL)
+    }
+
+    public func resolvePlayback(context: VodPlaybackContext, site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest {
+        try await repository(for: site).resolvePlayback(context: context, site: site, flag: flag, episodeURL: episodeURL)
     }
 
     private func repository(for site: Site) throws -> VodRepository {

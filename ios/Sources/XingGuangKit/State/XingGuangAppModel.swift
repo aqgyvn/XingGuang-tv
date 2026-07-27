@@ -374,7 +374,8 @@ public final class XingGuangAppModel: ObservableObject {
             request.enginePreference = playerPreference
             return request
         }
-        var request = try await repository.resolvePlayback(site: sourceSite, flag: route.name, episodeURL: episode.url)
+        let context = VodPlaybackContext(parses: configuration.parses, flags: configuration.flags)
+        var request = try await repository.resolvePlayback(context: context, site: sourceSite, flag: route.name, episodeURL: episode.url)
         request.headers = HTTPUserAgent.applyingDefault(to: request.headers, value: globalUserAgent)
         if request.requiresSniffing {
             guard let webMediaSniffer else {

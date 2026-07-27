@@ -3468,3 +3468,32 @@
 - `docs/ios-development.md`: records the successful full CI run, artifact name and remaining device checks.
 - `progress.md`: appends final verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Implement iOS playback parse directives
+
+### What was done
+- Added a shared playback parsing chain for API and JavaScript sources, carrying configured parser rules and VIP flags through the repository interface.
+- Implemented raw Web prefixes and type 0 sniffing, `json:` and type 1 JSON resolution, `parse:` named selection and type 4 flag-matched fallback.
+- Added Android-compatible `jx`, `jxFrom` and `click` playback fields, restricted parser-returned playback headers and retained explicit errors for type 2/3 Android runtime dependencies.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors.
+- Added unit coverage for direct media, unknown-page sniffing, raw Web prefixes, nested JSON URLs, header filtering, named unsupported parsers, flag-matched aggregate parsing, type 4 result directives and JavaScript VIP flags.
+- Verified the new source files are included by existing Swift Package and XcodeGen source-directory discovery, with no project manifest change required.
+- Not available on this Windows host: Swift compilation and WebKit/media interaction tests; macOS CI must pass iPhone/iPad tests, device Release, IPA structure and ad-hoc signing.
+
+### Notes
+- `ios/App/XingGuangApp.swift`: injects one policy-aware playback parser into API and JavaScript repositories.
+- `ios/Sources/XingGuangKit/Models/CatalogModels.swift`: decodes additional Android playback-result fields.
+- `ios/Sources/XingGuangKit/Services/VodRepository.swift`: adds the backward-compatible playback context interface.
+- `ios/Sources/XingGuangKit/Services/PlaybackParseResolver.swift`: implements supported parser selection, JSON resolution, Web sniff requests and explicit platform errors.
+- `ios/Sources/XingGuangKit/Services/ApiVodRepository.swift`: routes API and type 4 playback responses through the shared resolver.
+- `ios/Sources/XingGuangJavaScript/JavaScriptVodRepository.swift`: passes VIP flags and JavaScript playback results through the shared resolver and router.
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: supplies active configuration parser context at playback time.
+- `ios/Tests/XingGuangKitTests/PlaybackParseResolverTests.swift`: covers parser behavior and security boundaries.
+- `ios/Tests/XingGuangKitTests/ApiVodRepositoryTests.swift`: covers type 4 `playUrl` JSON resolution.
+- `ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift`: covers configured VIP flags passed to Spider playback.
+- `docs/ios-compatibility-matrix.md`: records supported parser types and Android runtime limits.
+- `docs/ios-development.md`: documents parser precedence, network behavior and validation scope.
+- `progress.md`: appends implementation evidence and rollback instructions.
+- Rollback method: before committing, run `git restore -- ios/App/XingGuangApp.swift ios/Sources/XingGuangJavaScript/JavaScriptVodRepository.swift ios/Sources/XingGuangKit/Models/CatalogModels.swift ios/Sources/XingGuangKit/Services/ApiVodRepository.swift ios/Sources/XingGuangKit/Services/VodRepository.swift ios/Sources/XingGuangKit/State/XingGuangAppModel.swift ios/Tests/XingGuangKitTests/ApiVodRepositoryTests.swift ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md` and remove `ios/Sources/XingGuangKit/Services/PlaybackParseResolver.swift` plus `ios/Tests/XingGuangKitTests/PlaybackParseResolverTests.swift`; after this feature commit is the branch tip, run `git revert HEAD`.

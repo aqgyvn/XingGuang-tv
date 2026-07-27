@@ -207,13 +207,17 @@ public struct VodResult: Codable, Equatable {
     public var danmaku: [DanmakuResource]
     public var drm: PlaybackDRM?
     public var flag: String
+    public var jxFrom: String
+    public var click: String
     public var format: String
     public var parse: Int
+    public var jx: Int
     public var pageCount: Int
 
     enum CodingKeys: String, CodingKey {
         case classes = "class"
-        case list, filters, url, header, flag, format, parse, artwork, drm, danmaku
+        case list, filters, url, header, flag, format, parse, jx, click, artwork, drm, danmaku
+        case jxFrom
         case message = "msg"
         case playURL = "playUrl"
         case pageCount = "pagecount"
@@ -233,8 +237,11 @@ public struct VodResult: Codable, Equatable {
         danmaku: [DanmakuResource] = [],
         drm: PlaybackDRM? = nil,
         flag: String = "",
+        jxFrom: String = "",
+        click: String = "",
         format: String = "",
         parse: Int = 0,
+        jx: Int = 0,
         pageCount: Int = 0
     ) {
         self.classes = classes
@@ -249,8 +256,11 @@ public struct VodResult: Codable, Equatable {
         self.danmaku = danmaku
         self.drm = drm
         self.flag = flag
+        self.jxFrom = jxFrom
+        self.click = click
         self.format = format
         self.parse = parse
+        self.jx = jx
         self.pageCount = pageCount
     }
 
@@ -276,8 +286,11 @@ public struct VodResult: Codable, Equatable {
         danmaku = container.array(DanmakuResource.self, .danmaku)
         drm = try? container.decodeIfPresent(PlaybackDRM.self, forKey: .drm)
         flag = container.string(.flag)
+        jxFrom = container.string(.jxFrom)
+        click = container.string(.click)
         format = container.string(.format)
         parse = container.integer(.parse)
+        jx = container.integer(.jx)
         pageCount = container.integer(.pageCount)
     }
 }

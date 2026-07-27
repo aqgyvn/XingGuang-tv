@@ -68,6 +68,28 @@ final class JavaScriptVodRepositoryTests: XCTestCase {
         XCTAssertEqual(playback.sniffScript, site.click)
     }
 
+    func testPlaybackReceivesConfiguredVIPFlags() async throws {
+        let script = """
+        export default {
+          init: function() {},
+          play: function(flag, id, vipFlags) { return JSON.stringify({"url":"https://cdn.example/" + vipFlags[0] + ".m3u8"}); }
+        };
+        """
+        let repository = JavaScriptVodRepository(transport: ScriptTransport(sources: [
+            "https://example.com/flags.js": Data(script.utf8)
+        ]))
+        let site = Site(key: "flags", name: "Flags", api: "https://example.com/flags.js", type: 3)
+
+        let playback = try await repository.resolvePlayback(
+            context: VodPlaybackContext(flags: ["qq"]),
+            site: site,
+            flag: "线路",
+            episodeURL: "https://vip.example/episode"
+        )
+
+        XCTAssertEqual(playback.url, "https://cdn.example/qq.m3u8")
+    }
+
     func testTypeThreeLocalAndMD5BridgesWork() async throws {
         let script = """
         export default {

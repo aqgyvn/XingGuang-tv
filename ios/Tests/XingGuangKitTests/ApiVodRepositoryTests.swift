@@ -52,6 +52,28 @@ final class ApiVodRepositoryTests: XCTestCase {
         XCTAssertEqual(request.timeout, 30)
     }
 
+    func testTypeFourPlaybackUsesResultJSONParseDirective() async throws {
+        let client = HTTPClientStub(responses: [
+            Data(#"{"url":"https://vip.example/episode","playUrl":"json:https://parser.example/?url=","parse":1}"#.utf8),
+            Data(#"{"url":"https://cdn.example/video.m3u8","ua":"ParserUA"}"#.utf8)
+        ])
+        let repository = ApiVodRepository(client: client)
+        let site = Site(key: "drpy", name: "扩展", api: "https://example.com/api", type: 4)
+
+        let request = try await repository.resolvePlayback(
+            context: VodPlaybackContext(),
+            site: site,
+            flag: "qq",
+            episodeURL: "https://vip.example/episode"
+        )
+
+        XCTAssertEqual(client.requests.count, 2)
+        XCTAssertEqual(client.requests[1].url.absoluteString, "https://parser.example/?url=https://vip.example/episode")
+        XCTAssertEqual(request.url, "https://cdn.example/video.m3u8")
+        XCTAssertEqual(request.headers["User-Agent"], "ParserUA")
+        XCTAssertFalse(request.requiresSniffing)
+    }
+
     func testRemoteShortExtensionKeepsAPIRequestAsGET() async throws {
         let longExtensionURL = "https://example.com/" + String(repeating: "x", count: 1_100)
         let client = HTTPClientStub(responses: [Data("short-extension".utf8), Data(#"{"list":[]}"#.utf8)])

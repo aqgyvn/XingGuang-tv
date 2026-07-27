@@ -9,6 +9,23 @@ public protocol VodRepository: Sendable {
     func search(site: Site, keyword: String, page: Int) async throws -> VodResult
     func detail(site: Site, vodID: String) async throws -> VodResult
     func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest
+    func resolvePlayback(context: VodPlaybackContext, site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest
+}
+
+public extension VodRepository {
+    func resolvePlayback(context: VodPlaybackContext, site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest {
+        try await resolvePlayback(site: site, flag: flag, episodeURL: episodeURL)
+    }
+}
+
+public struct VodPlaybackContext: Equatable, @unchecked Sendable {
+    public var parses: [ParseRule]
+    public var flags: [String]
+
+    public init(parses: [ParseRule] = [], flags: [String] = []) {
+        self.parses = parses
+        self.flags = flags
+    }
 }
 
 public struct VodSearchItem: Equatable, Identifiable {

@@ -20,7 +20,7 @@
 尚未完成或尚未验收：
 
 - `XingGuang-iOS-33` 已包含 MPV/MDK/AVPlayer、播放体验控制及完整 iPhone/iPad CI 验证；真实格式兼容、亮度、系统音量和画面比例仍以 TrollStore 真机验收为准。
-- JavaScript 仍不能运行依赖 Android JAR 的扩展函数；Android JAR、Python Spider 和部分来源专用 `playUrl` 解析链会返回明确的不兼容错误。
+- JavaScript 仍不能运行依赖 Android JAR 的扩展函数；Android JAR、Python Spider 和依赖 Android 扩展运行时的 type 2/3 解析器会返回明确的不兼容错误。
 - WebView 媒体嗅探、二维码扫描、广告规则和配置文件打开流程已有 iOS 等效实现；DoH 受 iOS 15 URLSession 公共 API 限制，保留配置但使用系统 DNS。
 - HLS AES 等由系统播放核心原生处理；传入 Widevine、PlayReady、ClearKey 或其他外置 DRM 描述时会给出 DRM 错误。当前没有 FairPlay 许可证代理实现。
 - MPV/MDK 路径不承诺 AirPlay、系统画中画或任意自定义 Header 与 Android 完全一致；外置字幕仍可采用播放器上层同步渲染，不依赖某个内核的字幕样式实现。
@@ -229,6 +229,14 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 - 并发上限、结果顺序、去重、失败隔离、取消传播和来源站点持久化已有单元测试。本批次 Windows 主机无 Swift 工具链，仅完成静态差异检查；完整编译、iPhone/iPad 测试、设备 Release、IPA 和签名仍须 macOS CI 验证。
 
 运行 `30246061357` 已通过新增聚合搜索测试、全部 iPhone/iPad 单元与 UI 测试、设备 Release、TrollStore IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-41`；真实多站点并发、部分站点超时提示和来源绑定播放仍需 TrollStore 真机验收。
+
+## `parses` / `playUrl` 播放解析链
+
+- `VodRepository` 的播放入口接收当前配置中的 `parses` 与 `flags`；API、JavaScript 和路由 Repository 均保留旧入口，既有测试替身和预览不会被迫实现新方法。
+- 播放结果支持 Android 字段 `parse`、`jx`、`playUrl`、`jxFrom`、`flag` 和 `click`。`json:` 使用 JSON 解析器，`parse:` 选择具名解析器，其他非空 `playUrl` 作为 Web 解析前缀；没有显式解析器的普通网页进入 WKWebView 嗅探。
+- type 1 JSON 解析器接受根级或 `data.url`，只接受 User-Agent、Referer 和 Cookie 播放 Header；配置与 App 网络策略继续通过同一 `HTTPClient` 生效。type 4 先按线路 flag 选择 JSON 解析器，失败后使用匹配的 type 0 Web 解析器或原页面嗅探。
+- type 2/3 依赖 Android `BaseLoader`/JAR 扩展，iOS 返回明确不兼容错误。播放器核心仍只接收解析完成的媒体请求，不在 MPV、MDK 或 AVPlayer 内部重复执行解析链。
+- 新增测试覆盖直接媒体、未知页面嗅探、Web 前缀、JSON 嵌套 URL、Header 白名单、具名不兼容解析器、线路匹配聚合、type 4 结果指令和 JavaScript `vipFlags`。Windows 无 Swift 工具链，完整编译与 IPA 验证仍须 macOS CI。
 
 运行 `30215168139` 已通过新增播放器会话、持久化和备份测试、全部 iPhone/iPad UI 测试、设备 Release、IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-33`（artifact ID `8635726897`，`22,866,630` 字节，保留至 2026-08-09）；亮度、系统音量、定时暂停和三内核画面比例仍需 TrollStore 真机逐项验收。
 

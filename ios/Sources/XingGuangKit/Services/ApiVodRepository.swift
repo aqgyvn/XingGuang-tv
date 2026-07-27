@@ -23,10 +23,12 @@ public enum VodRepositoryError: Error, Equatable, LocalizedError {
 public final class ApiVodRepository: VodRepository, @unchecked Sendable {
     private let client: HTTPClient
     private let decoder: JSONDecoder
+    private let parseResolver: PlaybackParseResolving
 
-    public init(client: HTTPClient = URLSessionHTTPClient()) {
+    public init(client: HTTPClient = URLSessionHTTPClient(), parseResolver: PlaybackParseResolving? = nil) {
         self.client = client
         self.decoder = JSONDecoder()
+        self.parseResolver = parseResolver ?? PlaybackParseResolver(client: client)
     }
 
     public func loadConfig(from url: URL) async throws -> VodConfigDocument {
@@ -72,6 +74,10 @@ public final class ApiVodRepository: VodRepository, @unchecked Sendable {
     }
 
     public func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest {
+        try await resolvePlayback(context: VodPlaybackContext(), site: site, flag: flag, episodeURL: episodeURL)
+    }
+
+    public func resolvePlayback(context: VodPlaybackContext, site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest {
         guard !episodeURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw VodRepositoryError.unsupportedPlayback("选集播放地址为空")
         }
@@ -82,18 +88,23 @@ public final class ApiVodRepository: VodRepository, @unchecked Sendable {
             let result = try await request(site: site, params: ["play": episodeURL, "flag": flag], xmlAllowed: false)
             var headers = site.header
             headers.merge(result.header) { _, new in new }
+            var resolvedResult = result
             if let resolved = result.list.first?.vodPlayURL.components(separatedBy: "$$$").first, !resolved.isEmpty {
-                return playbackRequest(url: resolved, headers: headers, result: result, site: site)
+                resolvedResult.url = resolved
             }
-            if !result.url.isEmpty { return playbackRequest(url: result.url, headers: headers, result: result, site: site) }
+            resolvedResult.header = headers
+            return try await parseResolver.resolve(result: resolvedResult, site: site, context: context, originalURL: episodeURL, flag: flag, inferParsingForUnknownURL: false)
         }
         if site.type == 3 {
             throw VodRepositoryError.unsupportedPlayback("JavaScript 来源将在下一阶段接入")
         }
-        return PlaybackRequest(
-            url: episodeURL,
-            headers: site.header,
-            timeout: TimeInterval(site.timeout > 0 ? site.timeout : 15)
+        return try await parseResolver.resolve(
+            result: VodResult(url: episodeURL),
+            site: site,
+            context: context,
+            originalURL: episodeURL,
+            flag: flag,
+            inferParsingForUnknownURL: true
         )
     }
 
@@ -145,20 +156,6 @@ public final class ApiVodRepository: VodRepository, @unchecked Sendable {
         return String(data: try await client.send(HTTPRequest(url: url, headers: headers)).data, encoding: .utf8) ?? ""
     }
 
-    private func playbackRequest(url: String, headers: [String: String], result: VodResult, site: Site) -> PlaybackRequest {
-        PlaybackRequest(
-            url: url,
-            headers: headers,
-            format: result.format,
-            artwork: result.artwork,
-            subtitles: result.subtitles,
-            danmaku: result.danmaku,
-            drm: result.drm,
-            timeout: TimeInterval(site.timeout > 0 ? site.timeout : 15),
-            requiresSniffing: result.parse != 0,
-            sniffScript: site.click
-        )
-    }
 }
 
 private extension Site {

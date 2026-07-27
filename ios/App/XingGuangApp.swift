@@ -21,11 +21,15 @@ struct XingGuangApp: App {
         )
         let networkPolicy = HTTPNetworkPolicyStore()
         let httpClient = URLSessionHTTPClient(policyStore: networkPolicy)
-        let javascript = JavaScriptVodRepository(transport: URLSessionJavaScriptHTTPTransport(policyStore: networkPolicy))
+        let parseResolver = PlaybackParseResolver(client: httpClient)
+        let javascript = JavaScriptVodRepository(
+            transport: URLSessionJavaScriptHTTPTransport(policyStore: networkPolicy),
+            parseResolver: parseResolver
+        )
         let proxyServer = LocalProxyServer(repository: javascript)
         self.proxyServer = proxyServer
         let repository = RoutingVodRepository(
-            api: ApiVodRepository(client: httpClient),
+            api: ApiVodRepository(client: httpClient, parseResolver: parseResolver),
             javascript: javascript
         )
         let liveRepository = DefaultLiveRepository(client: httpClient, dynamicContentLoader: { live in

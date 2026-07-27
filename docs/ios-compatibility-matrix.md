@@ -44,6 +44,7 @@ CI 通过只证明编译、测试、IPA 结构和签名有效；真机媒体、�
 | `type 1` JSON API | 已对齐 | 保持 Android 字段默认语义。 |
 | `type 4` 扩展 API | 已对齐 | 支持扩展请求和需嗅探播放结果。 |
 | `type 3` JavaScript Spider | 已对齐 | QuickJS 串行运行，覆盖 Spider 方法、模块、Promise、local、HTTP 和加密桥。 |
+| `parses` / `playUrl` 播放解析链 | iOS 等效实现 | API 与 JavaScript 播放结果共用解析链；支持原始 Web 前缀和 type 0 嗅探、`json:` 与 type 1 JSON、`parse:` 具名选择及 type 4 按线路聚合回退。依赖 Android 扩展运行时的 type 2/3 返回明确不兼容错误。 |
 | Android JAR Spider | 不在本轮范围 | iOS 明确返回 JAR 来源不兼容，不显示空白结果。 |
 | Python Spider | 不在本轮范围 | 需逐源改写为 Swift/JavaScript 或使用独立兼容服务。 |
 | Header、Cookie、重定向、超时、取消 | 已对齐 | App 网络统一由 URLSession 执行并分类错误。 |
