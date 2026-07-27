@@ -148,6 +148,8 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 
 本轮进一步补齐重定向策略：普通 App HTTP 和 JavaScript HTTP 的重定向代理会在访问目标前阻止匹配主机；若服务端返回被阻止的 `Location`，调用方收到明确广告拦截错误。新增测试覆盖主机/路径边界、Android 完整正则语义、相对重定向解析、两种传输代理以及 WKWebView 内容规则。当前 Windows 主机无 Swift 工具链，仍须下一次 macOS CI 验证编译、iPhone/iPad 测试、设备 Release、IPA 与签名。
 
+运行 `30261124861` 已通过新增广告策略与重定向测试、全部 iPhone/iPad 单元与 UI 测试、设备 Release、TrollStore IPA 打包、结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-45`（artifact ID `8651322305`，`23,136,640` 字节，SHA-256 `2932e6174d6c1ef5a3ad3e845be70c5780dc280e9aef2930345a4341819ed7ec`，保留至 2026-08-10）；真实站点的多级重定向、网页子资源拦截和三播放核心边界仍需 TrollStore 真机验收。
+
 ## 配置文件与二维码
 
 - 设置页的点播和直播配置框均提供文件与二维码图标入口。二维码仅接受包含主机的 `http/https` 地址，扫描成功后直接保存并加载对应配置。

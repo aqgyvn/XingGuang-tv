@@ -3597,3 +3597,19 @@
 - `docs/ios-development.md`: documents policy semantics, coverage and HLS/core boundaries.
 - `progress.md`: appends implementation evidence and rollback instructions.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/Services/HTTPNetworkPolicy.swift ios/Sources/XingGuangKit/Services/HTTPClient.swift ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift ios/Sources/XingGuangKit/Services/WebMediaSniffer.swift ios/Tests/XingGuangKitTests/HTTPClientTests.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md` and remove `ios/Tests/XingGuangKitTests/JavaScriptHTTPTests.swift`; after this feature commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Record ad redirect policy CI verification
+
+### What was done
+- Recorded the completed macOS validation and installable TrollStore artifact for App, JavaScript and WKWebView ad-host policy hardening.
+
+### Testing
+- Passed: GitHub Actions run `30261124861` completed the new host-boundary, redirect and WebKit-rule tests plus all iPhone/iPad unit/UI tests.
+- Passed: the same run completed the device Release build, TrollStore IPA packaging, structure validation and ad-hoc signature checks.
+- Artifact: `XingGuang-iOS-45`, ID `8651322305`, `23,136,640` bytes, SHA-256 `2932e6174d6c1ef5a3ad3e845be70c5780dc280e9aef2930345a4341819ed7ec`, retained through 2026-08-10.
+- Remaining device validation: real multi-hop redirects, WKWebView subresource blocking and the documented MPV/MDK/AVPlayer internal-request boundary.
+
+### Notes
+- `docs/ios-development.md`: records the successful full CI run, artifact metadata and remaining device checks.
+- `progress.md`: appends final verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
