@@ -3531,3 +3531,28 @@
 - `docs/ios-development.md`: records the successful full CI run, artifact name and remaining device checks.
 - `progress.md`: appends final verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Add iOS configuration history management
+
+### What was done
+- Reused the existing `config` table to load, update and delete point-on-demand and live configuration history without a schema migration.
+- Added a settings history panel with current-state labels, explicit switching, deletion confirmation and protection for the active configuration.
+- Included every stored configuration record in backup export and isolated live-history persistence errors from successful live-source loading.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors.
+- Added database coverage for ordering, same URL/type updates and deletion; added model coverage for switching, current-record protection, inactive deletion, live recording and full-history backup export.
+- Added an iPhone UI assertion that the configuration-history panel renders in Settings.
+- Not available on this Windows host: Swift compilation and iPhone/iPad execution because no Swift/Xcode toolchain is installed. macOS CI must pass unit/UI tests, device Release, IPA structure and ad-hoc signing before this task is complete.
+
+### Notes
+- `ios/Sources/XingGuangKit/Persistence/AppDatabase.swift`: exposes configuration-history reads, upserts and deletes on the existing table.
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: publishes history, switches records, protects the active record, records live sources and exports all configurations.
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: displays configuration history and provides switch/delete actions.
+- `ios/Tests/XingGuangKitTests/AppDatabaseTests.swift`: verifies ordering, update and deletion behavior.
+- `ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift`: verifies switching, deletion protection, live recording and backup coverage.
+- `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: verifies the Settings history panel is present.
+- `docs/ios-compatibility-matrix.md`: records configuration-history parity and behavior.
+- `docs/ios-development.md`: documents persistence, UI behavior and the macOS CI gate.
+- `progress.md`: appends implementation evidence and rollback instructions.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/Persistence/AppDatabase.swift ios/Sources/XingGuangKit/State/XingGuangAppModel.swift ios/Sources/XingGuangKit/Views/SettingsView.swift ios/Tests/XingGuangKitTests/AppDatabaseTests.swift ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift ios/Tests/XingGuangUITests/XingGuangUITests.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md`; after this feature commit is the branch tip, run `git revert HEAD`.

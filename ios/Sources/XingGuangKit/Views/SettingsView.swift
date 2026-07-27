@@ -13,6 +13,7 @@ public struct SettingsView: View {
     @State private var isImportingConfiguration = false
     @State private var configurationKind: ConfigurationKind?
     @State private var scannerKind: ConfigurationKind?
+    @State private var configurationPendingDeletion: ConfigRecord?
     @State private var configurationImportState: ConfigurationImportState = .idle
     @State private var isImportingLocalMedia = false
     @State private var localMediaFile: LocalMediaFile?
@@ -79,6 +80,7 @@ public struct SettingsView: View {
 
                 configurationStatus
                 configurationImportStatus
+                configurationHistoryPanel
 
                 VStack(alignment: .leading, spacing: 10) {
                     Label("播放内核", systemImage: "play.rectangle")
@@ -252,6 +254,16 @@ public struct SettingsView: View {
         }
         .sheet(item: $localMediaFile) { file in
             LocalMediaPlayerView(file: file, model: model)
+        }
+        .alert(item: $configurationPendingDeletion) { record in
+            Alert(
+                title: Text("删除配置记录？"),
+                message: Text(record.url),
+                primaryButton: .destructive(Text("删除")) {
+                    _ = model.deleteConfiguration(record)
+                },
+                secondaryButton: .cancel()
+            )
         }
         .accessibilityIdentifier("settings.home")
     }
@@ -573,6 +585,105 @@ public struct SettingsView: View {
                 .foregroundColor(.red)
                 .accessibilityIdentifier("settings.configurationImport.failed")
         }
+    }
+
+    private var configurationHistoryPanel: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Label("配置历史", systemImage: "clock.arrow.circlepath")
+                .font(.headline)
+                .foregroundColor(XingGuangTheme.text)
+                .padding(14)
+
+            if visibleConfigurationHistory.isEmpty {
+                Text("暂无配置记录")
+                    .font(.subheadline)
+                    .foregroundColor(XingGuangTheme.secondaryText)
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 14)
+            } else {
+                ForEach(Array(visibleConfigurationHistory.enumerated()), id: \.element.id) { index, record in
+                    if index > 0 { Divider().padding(.leading, 48) }
+                    configurationHistoryRow(record)
+                }
+            }
+
+            if !model.configurationHistoryError.isEmpty {
+                Label(model.configurationHistoryError, systemImage: "xmark.octagon.fill")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(.red)
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 14)
+            }
+        }
+        .xingGuangPanel()
+        .accessibilityIdentifier("settings.configurationHistory")
+    }
+
+    private func configurationHistoryRow(_ record: ConfigRecord) -> some View {
+        let isCurrent = model.isCurrentConfiguration(record)
+        let title = record.name.isEmpty ? (record.type == 0 ? "点播配置" : "直播配置") : record.name
+        return HStack(alignment: .top, spacing: 10) {
+            Image(systemName: record.type == 0 ? "film" : "play.tv")
+                .foregroundColor(XingGuangTheme.primary)
+                .frame(width: 24, height: 36)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(XingGuangTheme.text)
+                    if isCurrent {
+                        Text("当前使用")
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(.green)
+                    }
+                }
+                Text(record.url)
+                    .font(.caption)
+                    .foregroundColor(XingGuangTheme.secondaryText)
+                    .lineLimit(2)
+                    .truncationMode(.middle)
+                Text(configurationUpdatedText(record.time))
+                    .font(.caption)
+                    .foregroundColor(XingGuangTheme.secondaryText)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button {
+                model.activateConfiguration(record)
+            } label: {
+                Image(systemName: isCurrent ? "checkmark.circle.fill" : "arrow.triangle.2.circlepath")
+                    .frame(width: 36, height: 36)
+            }
+            .buttonStyle(.borderless)
+            .disabled(isCurrent)
+            .accessibilityLabel(isCurrent ? "当前配置" : "切换配置")
+            .accessibilityIdentifier("settings.configurationHistory.activate.\(record.id)")
+
+            Button {
+                configurationPendingDeletion = record
+            } label: {
+                Image(systemName: "trash")
+                    .frame(width: 36, height: 36)
+            }
+            .buttonStyle(.borderless)
+            .foregroundColor(isCurrent ? XingGuangTheme.secondaryText : .red)
+            .disabled(isCurrent)
+            .accessibilityLabel(isCurrent ? "当前配置不可删除" : "删除配置")
+            .accessibilityIdentifier("settings.configurationHistory.delete.\(record.id)")
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+    }
+
+    private var visibleConfigurationHistory: [ConfigRecord] {
+        model.configurationHistory.filter { $0.type == 0 || $0.type == 1 }
+    }
+
+    private func configurationUpdatedText(_ milliseconds: Int64) -> String {
+        guard milliseconds > 0 else { return "更新时间未知" }
+        let date = Date(timeIntervalSince1970: TimeInterval(milliseconds) / 1000)
+        return "更新于 \(DateFormatter.localizedString(from: date, dateStyle: .short, timeStyle: .short))"
     }
 
     private func settingsLabel(title: String, systemName: String) -> some View {

@@ -9,7 +9,7 @@
 - 点播、直播、设置三个 SwiftUI 主入口，适配 iPhone 与 iPad。
 - `type 0` XML、`type 1` JSON、`type 4` 扩展 API 的配置、首页、分类、搜索、详情和播放地址请求。
 - Android 字段语义兼容的配置、站点、影片、筛选、播放线路、收藏、历史、进度和轨道模型；数字型 ID、URL 对数组及 type 4 的字幕/DRM/请求头结果均可解码。
-- GRDB/SQLite 持久化：`config`、`site`、`live`、`keep`、`history`、`track` 表；支持配置替换、收藏、历史、继续观看、线路、进度和倍速保存。
+- GRDB/SQLite 持久化：`config`、`site`、`live`、`keep`、`history`、`track` 表；支持配置历史切换、非当前记录删除、收藏、历史、继续观看、线路、进度和倍速保存。
 - `MPV`、`MDK`、`AVPlayer` 三种强制播放内核模式，不再提供自动选核或隐藏回退。默认使用 AVPlayer；Android 备份的 `player_engine` 按 `0=AVPlayer`、`1=MDK`、`2=MPV` 导入，旧 iOS 的 `automatic/vlc` 偏好回退为 AVPlayer。
 - AVPlayer 支持系统可播放的 HLS、MP4/MOV、内嵌音视频/字幕轨道、倍速、后台音频、AirPlay 与系统画中画；MPVKit 使用 libmpv + Metal/MoltenVK，swift-mdk 使用 MDK 原生 Surface，负责用户明确选择后的扩展格式播放。
 - 配置切换会取消旧配置与片库请求，UI 状态只在主线程更新。
@@ -241,6 +241,13 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 首次验证运行 `30248524082` 在 iPhone 测试步骤以 exit code 65 失败，后续 iPad、设备 Release 和 IPA 步骤均被跳过。静态复核发现线路匹配聚合测试错误地用 `parse=0` 构造了预期需要解析的结果；测试输入已改为 Android 语义要求的 `parse=1`，生产解析逻辑未改变，须通过下一次完整 CI 确认。
 
 修复后运行 `30257596430` 已通过解析链测试、全部 iPhone/iPad 单元与 UI 测试、设备 Release、TrollStore IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-43`；真实 JSON 解析服务、Web 嗅探和 type 4 回退仍需 TrollStore 真机验收。
+
+## 配置历史
+
+- 点播配置加载成功后沿用既有 `replaceConfiguration` 事务写入 `config`，直播配置加载成功后以相同 URL/type 更新记录；未新增或迁移数据库表。
+- 设置页按更新时间显示点播与直播记录，标明当前配置。切换记录会重新加载其 URL；当前配置不能删除，删除其他记录前由系统弹窗确认。
+- 备份导出读取全部配置历史，并补入尚未写入数据库的当前配置；同一 URL/type 不重复导出。数据库排序、更新、删除，模型切换、删除保护、直播记录及完整备份均有单元测试。
+- 当前 Windows 主机无 Swift 工具链，本批次仅完成静态差异检查；Swift 编译、iPhone/iPad 测试、设备 Release、IPA 结构和签名必须由下一次 macOS CI 验证。
 
 运行 `30215168139` 已通过新增播放器会话、持久化和备份测试、全部 iPhone/iPad UI 测试、设备 Release、IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-33`（artifact ID `8635726897`，`22,866,630` 字节，保留至 2026-08-09）；亮度、系统音量、定时暂停和三内核画面比例仍需 TrollStore 真机逐项验收。
 

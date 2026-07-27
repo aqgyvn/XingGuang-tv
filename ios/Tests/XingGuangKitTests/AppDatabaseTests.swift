@@ -39,6 +39,39 @@ final class AppDatabaseTests: XCTestCase {
         XCTAssertEqual(try database.loadSites().map(\.key), ["api"])
     }
 
+    func testConfigurationHistorySortsUpdatesAndDeletesWithoutSchemaChanges() throws {
+        let database = try AppDatabase.inMemory()
+        try database.saveConfigurationRecord(ConfigRecord(
+            type: 0,
+            time: 10,
+            url: "https://example.com/old.json",
+            name: "旧点播"
+        ))
+        try database.saveConfigurationRecord(ConfigRecord(
+            type: 1,
+            time: 20,
+            url: "https://example.com/live.json",
+            name: "直播"
+        ))
+        try database.saveConfigurationRecord(ConfigRecord(
+            type: 0,
+            time: 30,
+            url: "https://example.com/old.json",
+            name: "更新点播"
+        ))
+
+        var records = try database.loadConfigurations()
+        XCTAssertEqual(records.map(\.time), [30, 20])
+        XCTAssertEqual(records.first?.name, "更新点播")
+        XCTAssertGreaterThan(records.first?.id ?? 0, 0)
+
+        let live = try XCTUnwrap(records.first(where: { $0.type == 1 }))
+        try database.deleteConfiguration(id: live.id)
+        records = try database.loadConfigurations()
+
+        XCTAssertEqual(records.map(\.type), [0])
+    }
+
     func testValidatedBackupReplacesCollectionsAndAppliesPreferences() throws {
         let database = try AppDatabase.inMemory()
         try database.replaceConfiguration(

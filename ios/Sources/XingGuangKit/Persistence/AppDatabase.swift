@@ -3,6 +3,9 @@ import GRDB
 
 public protocol PersistenceStore: Sendable {
     func replaceConfiguration(_ document: VodConfigDocument, sourceURL: String) throws
+    func loadConfigurations() throws -> [ConfigRecord]
+    func saveConfigurationRecord(_ record: ConfigRecord) throws
+    func deleteConfiguration(id: Int) throws
     func loadSites() throws -> [Site]
     func loadKeeps() throws -> [Keep]
     func containsKeep(key: String) throws -> Bool
@@ -71,6 +74,39 @@ public final class AppDatabase: PersistenceStore, BackupDocumentApplying, @unche
                 """,
                 arguments: [Int64(Date().timeIntervalSince1970 * 1000), sourceURL, documentJSON, "点播", document.logo, document.sites.first?.key ?? ""]
             )
+        }
+    }
+
+    public func loadConfigurations() throws -> [ConfigRecord] {
+        try queue.read { db in
+            try Row.fetchAll(db, sql: "SELECT * FROM config ORDER BY time DESC, id DESC").map {
+                Self.config(from: $0)
+            }
+        }
+    }
+
+    public func saveConfigurationRecord(_ record: ConfigRecord) throws {
+        try queue.write { db in
+            try db.execute(
+                sql: """
+                INSERT INTO config (type, time, url, json, name, logo, home, parse)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(url, type) DO UPDATE SET
+                    time = excluded.time,
+                    json = excluded.json,
+                    name = excluded.name,
+                    logo = excluded.logo,
+                    home = excluded.home,
+                    parse = excluded.parse
+                """,
+                arguments: [record.type, record.time, record.url, record.json, record.name, record.logo, record.home, record.parse]
+            )
+        }
+    }
+
+    public func deleteConfiguration(id: Int) throws {
+        try queue.write { db in
+            try db.execute(sql: "DELETE FROM config WHERE id = ?", arguments: [id])
         }
     }
 
@@ -389,6 +425,20 @@ public final class AppDatabase: PersistenceStore, BackupDocumentApplying, @unche
         item.scale = row["scale"]
         item.configID = row["cid"]
         return item
+    }
+
+    private static func config(from row: Row) -> ConfigRecord {
+        ConfigRecord(
+            id: row["id"],
+            type: row["type"],
+            time: row["time"],
+            url: row["url"],
+            json: row["json"],
+            name: row["name"],
+            logo: row["logo"],
+            home: row["home"],
+            parse: row["parse"]
+        )
     }
 
     private var migrator: DatabaseMigrator {

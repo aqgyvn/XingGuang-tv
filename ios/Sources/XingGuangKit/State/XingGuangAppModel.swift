@@ -42,6 +42,8 @@ public final class XingGuangAppModel: ObservableObject {
     @Published public private(set) var liveState: LiveLoadState
     @Published public private(set) var keeps: [Keep]
     @Published public private(set) var histories: [History]
+    @Published public private(set) var configurationHistory: [ConfigRecord]
+    @Published public private(set) var configurationHistoryError = ""
     @Published public var incognito: Bool {
         didSet { defaults.set(incognito, forKey: "ios.incognito") }
     }
@@ -153,6 +155,7 @@ public final class XingGuangAppModel: ObservableObject {
             self.liveState = liveSources.isEmpty ? .empty : .loaded
             self.keeps = keeps
             self.histories = continueWatching.map { [$0] } ?? []
+            self.configurationHistory = []
         } else {
             let emptyCategory = VodClass(typeID: "", typeName: "")
             self.configuration = VodConfigDocument()
@@ -166,6 +169,7 @@ public final class XingGuangAppModel: ObservableObject {
             self.liveState = .idle
             self.keeps = []
             self.histories = []
+            self.configurationHistory = []
         }
     }
 
@@ -255,6 +259,51 @@ public final class XingGuangAppModel: ObservableObject {
 
     public func resetConfigurationSaveState() {
         configurationSaveState = .idle
+    }
+
+    public func isCurrentConfiguration(_ record: ConfigRecord) -> Bool {
+        let current = record.type == 0 ? vodConfigURL : liveConfigURL
+        return current.trimmingCharacters(in: .whitespacesAndNewlines)
+            == record.url.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    public func activateConfiguration(_ record: ConfigRecord) {
+        let url = record.url.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard record.type == 0 || record.type == 1, !url.isEmpty else { return }
+        guard isValidOptionalURL(url) else {
+            configurationSaveState = .invalid
+            return
+        }
+        guard !isCurrentConfiguration(record) else { return }
+        configurationHistoryError = ""
+        configurationSaveState = .loading
+        if record.type == 0 {
+            vodConfigURL = url
+            defaults.set(url, forKey: "ios.vodConfigURL")
+            loadConfiguration()
+        } else {
+            liveConfigURL = url
+            defaults.set(url, forKey: "ios.liveConfigURL")
+            loadLiveConfiguration(updateConfigurationState: true)
+        }
+    }
+
+    @discardableResult
+    public func deleteConfiguration(_ record: ConfigRecord) -> Bool {
+        guard !isCurrentConfiguration(record) else { return false }
+        guard let persistence else {
+            configurationHistoryError = "配置历史存储不可用"
+            return false
+        }
+        do {
+            try persistence.deleteConfiguration(id: record.id)
+            configurationHistoryError = ""
+            reloadPersistence()
+            return true
+        } catch {
+            configurationHistoryError = error.localizedDescription
+            return false
+        }
     }
 
     public func reloadPreferences() {
@@ -402,11 +451,11 @@ public final class XingGuangAppModel: ObservableObject {
     public func makeBackupDocument() throws -> BackupDocument {
         let encoder = JSONEncoder()
         let now = Int64(Date().timeIntervalSince1970 * 1000)
-        var configs: [ConfigRecord] = []
+        var configs = (try persistence?.loadConfigurations()) ?? []
         let vodURL = vodConfigURL.trimmingCharacters(in: .whitespacesAndNewlines)
         if !vodURL.isEmpty {
             let data = try encoder.encode(configuration)
-            configs.append(ConfigRecord(
+            let current = ConfigRecord(
                 type: 0,
                 time: now,
                 url: vodURL,
@@ -414,18 +463,20 @@ public final class XingGuangAppModel: ObservableObject {
                 name: "点播",
                 logo: configuration.logo,
                 home: selectedSite.key
-            ))
+            )
+            if !configs.contains(where: { $0.type == 0 && $0.url == vodURL }) { configs.append(current) }
         }
         let liveURL = liveConfigURL.trimmingCharacters(in: .whitespacesAndNewlines)
         if !liveURL.isEmpty {
             let data = try encoder.encode(liveSources)
-            configs.append(ConfigRecord(
+            let current = ConfigRecord(
                 type: 1,
                 time: now,
                 url: liveURL,
                 json: String(data: data, encoding: .utf8) ?? "",
                 name: "直播"
-            ))
+            )
+            if !configs.contains(where: { $0.type == 1 && $0.url == liveURL }) { configs.append(current) }
         }
         return BackupDocument(
             sites: configuration.sites,
@@ -689,6 +740,22 @@ public final class XingGuangAppModel: ObservableObject {
                 try Task.checkCancellation()
                 liveSources = [loaded]
                 liveState = loaded.groups.flatMap(\.channels).isEmpty ? .empty : .loaded
+                if let persistence {
+                    do {
+                        let data = try JSONEncoder().encode(loaded)
+                        try persistence.saveConfigurationRecord(ConfigRecord(
+                            type: 1,
+                            time: Int64(Date().timeIntervalSince1970 * 1000),
+                            url: value,
+                            json: String(data: data, encoding: .utf8) ?? "",
+                            name: loaded.name.isEmpty ? "直播" : loaded.name
+                        ))
+                        configurationHistoryError = ""
+                        reloadPersistence()
+                    } catch {
+                        configurationHistoryError = error.localizedDescription
+                    }
+                }
                 if updateConfigurationState { configurationSaveState = .saved }
             } catch is CancellationError {
             } catch {
@@ -770,6 +837,13 @@ public final class XingGuangAppModel: ObservableObject {
         guard let persistence else { return }
         keeps = (try? persistence.loadKeeps()) ?? []
         histories = (try? persistence.loadHistories(limit: 100)) ?? []
+        do {
+            configurationHistory = try persistence.loadConfigurations()
+            configurationHistoryError = ""
+        } catch {
+            configurationHistory = []
+            configurationHistoryError = error.localizedDescription
+        }
     }
 
     private func historyKey(for vod: Vod, site: Site) -> String {

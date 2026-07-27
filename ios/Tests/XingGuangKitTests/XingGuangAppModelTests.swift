@@ -29,6 +29,71 @@ final class XingGuangAppModelTests: XCTestCase {
         XCTAssertNil(defaults.string(forKey: "ios.vodConfigURL"))
     }
 
+    func testConfigurationHistoryProtectsCurrentRecordAndDeletesInactiveRecord() throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let database = try AppDatabase.inMemory()
+        try database.saveConfigurationRecord(ConfigRecord(type: 0, time: 20, url: "https://example.com/current.json", name: "当前"))
+        try database.saveConfigurationRecord(ConfigRecord(type: 0, time: 10, url: "https://example.com/old.json", name: "旧配置"))
+        defaults.set("https://example.com/current.json", forKey: "ios.vodConfigURL")
+        let model = XingGuangAppModel(defaults: defaults, persistence: database, usePreviewData: false)
+
+        model.bootstrap()
+
+        let current = try XCTUnwrap(model.configurationHistory.first(where: { $0.url.contains("current") }))
+        let inactive = try XCTUnwrap(model.configurationHistory.first(where: { $0.url.contains("old") }))
+        XCTAssertTrue(model.isCurrentConfiguration(current))
+        XCTAssertFalse(model.deleteConfiguration(current))
+        XCTAssertTrue(model.deleteConfiguration(inactive))
+        XCTAssertEqual(model.configurationHistory.map(\.url), ["https://example.com/current.json"])
+    }
+
+    func testActivatingVodConfigurationReloadsAndPersistsSelection() async throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let database = try AppDatabase.inMemory()
+        let record = ConfigRecord(type: 0, time: 10, url: "https://example.com/selected.json", name: "点播")
+        try database.saveConfigurationRecord(record)
+        let repository = ConfigurationHistoryVodRepository()
+        let model = XingGuangAppModel(
+            defaults: defaults,
+            repository: repository,
+            persistence: database,
+            usePreviewData: false
+        )
+
+        model.activateConfiguration(record)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(model.vodConfigURL, record.url)
+        XCTAssertEqual(defaults.string(forKey: "ios.vodConfigURL"), record.url)
+        XCTAssertEqual(model.selectedSite.key, "history")
+        XCTAssertEqual(model.configurationSaveState, .saved)
+        XCTAssertTrue(model.configurationHistory.contains(where: { $0.type == 0 && $0.url == record.url }))
+    }
+
+    func testLoadedLiveConfigurationIsAddedToHistory() async throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let database = try AppDatabase.inMemory()
+        let model = XingGuangAppModel(
+            defaults: defaults,
+            liveRepository: ConfigurationHistoryLiveRepository(),
+            persistence: database,
+            usePreviewData: false
+        )
+        model.liveConfigURL = "https://example.com/live.txt"
+
+        model.saveConfiguration()
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        let record = try XCTUnwrap(model.configurationHistory.first)
+        XCTAssertEqual(record.type, 1)
+        XCTAssertEqual(record.url, "https://example.com/live.txt")
+        XCTAssertEqual(record.name, "历史直播")
+        XCTAssertEqual(model.configurationSaveState, .saved)
+    }
+
     func testCategorySelectionUpdatesPublishedState() {
         let (defaults, suiteName) = makeDefaults()
         defer { defaults.removePersistentDomain(forName: suiteName) }
@@ -279,6 +344,24 @@ final class XingGuangAppModelTests: XCTestCase {
         XCTAssertEqual(backup.preferences[HTTPUserAgent.preferenceKey], .string("XingGuang-UA"))
     }
 
+    func testBackupDocumentIncludesAllStoredConfigurationHistory() throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let database = try AppDatabase.inMemory()
+        try database.saveConfigurationRecord(ConfigRecord(type: 0, time: 20, url: "https://example.com/new.json"))
+        try database.saveConfigurationRecord(ConfigRecord(type: 0, time: 10, url: "https://example.com/old.json"))
+        try database.saveConfigurationRecord(ConfigRecord(type: 1, time: 15, url: "https://example.com/live.txt"))
+        let model = XingGuangAppModel(defaults: defaults, persistence: database, usePreviewData: false)
+
+        let backup = try model.makeBackupDocument()
+
+        XCTAssertEqual(Set(backup.configs.map(\.url)), Set([
+            "https://example.com/new.json",
+            "https://example.com/old.json",
+            "https://example.com/live.txt"
+        ]))
+    }
+
     func testRemovedIOSPlayerPreferencesFallBackToAVPlayer() {
         let (defaults, suiteName) = makeDefaults()
         defer { defaults.removePersistentDomain(forName: suiteName) }
@@ -394,6 +477,32 @@ private final class PolicyVodRepository: VodRepository, @unchecked Sendable {
     func search(site: Site, keyword: String, page: Int) async throws -> VodResult { VodResult() }
     func detail(site: Site, vodID: String) async throws -> VodResult { VodResult() }
     func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest { PlaybackRequest(url: episodeURL) }
+}
+
+private final class ConfigurationHistoryVodRepository: VodRepository, @unchecked Sendable {
+    func loadConfig(from url: URL) async throws -> VodConfigDocument {
+        VodConfigDocument(sites: [Site(key: "history", name: "历史站点", api: "https://api.example", type: 1)])
+    }
+
+    func home(site: Site, includeFilters: Bool) async throws -> VodResult { VodResult() }
+    func category(site: Site, typeID: String, page: Int, filters: [String: String]) async throws -> VodResult { VodResult() }
+    func search(site: Site, keyword: String, page: Int) async throws -> VodResult { VodResult() }
+    func detail(site: Site, vodID: String) async throws -> VodResult { VodResult() }
+    func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest {
+        PlaybackRequest(url: episodeURL)
+    }
+}
+
+private final class ConfigurationHistoryLiveRepository: LiveRepository {
+    func load(_ live: Live) async throws -> Live {
+        Live(
+            name: "历史直播",
+            url: live.url,
+            groups: [LiveGroup(name: "默认", channels: [Channel(name: "频道", urls: ["https://example.com/live.m3u8"])])]
+        )
+    }
+
+    func loadEPG(for live: Live, channel: Channel?) async throws -> [Epg] { [] }
 }
 
 private final class FilterVodRepository: VodRepository, @unchecked Sendable {
