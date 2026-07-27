@@ -228,6 +228,8 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 - 聚合结果携带来源站点，后续详情、收藏、历史和播放解析均使用该来源，不会因首页当前站点不同而串线。取消搜索会取消仍在执行的子请求。
 - 并发上限、结果顺序、去重、失败隔离、取消传播和来源站点持久化已有单元测试。本批次 Windows 主机无 Swift 工具链，仅完成静态差异检查；完整编译、iPhone/iPad 测试、设备 Release、IPA 和签名仍须 macOS CI 验证。
 
+运行 `30246061357` 已通过新增聚合搜索测试、全部 iPhone/iPad 单元与 UI 测试、设备 Release、TrollStore IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-41`；真实多站点并发、部分站点超时提示和来源绑定播放仍需 TrollStore 真机验收。
+
 运行 `30215168139` 已通过新增播放器会话、持久化和备份测试、全部 iPhone/iPad UI 测试、设备 Release、IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-33`（artifact ID `8635726897`，`22,866,630` 字节，保留至 2026-08-09）；亮度、系统音量、定时暂停和三内核画面比例仍需 TrollStore 真机逐项验收。
 
 ## 缓存与全局 User-Agent
