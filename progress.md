@@ -3556,3 +3556,19 @@
 - `docs/ios-development.md`: documents persistence, UI behavior and the macOS CI gate.
 - `progress.md`: appends implementation evidence and rollback instructions.
 - Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/Persistence/AppDatabase.swift ios/Sources/XingGuangKit/State/XingGuangAppModel.swift ios/Sources/XingGuangKit/Views/SettingsView.swift ios/Tests/XingGuangKitTests/AppDatabaseTests.swift ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift ios/Tests/XingGuangUITests/XingGuangUITests.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md`; after this feature commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Record configuration history CI verification
+
+### What was done
+- Recorded the completed macOS validation and installable TrollStore artifact for point-on-demand and live configuration history management.
+
+### Testing
+- Passed: GitHub Actions run `30259664133` completed the configuration database/model tests and all iPhone/iPad unit/UI tests.
+- Passed: the same run completed the device Release build, TrollStore IPA packaging, structure validation and ad-hoc signature checks.
+- Artifact: `XingGuang-iOS-44`, ID `8650565296`, `23,129,146` bytes, SHA-256 `00da2096f0004c504ab44061dd398cd414d570ead0544bbdec5d364ba01b69c1`, retained through 2026-08-10.
+- Remaining device validation: real configuration switching, deletion confirmation and history display after backup restore.
+
+### Notes
+- `docs/ios-development.md`: records the successful full CI run, artifact metadata and remaining device checks.
+- `progress.md`: appends final verification evidence and rollback point.
+- Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.

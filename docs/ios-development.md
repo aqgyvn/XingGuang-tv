@@ -249,6 +249,8 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 - 备份导出读取全部配置历史，并补入尚未写入数据库的当前配置；同一 URL/type 不重复导出。数据库排序、更新、删除，模型切换、删除保护、直播记录及完整备份均有单元测试。
 - 当前 Windows 主机无 Swift 工具链，本批次仅完成静态差异检查；Swift 编译、iPhone/iPad 测试、设备 Release、IPA 结构和签名必须由下一次 macOS CI 验证。
 
+运行 `30259664133` 已通过配置历史数据库/模型测试、全部 iPhone/iPad 单元与 UI 测试、设备 Release、TrollStore IPA 打包、结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-44`（artifact ID `8650565296`，`23,129,146` 字节，SHA-256 `00da2096f0004c504ab44061dd398cd414d570ead0544bbdec5d364ba01b69c1`，保留至 2026-08-10）；真实配置切换、删除确认和备份恢复后历史显示仍需 TrollStore 真机验收。
+
 运行 `30215168139` 已通过新增播放器会话、持久化和备份测试、全部 iPhone/iPad UI 测试、设备 Release、IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-33`（artifact ID `8635726897`，`22,866,630` 字节，保留至 2026-08-09）；亮度、系统音量、定时暂停和三内核画面比例仍需 TrollStore 真机逐项验收。
 
 ## 缓存与全局 User-Agent
