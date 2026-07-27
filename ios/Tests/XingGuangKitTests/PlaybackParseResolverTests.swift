@@ -111,7 +111,7 @@ final class PlaybackParseResolverTests: XCTestCase {
         )
 
         let request = try await resolver.resolve(
-            result: VodResult(url: "https://vip.example/episode"),
+            result: VodResult(url: "https://vip.example/episode", parse: 1),
             site: Site(key: "api", type: 1),
             context: context,
             originalURL: "https://vip.example/episode",

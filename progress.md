@@ -3497,3 +3497,21 @@
 - `docs/ios-development.md`: documents parser precedence, network behavior and validation scope.
 - `progress.md`: appends implementation evidence and rollback instructions.
 - Rollback method: before committing, run `git restore -- ios/App/XingGuangApp.swift ios/Sources/XingGuangJavaScript/JavaScriptVodRepository.swift ios/Sources/XingGuangKit/Models/CatalogModels.swift ios/Sources/XingGuangKit/Services/ApiVodRepository.swift ios/Sources/XingGuangKit/Services/VodRepository.swift ios/Sources/XingGuangKit/State/XingGuangAppModel.swift ios/Tests/XingGuangKitTests/ApiVodRepositoryTests.swift ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md` and remove `ios/Sources/XingGuangKit/Services/PlaybackParseResolver.swift` plus `ios/Tests/XingGuangKitTests/PlaybackParseResolverTests.swift`; after this feature commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Correct playback aggregate parser test input
+
+### What was done
+- Corrected the aggregate parser test fixture to mark the playback result as requiring parsing, matching Android `parse=1` semantics.
+- Kept production parser selection unchanged because `parse=0` correctly means direct playback when no explicit `playUrl` is present.
+
+### Testing
+- Observed: GitHub Actions run `30248524082` failed in the iPhone test step with exit code 65; iPad, device Release and IPA steps were skipped.
+- Passed: static review confirms the aggregate test now enters the intended type 4 path while the direct-media test continues to cover `parse=0`.
+- Passed: `git diff --check` reports no whitespace errors.
+- Pending: a new macOS CI run must complete all iPhone/iPad tests, device Release, IPA structure and ad-hoc signing.
+
+### Notes
+- `ios/Tests/XingGuangKitTests/PlaybackParseResolverTests.swift`: changes only the aggregate parser test input from direct playback to parse-required playback.
+- `docs/ios-development.md`: records the failed run, skipped stages and correction rationale.
+- `progress.md`: appends failure evidence, correction and rollback instructions.
+- Rollback method: before committing, run `git restore -- ios/Tests/XingGuangKitTests/PlaybackParseResolverTests.swift docs/ios-development.md progress.md`; after this fix commit is the branch tip, run `git revert HEAD`.
