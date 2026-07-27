@@ -3428,3 +3428,27 @@
 - `docs/ios-development.md`: records the successful full CI run, artifact metadata and remaining device checks.
 - `progress.md`: appends final verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
+
+## 2026-07-27 - Task: Add bounded multi-site on-demand search
+
+### What was done
+- Added all-site and current-site search modes for visible, searchable on-demand sources, with at most four concurrent source requests.
+- Preserved successful results when one source fails, kept configuration source ordering, deduplicated by source plus video ID and propagated cancellation to pending searches.
+- Bound aggregate results to their source for detail loading, favorites, history and playback so navigation cannot use the unrelated home-page source.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors.
+- Added unit coverage for the concurrency limit, deterministic ordering, per-source deduplication, partial failure isolation, cancellation propagation and source-specific favorite/history keys.
+- Verified by search that no stale `result.page` or source-implicit history-key call remains.
+- Not available on this Windows host: Swift compilation and SwiftUI interaction tests; macOS CI must pass iPhone/iPad tests, device Release, IPA structure and ad-hoc signing.
+
+### Notes
+- `ios/Sources/XingGuangKit/Services/VodRepository.swift`: makes repositories sendable and defines source-bound aggregate search results and errors.
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: performs bounded aggregate requests and accepts explicit source sites for detail, playback and persistence operations.
+- `ios/Sources/XingGuangKit/Views/SearchPreviewView.swift`: adds search scope selection, source labels, pagination and partial-failure feedback.
+- `ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift`: keeps all detail and playback actions bound to the originating source.
+- `ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift`: covers aggregate-search concurrency, cancellation, failure isolation, deduplication and source keys.
+- `docs/ios-compatibility-matrix.md`: records aggregate-search parity and its request boundary.
+- `docs/ios-development.md`: documents behavior, verification coverage and the current CI gap.
+- `progress.md`: appends implementation evidence and rollback instructions.
+- Rollback method: before committing, run `git restore -- ios/Sources/XingGuangKit/Services/VodRepository.swift ios/Sources/XingGuangKit/State/XingGuangAppModel.swift ios/Sources/XingGuangKit/Views/SearchPreviewView.swift ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift docs/ios-compatibility-matrix.md docs/ios-development.md progress.md`; after this feature commit is the branch tip, run `git revert HEAD`.

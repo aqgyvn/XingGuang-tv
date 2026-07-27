@@ -274,9 +274,71 @@ public final class XingGuangAppModel: ObservableObject {
         try await searchPage(keyword: keyword, page: page).list
     }
 
-    public func searchPage(keyword: String, page: Int = 1) async throws -> VodResult {
-        guard let repository, !selectedSite.key.isEmpty else { return VodResult() }
-        return try await repository.search(site: selectedSite, keyword: keyword, page: page)
+    public func searchPage(keyword: String, page: Int = 1, site: Site? = nil) async throws -> VodResult {
+        let sourceSite = site ?? selectedSite
+        guard let repository, !sourceSite.key.isEmpty else { return VodResult() }
+        return try await repository.search(site: sourceSite, keyword: keyword, page: page)
+    }
+
+    public func searchAllSites(keyword: String, page: Int = 1, maximumConcurrentRequests: Int = 4) async throws -> AggregateVodSearchPage {
+        guard let repository else { return AggregateVodSearchPage() }
+        let sites = configuration.sites.filter { $0.hide != 1 && $0.searchable != 0 && !$0.key.isEmpty }
+        guard !sites.isEmpty else { return AggregateVodSearchPage() }
+        let concurrency = max(1, min(maximumConcurrentRequests, sites.count))
+
+        let outcomes = try await withThrowingTaskGroup(of: AggregateSearchOutcome.self) { group in
+            var nextIndex = 0
+            var collected: [AggregateSearchOutcome] = []
+
+            func addNext() {
+                guard nextIndex < sites.count else { return }
+                let index = nextIndex
+                let site = sites[index]
+                nextIndex += 1
+                group.addTask {
+                    do {
+                        let result = try await repository.search(site: site, keyword: keyword, page: page)
+                        try Task.checkCancellation()
+                        return AggregateSearchOutcome(index: index, site: site, result: result, errorMessage: nil)
+                    } catch is CancellationError {
+                        throw CancellationError()
+                    } catch {
+                        return AggregateSearchOutcome(index: index, site: site, result: nil, errorMessage: error.localizedDescription)
+                    }
+                }
+            }
+
+            for _ in 0..<concurrency { addNext() }
+            while let outcome = try await group.next() {
+                collected.append(outcome)
+                addNext()
+            }
+            return collected.sorted { $0.index < $1.index }
+        }
+
+        try Task.checkCancellation()
+        let succeeded = outcomes.compactMap { outcome -> (Site, VodResult)? in
+            guard let result = outcome.result else { return nil }
+            return (outcome.site, result)
+        }
+        let failures = outcomes.compactMap { $0.errorMessage == nil ? nil : $0.site.name }
+        if succeeded.isEmpty, !failures.isEmpty {
+            throw AggregateVodSearchError.allSitesFailed(failures)
+        }
+
+        var identifiers = Set<String>()
+        var items: [VodSearchItem] = []
+        for (site, result) in succeeded {
+            for vod in result.list {
+                let item = VodSearchItem(site: site, vod: vod)
+                if identifiers.insert(item.id).inserted { items.append(item) }
+            }
+        }
+        return AggregateVodSearchPage(
+            items: items,
+            canLoadMore: succeeded.contains { page < max($0.1.pageCount, 1) },
+            failedSiteNames: failures
+        )
     }
 
     public func recordSearch(_ keyword: String) {
@@ -298,25 +360,27 @@ public final class XingGuangAppModel: ObservableObject {
         defaults.removeObject(forKey: "ios.searchHistory")
     }
 
-    public func detail(for vod: Vod) async throws -> Vod {
-        guard let repository, !selectedSite.key.isEmpty else { return vod }
-        return try await repository.detail(site: selectedSite, vodID: vod.vodID).list.first ?? vod
+    public func detail(for vod: Vod, site: Site? = nil) async throws -> Vod {
+        let sourceSite = site ?? selectedSite
+        guard let repository, !sourceSite.key.isEmpty else { return vod }
+        return try await repository.detail(site: sourceSite, vodID: vod.vodID).list.first ?? vod
     }
 
-    public func resolvePlayback(route: PlaybackRoute, episode: PlaybackEpisode) async throws -> PlaybackRequest {
+    public func resolvePlayback(site: Site? = nil, route: PlaybackRoute, episode: PlaybackEpisode) async throws -> PlaybackRequest {
+        let sourceSite = site ?? selectedSite
         guard let repository else {
             var request = PlaybackRequest(url: episode.url)
             request.headers = HTTPUserAgent.applyingDefault(to: request.headers, value: globalUserAgent)
             request.enginePreference = playerPreference
             return request
         }
-        var request = try await repository.resolvePlayback(site: selectedSite, flag: route.name, episodeURL: episode.url)
+        var request = try await repository.resolvePlayback(site: sourceSite, flag: route.name, episodeURL: episode.url)
         request.headers = HTTPUserAgent.applyingDefault(to: request.headers, value: globalUserAgent)
         if request.requiresSniffing {
             guard let webMediaSniffer else {
                 throw VodRepositoryError.unsupportedPlayback("当前运行环境未配置网页媒体嗅探器")
             }
-            request = try await webMediaSniffer.resolve(request, site: selectedSite)
+            request = try await webMediaSniffer.resolve(request, site: sourceSite)
         }
         request.enginePreference = playerPreference
         return request
@@ -477,8 +541,8 @@ public final class XingGuangAppModel: ObservableObject {
         keeps.contains { $0.type == 1 && $0.key == liveKeepKey(live: live, channel: channel) }
     }
 
-    public func history(for vod: Vod) -> History? {
-        histories.first { $0.key == historyKey(for: vod) }
+    public func history(for vod: Vod, site: Site? = nil) -> History? {
+        histories.first { $0.key == historyKey(for: vod, site: site ?? selectedSite) }
     }
 
     public func savePlayback(
@@ -490,10 +554,11 @@ public final class XingGuangAppModel: ObservableObject {
         reverseSort: Bool? = nil,
         opening: Int64? = nil,
         ending: Int64? = nil,
-        scale: Int? = nil
+        scale: Int? = nil,
+        site: Site? = nil
     ) {
         guard !incognito, let persistence else { return }
-        let key = historyKey(for: vod)
+        let key = historyKey(for: vod, site: site ?? selectedSite)
         var history = (try? persistence.history(key: key)) ?? History(key: key, vodName: vod.vodName, vodPic: vod.vodPic)
         history.vodName = vod.vodName
         history.vodPic = vod.vodPic
@@ -513,11 +578,12 @@ public final class XingGuangAppModel: ObservableObject {
     }
 
     @discardableResult
-    public func toggleKeep(vod: Vod) -> Bool {
+    public func toggleKeep(vod: Vod, site: Site? = nil) -> Bool {
         guard let persistence else { return false }
+        let sourceSite = site ?? selectedSite
         let keep = Keep(
-            key: historyKey(for: vod),
-            siteName: selectedSite.name,
+            key: historyKey(for: vod, site: sourceSite),
+            siteName: sourceSite.name,
             vodName: vod.vodName,
             vodPic: vod.vodPic,
             createTime: Int64(Date().timeIntervalSince1970 * 1000)
@@ -527,8 +593,8 @@ public final class XingGuangAppModel: ObservableObject {
         return selected
     }
 
-    public func isKept(_ vod: Vod) -> Bool {
-        keeps.contains { $0.key == historyKey(for: vod) }
+    public func isKept(_ vod: Vod, site: Site? = nil) -> Bool {
+        keeps.contains { $0.key == historyKey(for: vod, site: site ?? selectedSite) }
     }
 
     public func vod(from keep: Keep) -> Vod {
@@ -705,8 +771,8 @@ public final class XingGuangAppModel: ObservableObject {
         histories = (try? persistence.loadHistories(limit: 100)) ?? []
     }
 
-    private func historyKey(for vod: Vod) -> String {
-        "\(selectedSite.key)@@@\(vod.vodID)"
+    private func historyKey(for vod: Vod, site: Site) -> String {
+        "\(site.key)@@@\(vod.vodID)"
     }
 
     private func liveKeepKey(live: Live, channel: Channel) -> String {
@@ -719,4 +785,11 @@ public final class XingGuangAppModel: ObservableObject {
         guard let url = URL(string: trimmed), let scheme = url.scheme?.lowercased() else { return false }
         return scheme == "http" || scheme == "https" || scheme == "file"
     }
+}
+
+private struct AggregateSearchOutcome: @unchecked Sendable {
+    var index: Int
+    var site: Site
+    var result: VodResult?
+    var errorMessage: String?
 }

@@ -2,13 +2,47 @@ import Foundation
 import Combine
 import UIKit
 
-public protocol VodRepository {
+public protocol VodRepository: Sendable {
     func loadConfig(from url: URL) async throws -> VodConfigDocument
     func home(site: Site, includeFilters: Bool) async throws -> VodResult
     func category(site: Site, typeID: String, page: Int, filters: [String: String]) async throws -> VodResult
     func search(site: Site, keyword: String, page: Int) async throws -> VodResult
     func detail(site: Site, vodID: String) async throws -> VodResult
     func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest
+}
+
+public struct VodSearchItem: Equatable, Identifiable {
+    public var id: String { "\(site.key)@@@\(vod.vodID)" }
+    public var site: Site
+    public var vod: Vod
+
+    public init(site: Site, vod: Vod) {
+        self.site = site
+        self.vod = vod
+    }
+}
+
+public struct AggregateVodSearchPage: Equatable {
+    public var items: [VodSearchItem]
+    public var canLoadMore: Bool
+    public var failedSiteNames: [String]
+
+    public init(items: [VodSearchItem] = [], canLoadMore: Bool = false, failedSiteNames: [String] = []) {
+        self.items = items
+        self.canLoadMore = canLoadMore
+        self.failedSiteNames = failedSiteNames
+    }
+}
+
+public enum AggregateVodSearchError: Error, Equatable, LocalizedError {
+    case allSitesFailed([String])
+
+    public var errorDescription: String? {
+        switch self {
+        case .allSitesFailed(let names):
+            return "所有站点搜索失败：\(names.joined(separator: "、"))"
+        }
+    }
 }
 
 public enum PlayerState: Equatable {

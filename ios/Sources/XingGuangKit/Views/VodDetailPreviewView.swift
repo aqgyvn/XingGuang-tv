@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 @MainActor
 struct VodDetailPreviewView: View {
     @ObservedObject var model: XingGuangAppModel
+    private let sourceSite: Site
     @StateObject private var session: PlayerSession
     @State private var vod: Vod
     @State private var selectedRoute = 0
@@ -43,8 +44,9 @@ struct VodDetailPreviewView: View {
     @State private var playbackInformation: PlaybackInformationPayload?
     @State private var searchPresented = false
 
-    init(vod: Vod, model: XingGuangAppModel) {
+    init(vod: Vod, model: XingGuangAppModel, site: Site? = nil) {
         self.model = model
+        self.sourceSite = site ?? model.selectedSite
         _vod = State(initialValue: vod)
         _session = StateObject(wrappedValue: model.makePlayerSession())
         _speed = State(initialValue: model.defaultPlaybackSpeed)
@@ -78,11 +80,11 @@ struct VodDetailPreviewView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    _ = model.toggleKeep(vod: vod)
+                    _ = model.toggleKeep(vod: vod, site: sourceSite)
                 } label: {
-                    Image(systemName: model.isKept(vod) ? "star.fill" : "star")
+                    Image(systemName: model.isKept(vod, site: sourceSite) ? "star.fill" : "star")
                 }
-                .accessibilityLabel(model.isKept(vod) ? "取消收藏" : "收藏")
+                .accessibilityLabel(model.isKept(vod, site: sourceSite) ? "取消收藏" : "收藏")
             }
         }
         .task { await loadDetail() }
@@ -152,7 +154,7 @@ struct VodDetailPreviewView: View {
             PlaybackInformationSheet(payload: payload)
         }
         .sheet(isPresented: $searchPresented) {
-            SearchPreviewView(model: model, initialQuery: vod.vodName)
+            SearchPreviewView(model: model, initialQuery: vod.vodName, initialSite: sourceSite)
         }
         .accessibilityIdentifier("vod.detail")
     }
@@ -526,7 +528,7 @@ struct VodDetailPreviewView: View {
                 .foregroundColor(XingGuangTheme.text)
             }
             .buttonStyle(.plain)
-            .disabled(model.selectedSite.searchable == 0 || vod.vodName.isEmpty)
+            .disabled(sourceSite.searchable == 0 || vod.vodName.isEmpty)
             HStack(spacing: 8) {
                 if !vod.vodRemarks.isEmpty { badge(vod.vodRemarks) }
                 if !vod.vodYear.isEmpty { badge(vod.vodYear) }
@@ -631,7 +633,7 @@ struct VodDetailPreviewView: View {
     @ViewBuilder
     private var metadata: some View {
         let values = [
-            ("站点", model.selectedSite.name),
+            ("站点", sourceSite.name),
             ("导演", vod.vodDirector),
             ("演员", vod.vodActor)
         ].filter { !$0.1.isEmpty }
@@ -660,7 +662,7 @@ struct VodDetailPreviewView: View {
         detailLoading = true
         detailError = ""
         do {
-            vod = try await model.detail(for: vod)
+            vod = try await model.detail(for: vod, site: sourceSite)
             restoreSelection()
         } catch {
             detailError = error.localizedDescription
@@ -673,7 +675,7 @@ struct VodDetailPreviewView: View {
         selectedEpisode = 0
         playingEpisodeURL = ""
         expectedResumePosition = 0
-        guard let history = model.history(for: vod) else {
+        guard let history = model.history(for: vod, site: sourceSite) else {
             speed = model.defaultPlaybackSpeed
             resetPersistenceCheckpoint()
             return
@@ -704,9 +706,9 @@ struct VodDetailPreviewView: View {
         detailError = ""
         playbackTask = Task { @MainActor in
             do {
-                let request = try await model.resolvePlayback(route: route, episode: episode)
+                let request = try await model.resolvePlayback(site: sourceSite, route: route, episode: episode)
                 try Task.checkCancellation()
-                let history = model.history(for: vod)
+                let history = model.history(for: vod, site: sourceSite)
                 let storedPosition = history?.episodeURL == episode.url ? Double(max(history?.position ?? 0, 0)) / 1000 : 0
                 let storedDuration = history?.episodeURL == episode.url ? Double(max(history?.duration ?? 0, 0)) / 1000 : 0
                 let completed = storedDuration > 0 && storedPosition + max(ending, 5) >= storedDuration
@@ -746,7 +748,8 @@ struct VodDetailPreviewView: View {
             reverseSort: reverseSort,
             opening: Int64(opening * 1000),
             ending: Int64(ending * 1000),
-            scale: aspectMode.rawValue
+            scale: aspectMode.rawValue,
+            site: sourceSite
         )
         lastPersistedPosition = position
         lastPersistedEpisodeURL = episode.url

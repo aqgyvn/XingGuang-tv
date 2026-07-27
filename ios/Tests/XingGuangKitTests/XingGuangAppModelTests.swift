@@ -122,6 +122,66 @@ final class XingGuangAppModelTests: XCTestCase {
         XCTAssertNil(defaults.stringArray(forKey: "ios.searchHistory"))
     }
 
+    func testAggregateSearchLimitsConcurrencyKeepsSourceOrderAndIsolatesFailures() async throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set("https://example.com/config.json", forKey: "ios.vodConfigURL")
+        let repository = AggregateSearchVodRepository()
+        let model = XingGuangAppModel(
+            defaults: defaults,
+            repository: repository,
+            usePreviewData: false
+        )
+        model.bootstrap()
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        let result = try await model.searchAllSites(keyword: "星光", maximumConcurrentRequests: 2)
+
+        XCTAssertLessThanOrEqual(repository.maximumActiveRequests, 2)
+        XCTAssertEqual(result.items.map(\.id), ["first@@@same", "second@@@same", "third@@@third"])
+        XCTAssertEqual(result.failedSiteNames, ["失败站点"])
+        XCTAssertTrue(result.canLoadMore)
+    }
+
+    func testAggregateSearchCancellationPropagates() async throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set("https://example.com/config.json", forKey: "ios.vodConfigURL")
+        let repository = AggregateSearchVodRepository(delayNanoseconds: 200_000_000)
+        let model = XingGuangAppModel(defaults: defaults, repository: repository, usePreviewData: false)
+        model.bootstrap()
+        try await Task.sleep(nanoseconds: 20_000_000)
+
+        let task = Task { try await model.searchAllSites(keyword: "取消", maximumConcurrentRequests: 2) }
+        try await Task.sleep(nanoseconds: 20_000_000)
+        task.cancel()
+
+        do {
+            _ = try await task.value
+            XCTFail("Expected cancellation")
+        } catch is CancellationError {
+        }
+    }
+
+    func testSearchResultSourceIsUsedForKeepAndHistoryKeys() throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let database = try AppDatabase.inMemory()
+        let first = Site(key: "first", name: "第一站")
+        let second = Site(key: "second", name: "第二站")
+        let model = XingGuangAppModel(selectedSite: first, defaults: defaults, persistence: database)
+        let vod = Vod(vodID: "same", vodName: "同名影片")
+        let route = PlaybackRoute(name: "线路", episodes: [PlaybackEpisode(name: "正片", url: "https://example.com/video.m3u8")])
+
+        XCTAssertTrue(model.toggleKeep(vod: vod, site: second))
+        model.savePlayback(vod: vod, route: route, episode: route.episodes[0], time: PlayerTime(position: 10, duration: 100), site: second)
+
+        XCTAssertTrue(model.isKept(vod, site: second))
+        XCTAssertFalse(model.isKept(vod, site: first))
+        XCTAssertNotNil(model.history(for: vod, site: second))
+        XCTAssertNil(model.history(for: vod, site: first))
+    }
+
     func testIncognitoSkipsPlaybackHistoryAndPreferencesPersist() throws {
         let (defaults, suiteName) = makeDefaults()
         defer { defaults.removePersistentDomain(forName: suiteName) }
@@ -404,4 +464,53 @@ private final class PagingVodRepository: VodRepository, @unchecked Sendable {
     func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest {
         PlaybackRequest(url: episodeURL)
     }
+}
+
+private final class AggregateSearchVodRepository: VodRepository, @unchecked Sendable {
+    private let lock = NSLock()
+    private let delayNanoseconds: UInt64
+    private var activeRequests = 0
+    private var storedMaximumActiveRequests = 0
+
+    init(delayNanoseconds: UInt64 = 30_000_000) {
+        self.delayNanoseconds = delayNanoseconds
+    }
+
+    var maximumActiveRequests: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return storedMaximumActiveRequests
+    }
+
+    func loadConfig(from url: URL) async throws -> VodConfigDocument {
+        VodConfigDocument(sites: [
+            Site(key: "first", name: "第一站", api: "https://first.example", type: 1),
+            Site(key: "failure", name: "失败站点", api: "https://failure.example", type: 1),
+            Site(key: "second", name: "第二站", api: "https://second.example", type: 1),
+            Site(key: "third", name: "第三站", api: "https://third.example", type: 1)
+        ])
+    }
+
+    func home(site: Site, includeFilters: Bool) async throws -> VodResult { VodResult() }
+    func category(site: Site, typeID: String, page: Int, filters: [String: String]) async throws -> VodResult { VodResult() }
+
+    func search(site: Site, keyword: String, page: Int) async throws -> VodResult {
+        lock.lock()
+        activeRequests += 1
+        storedMaximumActiveRequests = max(storedMaximumActiveRequests, activeRequests)
+        lock.unlock()
+        defer {
+            lock.lock()
+            activeRequests -= 1
+            lock.unlock()
+        }
+        try await Task.sleep(nanoseconds: delayNanoseconds)
+        if site.key == "failure" { throw URLError(.cannotConnectToHost) }
+        let vodID = site.key == "third" ? "third" : "same"
+        let vod = Vod(vodID: vodID, vodName: "\(site.name)影片")
+        return VodResult(list: site.key == "first" ? [vod, vod] : [vod], pageCount: site.key == "first" ? 2 : 1)
+    }
+
+    func detail(site: Site, vodID: String) async throws -> VodResult { VodResult() }
+    func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest { PlaybackRequest(url: episodeURL) }
 }
