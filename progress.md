@@ -3613,3 +3613,80 @@
 - `docs/ios-development.md`: records the successful full CI run, artifact metadata and remaining device checks.
 - `progress.md`: appends final verification evidence and rollback point.
 - Rollback method: before committing, run `git restore -- docs/ios-development.md progress.md`; after this documentation commit is the branch tip, run `git revert HEAD`.
+## 2026-07-28 - Task: Stabilize playback buffering and recent history persistence
+
+### What was done
+- Restored adaptive bitrate selection so ExoPlayer no longer locks multi-variant streams to the highest supported bitrate.
+- Made recent playback persist on lifecycle stop, including startup and buffering exits where position or duration is not available yet.
+- Synchronized valid playback progress before save, stamped the current time and queued a history snapshot instead of the mutable activity field.
+- Bumped the Android release to `561 / 5.6.1` and documented the behavior and verification results.
+
+### Testing
+- Passed: `git diff --check` reported no whitespace errors before release metadata updates.
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --stacktrace` completed successfully before the version bump.
+- Passed: MuMu Android 15 installed the debug APK with `adb install -r -d` while preserving app data.
+- Passed: a five-variant HLS stream from 246 Kbps to 6.2 Mbps selected about 836 Kbps rather than the highest variant, then played for 60 seconds without another `BUFFERING` transition or playback error.
+- Passed: returning before media preparation inserted a recent record with the selected episode, unknown position/duration and a current timestamp.
+- Passed: normal playback exit updated that record to position `8949` ms and duration `2725056` ms.
+- Passed: temporary playback-history records created by verification were removed and the original device history remained intact.
+- Pending at this log append: rebuild, package-version inspection and reinstall verification for final `561 / 5.6.1` metadata.
+
+### Notes
+- `app/src/main/java/com/fongmi/android/tv/player/exo/ExoUtil.java`: removes forced highest-bitrate selection so ExoPlayer can adapt to bandwidth.
+- `app/src/mobile/java/com/fongmi/android/tv/ui/activity/VideoActivity.java`: persists selected episodes reliably across startup, buffering and lifecycle exits using a stable snapshot.
+- `app/build.gradle`: bumps the Android package to `561 / 5.6.1`.
+- `README.md`: updates the displayed current version to `5.6.1`.
+- `docs/release-version.md`: records the current version mapping as `561 / 5.6.1`.
+- `docs/playback-stability-20260728.md`: documents causes, behavior, verification and rollback.
+- `progress.md`: appends this implementation and test record.
+- Rollback method before commit: run `git restore -- app/build.gradle app/src/main/java/com/fongmi/android/tv/player/exo/ExoUtil.java app/src/mobile/java/com/fongmi/android/tv/ui/activity/VideoActivity.java README.md docs/release-version.md progress.md`, then run `Remove-Item -LiteralPath docs/playback-stability-20260728.md`; after a single fix commit, run `git revert <commit>`.
+
+## 2026-07-28 - Task: Finalize playback stability 5.6.1 package
+
+### What was done
+- Built and inspected the final Android arm64 package, installed it over the existing MuMu app data and completed startup plus recent-playback exit smoke testing.
+- Published the verified APK as `output/XingGuang-5.6.1-arm64.apk`.
+
+### Testing
+- Passed: `\.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: APK badging reports package `com.xingguang.video`, `versionCode 561` and `versionName 5.6.1`.
+- Passed: MuMu ADB installed the `82,618,718`-byte package with `install -r -d`; device package metadata also reports `561 / 5.6.1`.
+- Passed: the final package launched to `HomeActivity`, opened an existing recent item in `VideoActivity`, and returned to `HistoryActivity` while the media was still buffering.
+- Passed: the buffering-exit smoke test refreshed the selected history row's `createTime`; logcat showed no fatal exception, playback exception, SQLite constraint failure or database exception.
+- Passed: `git diff --check` reported no whitespace errors.
+- Artifact: `output/XingGuang-5.6.1-arm64.apk`, `82,618,718` bytes (`78.79 MiB`), SHA-256 `065E1091D22A7E3B41F09D617597A8C25129B0579507797C052524F9C39BA6FA`.
+
+### Notes
+- `docs/playback-stability-20260728.md`: records final package, install and buffering-exit verification evidence.
+- `progress.md`: appends final build, device smoke-test and artifact evidence.
+- `output/XingGuang-5.6.1-arm64.apk`: contains the verified Android arm64 debug build for delivery.
+- Rollback method before commit: run `git restore -- app/build.gradle app/src/main/java/com/fongmi/android/tv/player/exo/ExoUtil.java app/src/mobile/java/com/fongmi/android/tv/ui/activity/VideoActivity.java README.md docs/release-version.md progress.md`, then run `Remove-Item -LiteralPath docs/playback-stability-20260728.md, output/XingGuang-5.6.1-arm64.apk`; after a single fix commit, run `git revert <commit>` and remove the copied APK.
+- Correction: the final build command was `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --stacktrace`; the preceding escaped spelling refers to the same completed build.
+
+## 2026-07-28 - Task: Correct dark ExoPlayer SDR output
+
+### What was done
+- Added a color-aware ExoPlayer MediaCodec renderer that supplies BT.709 limited-range SDR metadata only for 8-bit video whose color space, range and transfer fields are all missing.
+- Preserved explicit SDR/HDR color metadata, adaptive playback, NextLib extension ordering and the existing IJK/MPV render paths.
+- Bumped the Android release to `562 / 5.6.2`, documented the behavior and published the verified arm64 APK.
+
+### Testing
+- Passed: `:app:compileMobileArm64_v8aDebugJavaWithJavac` and the final `:app:assembleMobileArm64_v8aDebug` build completed successfully.
+- Passed: APK badging reports package `com.xingguang.video`, `versionCode 562` and `versionName 5.6.2`; APK Signature Scheme v2 verification reports one XingGuang signer.
+- Passed: MuMu Android 15 installed the `82,618,718`-byte APK over existing data and device package metadata reports `562 / 5.6.2`.
+- Passed: the affected HLS stream used `OMX.qcom.video.decoder.avc` and reported `BT709/Limited range/SDR SMPTE 170M/8/8` instead of `NA/NA/NA/8/8`.
+- Passed: the corrected color metadata remained present when adaptive playback changed from 848x480 to 1280x720, with no playback exception or fatal crash in the verification log.
+- Passed: IJK still decoded through FFmpeg `yuv420p` to `RV32`; MPV comparison remains unavailable on this emulator because its native library fails to load and the app falls back to EXO.
+- Passed: temporary test-stream history was removed, `player_engine` was restored to EXO, `HomeActivity` launched and `git diff --check` reported no whitespace errors.
+- Artifact: `output/XingGuang-5.6.2-arm64.apk`, SHA-256 `2A92E6733DF60FD3CE4B84746435E20AB179CA983C21C347E63BD7FC4919E038`.
+
+### Notes
+- `app/src/main/java/com/fongmi/android/tv/player/exo/ColorAwareRenderersFactory.java`: replaces only the standard MediaCodec video renderer and normalizes eligible incomplete 8-bit SDR color metadata.
+- `app/src/main/java/com/fongmi/android/tv/player/exo/ExoUtil.java`: selects the color-aware NextLib renderer factory.
+- `app/build.gradle`: bumps the Android package to `562 / 5.6.2`.
+- `README.md`: updates the displayed current version to `5.6.2`.
+- `docs/release-version.md`: records the current version mapping as `562 / 5.6.2`.
+- `docs/playback-color-20260728.md`: documents root cause, scope, verification, limitations and rollback.
+- `progress.md`: appends this implementation and verification record.
+- `output/XingGuang-5.6.2-arm64.apk`: contains the verified Android arm64 debug build for delivery.
+- Rollback method before commit: run `git restore -- app/build.gradle app/src/main/java/com/fongmi/android/tv/player/exo/ExoUtil.java README.md docs/release-version.md progress.md`, then run `Remove-Item -LiteralPath app/src/main/java/com/fongmi/android/tv/player/exo/ColorAwareRenderersFactory.java, docs/playback-color-20260728.md, output/XingGuang-5.6.2-arm64.apk`; after a single fix commit, run `git revert <commit>` and remove the copied APK.

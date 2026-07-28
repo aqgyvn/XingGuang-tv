@@ -140,6 +140,7 @@ public class VideoActivity extends BaseActivity implements Clock.Callback, Custo
     private boolean stop;
     private boolean lock;
     private boolean waitingConfig;
+    private boolean historySaved;
     private Runnable mR1;
     private Runnable mR2;
     private Runnable mR3;
@@ -445,10 +446,10 @@ public class VideoActivity extends BaseActivity implements Clock.Callback, Custo
         mBinding.swipeLayout.setRefreshing(true);
         mBinding.swipeLayout.setEnabled(false);
         mBinding.scroll.scrollTo(0, 0);
+        saveHistory();
         mClock.setCallback(null);
         mPlayers.reset();
         mPlayers.stop();
-        saveHistory();
         getDetail();
     }
 
@@ -1096,9 +1097,19 @@ public class VideoActivity extends BaseActivity implements Clock.Callback, Custo
 
     private void saveHistory() {
         if (mHistory == null || Setting.isIncognito()) return;
-        if (mHistory.getPosition() > 0 && mHistory.getDuration() > 0) {
-            App.execute(() -> mHistory.merge().save());
+        if (TextUtils.isEmpty(mHistory.getKey()) || TextUtils.isEmpty(mHistory.getVodName()) || TextUtils.isEmpty(mHistory.getEpisodeUrl())) return;
+        if (mPlayers != null && Objects.equals(mPlayers.getKey(), mHistory.getKey())) {
+            long position = mPlayers.getPosition();
+            long duration = mPlayers.getDuration();
+            if (position >= 0) mHistory.setPosition(position);
+            if (duration > 0) mHistory.setDuration(duration);
         }
+        mHistory.setCreateTime(System.currentTimeMillis());
+        String snapshot = mHistory.toString();
+        App.execute(() -> {
+            History history = History.objectFrom(snapshot);
+            if (history != null) history.merge().save();
+        });
     }
 
     private void updateHistory(Episode item) {
@@ -1662,6 +1673,7 @@ public class VideoActivity extends BaseActivity implements Clock.Callback, Custo
     @Override
     protected void onStart() {
         super.onStart();
+        historySaved = false;
         mClock.stop().start();
         setAudioOnly(false);
         setStop(false);
@@ -1682,6 +1694,8 @@ public class VideoActivity extends BaseActivity implements Clock.Callback, Custo
     @Override
     protected void onStop() {
         super.onStop();
+        saveHistory();
+        historySaved = true;
         if (Setting.isBackgroundOff()) mClock.stop();
         if (Setting.isBackgroundOff()) onPaused();
         if (!isAudioOnly()) setStop(true);
@@ -1701,7 +1715,7 @@ public class VideoActivity extends BaseActivity implements Clock.Callback, Custo
 
     @Override
     protected void onDestroy() {
-        saveHistory();
+        if (!historySaved) saveHistory();
         mClock.release();
         mPlayers.release();
         Timer.get().reset();
