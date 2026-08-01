@@ -3690,3 +3690,33 @@
 - `progress.md`: appends this implementation and verification record.
 - `output/XingGuang-5.6.2-arm64.apk`: contains the verified Android arm64 debug build for delivery.
 - Rollback method before commit: run `git restore -- app/build.gradle app/src/main/java/com/fongmi/android/tv/player/exo/ExoUtil.java README.md docs/release-version.md progress.md`, then run `Remove-Item -LiteralPath app/src/main/java/com/fongmi/android/tv/player/exo/ColorAwareRenderersFactory.java, docs/playback-color-20260728.md, output/XingGuang-5.6.2-arm64.apk`; after a single fix commit, run `git revert <commit>` and remove the copied APK.
+
+## 2026-08-01 - Task: Correct dark ExoPlayer phone output
+
+### What was done
+- Switched phone VOD ExoPlayer output from `TextureView` to Media3 `SurfaceView` so device HDR dataspace and tone mapping can use the direct video surface path.
+- Kept phone live playback, tablet playback, IJK, MPV and the existing incomplete-SDR BT.709 correction unchanged.
+- Avoided brightness, gamma and contrast filters because the supplied comparison screenshots use different source routes and are not a controlled color test.
+- Bumped the Android release to `563 / 5.6.3`, documented the behavior and published the arm64 APK.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed successfully for the experimental and final packages.
+- Passed: MuMu Android 15 created a `1080 x 675` ExoPlayer surface, decoded the public adaptive HLS stream with `OMX.qcom.video.decoder.avc`, reached `READY` and retained `BT709/Limited range/SDR SMPTE 170M/8/8` metadata.
+- Passed: the pre-release runtime adapted from `848 x 480` to `1280 x 720`; portrait video, fullscreen video, transparent playback controls and the video-track menu rendered above the `SurfaceView`.
+- Passed: exiting fullscreen restored portrait `VideoActivity`, returning restored portrait `HomeActivity`, and the successful public-stream runs contained no fatal exception, inflation failure or playback failure.
+- Passed: the final APK installed over existing data and device metadata reports `versionCode 563` and `versionName 5.6.3`.
+- Passed: APK badging, APK Signature Scheme v2 verification and the XingGuang certificate check completed successfully.
+- Passed: the temporary public-stream history row was removed after testing.
+- Remaining device validation: MuMu does not expose the target phone HDR display pipeline, so brightness must be compared on the physical device using the same route, episode and timestamp in both applications.
+- Artifact: `output/XingGuang-5.6.3-arm64.apk`, `82,618,722` bytes, SHA-256 `6BCA2103E555EBF9630F8A97A274FE6933EF435C7DC1008402F32454BC2F8B77`.
+
+### Notes
+- `app/src/mobile/res/layout/activity_video.xml`: changes only the phone VOD ExoPlayer surface type from `texture_view` to `surface_view`.
+- `app/build.gradle`: bumps the Android package to `563 / 5.6.3`.
+- `README.md`: updates the displayed current version to `5.6.3`.
+- `docs/release-version.md`: records the current version mapping as `563 / 5.6.3`.
+- `docs/playback-surface-20260801.md`: documents the cause, scope, verification boundary and rollback.
+- `progress.md`: appends this implementation and verification record.
+- `output/XingGuang-5.6.3-arm64.apk`: contains the verified Android arm64 debug build for delivery.
+- `tmp/surface-view-public-hls.png`, `tmp/surface-view-controls.png`, `tmp/surface-view-fullscreen-fast.png`, `tmp/surface-view-full-controls.png`, `tmp/surface-view-track-menu.png`, `tmp/surface-view-back-portrait.png`, `tmp/surface-view-return-home.png` and `tmp/surface-view-final-563.png`: retain the main device visual evidence for portrait, overlay, fullscreen, menu, return and final-package checks.
+- Rollback method before commit: run `git restore -- app/build.gradle app/src/mobile/res/layout/activity_video.xml README.md docs/release-version.md progress.md`, then run `Remove-Item -LiteralPath docs/playback-surface-20260801.md, output/XingGuang-5.6.3-arm64.apk`; after a single fix commit, run `git revert <commit>` and remove the copied APK.
