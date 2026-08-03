@@ -1,8 +1,11 @@
 package com.fongmi.android.tv.player.exo;
 
 import android.content.Context;
+import android.media.MediaFormat;
+import android.os.Build;
 import android.os.Handler;
 
+import androidx.annotation.RequiresApi;
 import androidx.media3.common.C;
 import androidx.media3.common.ColorInfo;
 import androidx.media3.common.Format;
@@ -49,6 +52,20 @@ final class ColorAwareRenderersFactory extends NextRenderersFactory {
             }
             return super.onInputFormatChanged(holder);
         }
+
+        @Override
+        protected MediaFormat getMediaFormat(Format format, String codecMimeType, CodecMaxValues codecMaxValues, float codecOperatingRate, boolean deviceNeedsNoPostProcessWorkaround, int tunnelingAudioSessionId) {
+            MediaFormat mediaFormat = super.getMediaFormat(format, codecMimeType, codecMaxValues, codecOperatingRate, deviceNeedsNoPostProcessWorkaround, tunnelingAudioSessionId);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && com.fongmi.android.tv.utils.Util.isMobile() && shouldRequestSdrToneMapping(format.colorInfo)) {
+                requestSdrToneMapping(mediaFormat);
+            }
+            return mediaFormat;
+        }
+
+        @RequiresApi(Build.VERSION_CODES.S)
+        private static void requestSdrToneMapping(MediaFormat mediaFormat) {
+            mediaFormat.setInteger(MediaFormat.KEY_COLOR_TRANSFER_REQUEST, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        }
     }
 
     static boolean isUnspecifiedEightBitSdr(ColorInfo colorInfo) {
@@ -59,5 +76,12 @@ final class ColorAwareRenderersFactory extends NextRenderersFactory {
                 && colorInfo.lumaBitdepth == 8
                 && colorInfo.chromaBitdepth == 8
                 && ColorInfo.isEquivalentToAssumedSdrDefault(colorInfo);
+    }
+
+    static boolean shouldRequestSdrToneMapping(ColorInfo colorInfo) {
+        return colorInfo != null
+                && (ColorInfo.isTransferHdr(colorInfo)
+                || colorInfo.lumaBitdepth > 8
+                || colorInfo.chromaBitdepth > 8);
     }
 }

@@ -3720,3 +3720,31 @@
 - `output/XingGuang-5.6.3-arm64.apk`: contains the verified Android arm64 debug build for delivery.
 - `tmp/surface-view-public-hls.png`, `tmp/surface-view-controls.png`, `tmp/surface-view-fullscreen-fast.png`, `tmp/surface-view-full-controls.png`, `tmp/surface-view-track-menu.png`, `tmp/surface-view-back-portrait.png`, `tmp/surface-view-return-home.png` and `tmp/surface-view-final-563.png`: retain the main device visual evidence for portrait, overlay, fullscreen, menu, return and final-package checks.
 - Rollback method before commit: run `git restore -- app/build.gradle app/src/mobile/res/layout/activity_video.xml README.md docs/release-version.md progress.md`, then run `Remove-Item -LiteralPath docs/playback-surface-20260801.md, output/XingGuang-5.6.3-arm64.apk`; after a single fix commit, run `git revert <commit>` and remove the copied APK.
+
+## 2026-08-02 - Task: Request SDR tone mapping for phone ExoPlayer HDR output
+
+### What was done
+- Added an Android 12+ MediaCodec SDR tone-mapping request for mobile ExoPlayer input whose transfer is HDR or whose reported luma/chroma bit depth exceeds 8.
+- Preserved source HDR metadata and kept ordinary 8-bit SDR, the existing incomplete-SDR correction, NextLib FFmpeg fallback, IJK, MPV and television behavior unchanged.
+- Confirmed that the Media3 version itself does not explain the remaining dark physical-device output, bumped the Android release to `564 / 5.6.4`, documented the verification boundary and published the arm64 APK.
+
+### Testing
+- Passed: `:app:compileMobileArm64_v8aDebugJavaWithJavac` and `:app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed successfully.
+- Passed: APK badging reports package `com.xingguang.video`, `versionCode 564` and `versionName 5.6.4`; the final APK installed over existing MuMu data and device metadata reports `564 / 5.6.4`.
+- Passed: JADX inspection of the built APK found `mediaFormat.setInteger("color-transfer-request", 3)` behind the Android 12+, mobile and HDR/greater-than-8-bit conditions.
+- Passed: the public adaptive SDR HLS stream used `OMX.qcom.video.decoder.avc`, reached `READY`, retained `BT709/Limited range/SDR SMPTE 170M/8/8`, and rendered portrait and fullscreen controls correctly.
+- Passed: after entering fullscreen, one Back action with controls hidden restored portrait `VideoActivity`; the app did not remain fullscreen.
+- Passed: the HLG and HDR10 samples reached first frame and retained `BT2020/Limited range/HLG/10/10` and `BT2020/Limited range/ST2084 PQ/10/10` input metadata without a fatal exception or playback exception.
+- Passed with device limitation: MuMu lacks a Main10 MediaCodec decoder, so HDR samples used NextLib FFmpeg; physical-phone hardware tone mapping and final brightness still require same-source comparison on the user's device.
+- Passed: APK Signature Scheme v2 verification reports one XingGuang signer; temporary test history rows and device-side HDR/test capture files were removed, and the application was restored to portrait `HomeActivity`.
+- Artifact: `output/XingGuang-5.6.4-arm64.apk`, `82,618,722` bytes, SHA-256 `2EFED3824A27AC27CC5CCE16B6CFC8F9BC7C68975BA3CAFFD4357FE9B688981E`.
+
+### Notes
+- `app/src/main/java/com/fongmi/android/tv/player/exo/ColorAwareRenderersFactory.java`: requests Android decoder SDR output only for eligible mobile MediaCodec HDR/greater-than-8-bit input.
+- `app/build.gradle`: bumps the Android package to `564 / 5.6.4`.
+- `README.md`: updates the displayed current version to `5.6.4`.
+- `docs/release-version.md`: records the current version mapping as `564 / 5.6.4`.
+- `docs/playback-hdr-tone-mapping-20260802.md`: documents the analysis, implementation scope, verification boundary and rollback.
+- `progress.md`: appends this implementation and verification record.
+- `output/XingGuang-5.6.4-arm64.apk`: contains the verified Android arm64 debug build for delivery.
+- Rollback method before commit: run `git restore -- app/build.gradle app/src/main/java/com/fongmi/android/tv/player/exo/ColorAwareRenderersFactory.java README.md docs/release-version.md progress.md`, then run `Remove-Item -LiteralPath docs/playback-hdr-tone-mapping-20260802.md, output/XingGuang-5.6.4-arm64.apk`; after a single fix commit, run `git revert <commit>` and remove the copied APK.
