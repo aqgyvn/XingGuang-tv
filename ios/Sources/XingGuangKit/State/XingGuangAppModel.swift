@@ -24,6 +24,33 @@ public enum LiveLoadState: Equatable {
     case failed(String)
 }
 
+public enum CatalogDisplaySize: Int, Codable, CaseIterable, Identifiable {
+    case compact
+    case standard
+    case spacious
+    case extraLarge
+
+    public var id: Int { rawValue }
+
+    public var title: String {
+        switch self {
+        case .compact: return "小"
+        case .standard: return "中"
+        case .spacious: return "大"
+        case .extraLarge: return "特大"
+        }
+    }
+
+    public var posterMinimumWidth: Double {
+        switch self {
+        case .compact: return 96
+        case .standard: return 128
+        case .spacious: return 160
+        case .extraLarge: return 192
+        }
+    }
+}
+
 @MainActor
 public final class XingGuangAppModel: ObservableObject {
     @Published public var selectedSite: Site
@@ -40,6 +67,12 @@ public final class XingGuangAppModel: ObservableObject {
     @Published public private(set) var configurationSaveState: ConfigurationSaveState = .idle
     @Published public private(set) var liveSources: [Live]
     @Published public private(set) var liveState: LiveLoadState
+    @Published public var selectedLiveSourceName: String {
+        didSet { defaults.set(selectedLiveSourceName, forKey: "ios.selectedLiveSourceName") }
+    }
+    public private(set) var selectedLiveSourceURL: String {
+        didSet { defaults.set(selectedLiveSourceURL, forKey: "ios.selectedLiveSourceURL") }
+    }
     @Published public private(set) var keeps: [Keep]
     @Published public private(set) var histories: [History]
     @Published public private(set) var configurationHistory: [ConfigRecord]
@@ -52,6 +85,15 @@ public final class XingGuangAppModel: ObservableObject {
     }
     @Published public var defaultPlaybackSpeed: Double {
         didSet { defaults.set(defaultPlaybackSpeed, forKey: "ios.defaultPlaybackSpeed") }
+    }
+    @Published public var longPressPlaybackSpeed: Double {
+        didSet {
+            let value = min(max(longPressPlaybackSpeed, 2), 5)
+            if value != longPressPlaybackSpeed {
+                longPressPlaybackSpeed = value
+            }
+            defaults.set(value, forKey: "ios.longPressPlaybackSpeed")
+        }
     }
     @Published public var defaultAspectMode: PlayerAspectMode {
         didSet { defaults.set(defaultAspectMode.rawValue, forKey: "ios.playbackAspectMode") }
@@ -71,8 +113,20 @@ public final class XingGuangAppModel: ObservableObject {
     @Published public var danmakuEnabled: Bool {
         didSet { defaults.set(danmakuEnabled, forKey: "ios.danmakuEnabled") }
     }
+    @Published public var danmakuLoadEnabled: Bool {
+        didSet { defaults.set(danmakuLoadEnabled, forKey: "ios.danmakuLoadEnabled") }
+    }
     @Published public var globalUserAgent: String {
         didSet { defaults.set(globalUserAgent, forKey: HTTPUserAgent.preferenceKey) }
+    }
+    @Published public var catalogDisplaySize: CatalogDisplaySize {
+        didSet { defaults.set(catalogDisplaySize.rawValue, forKey: "ios.catalogDisplaySize") }
+    }
+    @Published public var adHostBlockingEnabled: Bool {
+        didSet {
+            defaults.set(adHostBlockingEnabled, forKey: "ios.adHostBlockingEnabled")
+            networkPolicyStore?.setAdHostBlockingEnabled(adHostBlockingEnabled)
+        }
     }
 
     public var continueWatching: History? { histories.first }
@@ -88,6 +142,9 @@ public final class XingGuangAppModel: ObservableObject {
     private let webMediaSniffer: (any WebMediaSniffing)?
     private let networkPolicyStore: HTTPNetworkPolicyStore?
     private let defaults: UserDefaults
+    private var selectedVodSiteKey: String {
+        didSet { defaults.set(selectedVodSiteKey, forKey: "ios.selectedVodSiteKey") }
+    }
     private var configurationTask: Task<Void, Never>?
     private var catalogTask: Task<Void, Never>?
     private var liveTask: Task<Void, Never>?
@@ -121,10 +178,17 @@ public final class XingGuangAppModel: ObservableObject {
         self.defaults = defaults
         self.vodConfigURL = defaults.string(forKey: "ios.vodConfigURL") ?? ""
         self.liveConfigURL = defaults.string(forKey: "ios.liveConfigURL") ?? ""
+        self.selectedVodSiteKey = defaults.string(forKey: "ios.selectedVodSiteKey") ?? ""
+        self.selectedLiveSourceName = defaults.string(forKey: "ios.selectedLiveSourceName") ?? ""
+        self.selectedLiveSourceURL = defaults.string(forKey: "ios.selectedLiveSourceURL") ?? ""
         self.incognito = defaults.object(forKey: "ios.incognito") as? Bool ?? false
         self.automaticLineChange = defaults.object(forKey: "ios.automaticLineChange") as? Bool ?? true
         let storedSpeed = defaults.object(forKey: "ios.defaultPlaybackSpeed") as? Double ?? 1
         self.defaultPlaybackSpeed = min(max(storedSpeed, 0.5), 2)
+        let storedLongPressSpeed = defaults.object(forKey: "ios.longPressPlaybackSpeed") as? Double
+            ?? defaults.object(forKey: "speed") as? Double
+            ?? 3
+        self.longPressPlaybackSpeed = min(max(storedLongPressSpeed, 2), 5)
         let storedAspect = defaults.object(forKey: "ios.playbackAspectMode") as? Int ?? 0
         let defaultAspectMode = PlayerAspectMode(rawValue: storedAspect) ?? .original
         self.defaultAspectMode = defaultAspectMode
@@ -140,7 +204,16 @@ public final class XingGuangAppModel: ObservableObject {
         let storedSubtitleOffset = defaults.object(forKey: "ios.subtitleBottomOffset") as? Double ?? 24
         self.subtitleBottomOffset = min(max(storedSubtitleOffset, 8), 120)
         self.danmakuEnabled = defaults.object(forKey: "ios.danmakuEnabled") as? Bool ?? true
+        self.danmakuLoadEnabled = defaults.object(forKey: "ios.danmakuLoadEnabled") as? Bool
+            ?? defaults.object(forKey: "danmaku_load") as? Bool
+            ?? true
         self.globalUserAgent = HTTPUserAgent.configured(defaults: defaults)
+        self.catalogDisplaySize = CatalogDisplaySize(
+            rawValue: defaults.object(forKey: "ios.catalogDisplaySize") as? Int ?? CatalogDisplaySize.standard.rawValue
+        ) ?? .standard
+        self.adHostBlockingEnabled = defaults.object(forKey: "ios.adHostBlockingEnabled") as? Bool
+            ?? defaults.object(forKey: "ad_host_block") as? Bool
+            ?? true
         self.searchHistory = Array((defaults.stringArray(forKey: "ios.searchHistory") ?? []).prefix(20))
 
         if usePreviewData {
@@ -171,6 +244,7 @@ public final class XingGuangAppModel: ObservableObject {
             self.histories = []
             self.configurationHistory = []
         }
+        networkPolicyStore?.setAdHostBlockingEnabled(adHostBlockingEnabled)
     }
 
     public func bootstrap() {
@@ -233,9 +307,20 @@ public final class XingGuangAppModel: ObservableObject {
     }
 
     public func selectSite(_ site: Site) {
-        guard selectedSite.key != site.key else { return }
+        guard !site.key.isEmpty, site.changeable == 1 else { return }
+        guard selectedSite.key != site.key else {
+            selectedVodSiteKey = site.key
+            return
+        }
         selectedSite = site
+        selectedVodSiteKey = site.key
         loadHome()
+    }
+
+    public func selectLiveSource(_ source: Live) {
+        guard !source.name.isEmpty || !source.url.isEmpty else { return }
+        selectedLiveSourceName = source.name
+        selectedLiveSourceURL = source.url
     }
 
     public func saveConfiguration() {
@@ -254,6 +339,36 @@ public final class XingGuangAppModel: ObservableObject {
             loadLiveConfiguration(updateConfigurationState: true)
         } else {
             configurationSaveState = .saved
+        }
+    }
+
+    public func saveConfiguration(_ kind: ConfigurationKind) {
+        switch kind {
+        case .vod:
+            guard isValidOptionalURL(vodConfigURL) else {
+                configurationSaveState = .invalid
+                return
+            }
+            vodConfigURL = vodConfigURL.trimmingCharacters(in: .whitespacesAndNewlines)
+            defaults.set(vodConfigURL, forKey: "ios.vodConfigURL")
+            if repository != nil, !vodConfigURL.isEmpty {
+                loadConfiguration(loadConfiguredLiveSource: false)
+            } else {
+                configurationSaveState = .saved
+            }
+        case .live:
+            guard isValidOptionalURL(liveConfigURL) else {
+                configurationSaveState = .invalid
+                return
+            }
+            liveConfigURL = liveConfigURL.trimmingCharacters(in: .whitespacesAndNewlines)
+            defaults.set(liveConfigURL, forKey: "ios.liveConfigURL")
+            if liveRepository != nil, !liveConfigURL.isEmpty {
+                configurationSaveState = .loading
+                loadLiveConfiguration(updateConfigurationState: true)
+            } else {
+                configurationSaveState = .saved
+            }
         }
     }
 
@@ -310,13 +425,31 @@ public final class XingGuangAppModel: ObservableObject {
         incognito = defaults.object(forKey: "ios.incognito") as? Bool ?? incognito
         automaticLineChange = defaults.object(forKey: "ios.automaticLineChange") as? Bool ?? automaticLineChange
         defaultPlaybackSpeed = min(max(defaults.object(forKey: "ios.defaultPlaybackSpeed") as? Double ?? defaultPlaybackSpeed, 0.5), 2)
+        longPressPlaybackSpeed = min(max(
+            defaults.object(forKey: "ios.longPressPlaybackSpeed") as? Double
+                ?? defaults.object(forKey: "speed") as? Double
+                ?? longPressPlaybackSpeed,
+            2
+        ), 5)
         defaultAspectMode = PlayerAspectMode(rawValue: defaults.object(forKey: "ios.playbackAspectMode") as? Int ?? defaultAspectMode.rawValue) ?? defaultAspectMode
         liveAspectMode = PlayerAspectMode(rawValue: defaults.object(forKey: "ios.liveAspectMode") as? Int ?? liveAspectMode.rawValue) ?? liveAspectMode
         playerPreference = PlayerEnginePreference(rawValue: defaults.string(forKey: "ios.playerEngine") ?? "") ?? playerPreference
         subtitleTextSize = min(max(defaults.object(forKey: "ios.subtitleTextSize") as? Double ?? subtitleTextSize, 14), 42)
         subtitleBottomOffset = min(max(defaults.object(forKey: "ios.subtitleBottomOffset") as? Double ?? subtitleBottomOffset, 8), 120)
         danmakuEnabled = defaults.object(forKey: "ios.danmakuEnabled") as? Bool ?? danmakuEnabled
+        danmakuLoadEnabled = defaults.object(forKey: "ios.danmakuLoadEnabled") as? Bool
+            ?? defaults.object(forKey: "danmaku_load") as? Bool
+            ?? danmakuLoadEnabled
         globalUserAgent = HTTPUserAgent.configured(defaults: defaults)
+        catalogDisplaySize = CatalogDisplaySize(
+            rawValue: defaults.object(forKey: "ios.catalogDisplaySize") as? Int ?? catalogDisplaySize.rawValue
+        ) ?? catalogDisplaySize
+        adHostBlockingEnabled = defaults.object(forKey: "ios.adHostBlockingEnabled") as? Bool
+            ?? defaults.object(forKey: "ad_host_block") as? Bool
+            ?? adHostBlockingEnabled
+        selectedVodSiteKey = defaults.string(forKey: "ios.selectedVodSiteKey") ?? selectedVodSiteKey
+        selectedLiveSourceName = defaults.string(forKey: "ios.selectedLiveSourceName") ?? selectedLiveSourceName
+        selectedLiveSourceURL = defaults.string(forKey: "ios.selectedLiveSourceURL") ?? selectedLiveSourceURL
     }
 
     public func search(keyword: String, page: Int = 1) async throws -> [Vod] {
@@ -452,6 +585,7 @@ public final class XingGuangAppModel: ObservableObject {
         let encoder = JSONEncoder()
         let now = Int64(Date().timeIntervalSince1970 * 1000)
         var configs = (try persistence?.loadConfigurations()) ?? []
+        let currentVodSiteKey = selectedVodSiteKey.isEmpty ? selectedSite.key : selectedVodSiteKey
         let vodURL = vodConfigURL.trimmingCharacters(in: .whitespacesAndNewlines)
         if !vodURL.isEmpty {
             let data = try encoder.encode(configuration)
@@ -462,7 +596,7 @@ public final class XingGuangAppModel: ObservableObject {
                 json: String(data: data, encoding: .utf8) ?? "",
                 name: "点播",
                 logo: configuration.logo,
-                home: selectedSite.key
+                home: currentVodSiteKey
             )
             if !configs.contains(where: { $0.type == 0 && $0.url == vodURL }) { configs.append(current) }
         }
@@ -489,20 +623,31 @@ public final class XingGuangAppModel: ObservableObject {
                 "ios.incognito": .bool(incognito),
                 "ios.automaticLineChange": .bool(automaticLineChange),
                 "ios.defaultPlaybackSpeed": .number(defaultPlaybackSpeed),
+                "ios.longPressPlaybackSpeed": .number(longPressPlaybackSpeed),
                 "ios.playbackAspectMode": .number(Double(defaultAspectMode.rawValue)),
                 "ios.liveAspectMode": .number(Double(liveAspectMode.rawValue)),
                 "ios.subtitleTextSize": .number(subtitleTextSize),
                 "ios.subtitleBottomOffset": .number(subtitleBottomOffset),
                 "ios.danmakuEnabled": .bool(danmakuEnabled),
+                "ios.danmakuLoadEnabled": .bool(danmakuLoadEnabled),
                 HTTPUserAgent.preferenceKey: .string(globalUserAgent),
+                "ios.catalogDisplaySize": .number(Double(catalogDisplaySize.rawValue)),
+                "ios.adHostBlockingEnabled": .bool(adHostBlockingEnabled),
+                "ios.selectedVodSiteKey": .string(currentVodSiteKey),
+                "ios.selectedLiveSourceName": .string(selectedLiveSourceName),
+                "ios.selectedLiveSourceURL": .string(selectedLiveSourceURL),
                 "player_engine": .number(androidPlayerEngineValue),
                 "incognito": .bool(incognito),
                 "change": .bool(automaticLineChange),
+                "speed": .number(longPressPlaybackSpeed),
+                "size": .number(Double(catalogDisplaySize.rawValue)),
                 "scale": .number(Double(defaultAspectMode.rawValue)),
                 "scale_live": .number(Double(liveAspectMode.rawValue)),
                 "subtitle_text_size": .number(subtitleTextSize),
                 "subtitle_position": .number(subtitleBottomOffset),
                 "danmaku_show": .bool(danmakuEnabled),
+                "danmaku_load": .bool(danmakuLoadEnabled),
+                "ad_host_block": .bool(adHostBlockingEnabled),
                 "ua": .string(globalUserAgent)
             ]
         )
@@ -657,7 +802,7 @@ public final class XingGuangAppModel: ObservableObject {
         Vod(vodID: history.key.components(separatedBy: "@@@").last ?? history.key, vodName: history.vodName, vodPic: history.vodPic, vodRemarks: history.vodRemarks)
     }
 
-    private func loadConfiguration() {
+    private func loadConfiguration(loadConfiguredLiveSource: Bool = true) {
         guard let repository, let url = URL(string: vodConfigURL) else {
             configurationSaveState = .invalid
             return
@@ -678,14 +823,18 @@ public final class XingGuangAppModel: ObservableObject {
                 configuration = document
                 networkPolicyStore?.apply(document)
                 liveSources = document.lives
-                selectedSite = document.sites.first(where: { $0.key == selectedSite.key && $0.hide != 1 }) ?? first
+                let restoredSite = retainedVodSite(in: document.sites, fallback: first)
+                selectedSite = restoredSite
+                selectedVodSiteKey = restoredSite.key
                 configurationSaveState = .saved
                 reloadPersistence()
                 loadHome()
-                if !liveConfigURL.isEmpty {
-                    loadLiveConfiguration(updateConfigurationState: true)
-                } else {
-                    loadLiveSources(document.lives)
+                if loadConfiguredLiveSource {
+                    if !liveConfigURL.isEmpty {
+                        loadLiveConfiguration(updateConfigurationState: true)
+                    } else {
+                        loadLiveSources(document.lives)
+                    }
                 }
             } catch is CancellationError {
             } catch {
@@ -740,6 +889,7 @@ public final class XingGuangAppModel: ObservableObject {
                 try Task.checkCancellation()
                 liveSources = [loaded]
                 liveState = loaded.groups.flatMap(\.channels).isEmpty ? .empty : .loaded
+                retainSelectedLiveSource(in: liveSources)
                 if let persistence {
                     do {
                         let data = try JSONEncoder().encode(loaded)
@@ -769,6 +919,7 @@ public final class XingGuangAppModel: ObservableObject {
         guard let liveRepository else {
             liveSources = sources
             liveState = sources.flatMap(\.groups).flatMap(\.channels).isEmpty ? .empty : .loaded
+            retainSelectedLiveSource(in: liveSources)
             return
         }
         liveTask?.cancel()
@@ -788,6 +939,7 @@ public final class XingGuangAppModel: ObservableObject {
                 }
                 liveSources = loaded
                 liveState = loaded.flatMap(\.groups).flatMap(\.channels).isEmpty ? .empty : .loaded
+                retainSelectedLiveSource(in: liveSources)
             } catch is CancellationError {
             } catch {
                 liveSources = sources
@@ -844,6 +996,32 @@ public final class XingGuangAppModel: ObservableObject {
             configurationHistory = []
             configurationHistoryError = error.localizedDescription
         }
+    }
+
+    private func retainSelectedLiveSource(in sources: [Live]) {
+        let byURL = selectedLiveSourceURL.isEmpty
+            ? nil
+            : sources.first(where: { $0.url == selectedLiveSourceURL })
+        let byName = selectedLiveSourceName.isEmpty
+            ? nil
+            : sources.first(where: { $0.name == selectedLiveSourceName })
+        guard let selected = byURL ?? byName ?? sources.first else {
+            selectedLiveSourceName = ""
+            selectedLiveSourceURL = ""
+            return
+        }
+        selectedLiveSourceName = selected.name
+        selectedLiveSourceURL = selected.url
+    }
+
+    private func retainedVodSite(in sites: [Site], fallback: Site) -> Site {
+        if let selected = sites.first(where: { $0.key == selectedVodSiteKey && $0.hide != 1 }) {
+            return selected
+        }
+        if let selected = sites.first(where: { $0.key == selectedSite.key && $0.hide != 1 }) {
+            return selected
+        }
+        return fallback
     }
 
     private func historyKey(for vod: Vod, site: Site) -> String {

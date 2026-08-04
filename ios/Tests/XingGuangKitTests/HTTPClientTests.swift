@@ -87,6 +87,17 @@ final class HTTPClientTests: XCTestCase {
         }
     }
 
+    func testAdPolicyCanBeDisabledWithoutDiscardingConfiguredRules() throws {
+        let policy = HTTPNetworkPolicyStore()
+        policy.apply(VodConfigDocument(ads: ["ads.example"]))
+        policy.setAdHostBlockingEnabled(false)
+
+        XCTAssertFalse(policy.isBlocked(URL(string: "https://video.ads.example/banner")!))
+        XCTAssertNoThrow(try policy.validate(URL(string: "https://video.ads.example/content")!))
+        XCTAssertNil(policy.webKitContentBlockerRules())
+        XCTAssertEqual(policy.adPatterns(), ["ads.example"])
+    }
+
     func testRedirectDelegateRejectsBlockedTargetBeforeFollowing() {
         let policy = HTTPNetworkPolicyStore()
         policy.apply(VodConfigDocument(ads: ["ads.example"]))

@@ -209,7 +209,18 @@ public struct VodHomeView: View {
         case .failed(let message):
             StatusView(systemName: "exclamationmark.triangle", title: message)
         case .loaded(let items):
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 136, maximum: 190), spacing: 16)], spacing: 16) {
+            LazyVGrid(
+                columns: [
+                    GridItem(
+                        .adaptive(
+                            minimum: CGFloat(model.catalogDisplaySize.posterMinimumWidth),
+                            maximum: 210
+                        ),
+                        spacing: 16
+                    )
+                ],
+                spacing: 16
+            ) {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, vod in
                     NavigationLink(destination: VodDetailPreviewView(vod: vod, model: model)) {
                         VodPosterCard(vod: vod, index: index)

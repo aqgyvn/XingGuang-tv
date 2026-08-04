@@ -50,169 +50,13 @@ public struct SettingsView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                configurationPanel(
-                    title: "点播配置",
-                    systemName: "film",
-                    placeholder: "https://example.com/vod.json",
-                    value: $model.vodConfigURL,
-                    kind: .vod
-                )
-                configurationPanel(
-                    title: "直播配置",
-                    systemName: "play.tv",
-                    placeholder: "https://example.com/live.json",
-                    value: $model.liveConfigURL,
-                    kind: .live
-                )
-
-                Button {
-                    model.saveConfiguration()
-                } label: {
-                    Label("保存配置", systemImage: "tray.and.arrow.down.fill")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity, minHeight: 48)
-                        .background(XingGuangTheme.primary)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-                .accessibilityIdentifier("settings.save")
-
-                configurationStatus
-                configurationImportStatus
-                configurationHistoryPanel
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("播放内核", systemImage: "play.rectangle")
-                        .font(.headline)
-                        .foregroundColor(XingGuangTheme.text)
-                    Picker("播放内核", selection: $model.playerPreference) {
-                        Text("MPV").tag(PlayerEnginePreference.mpv)
-                        Text("MDK").tag(PlayerEnginePreference.mdk)
-                        Text("AVPlayer").tag(PlayerEnginePreference.avPlayer)
-                    }
-                    .pickerStyle(.segmented)
-                }
-                .padding(14)
-                .xingGuangPanel()
-
-                VStack(spacing: 0) {
-                    Button {
-                        localMediaError = ""
-                        isImportingLocalMedia = true
-                    } label: {
-                        settingsRow(title: "打开本地媒体", value: "选择文件", systemName: "folder.badge.play")
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("settings.localMedia.open")
-
-                    if localMediaLoading {
-                        Label("正在准备本地媒体", systemImage: "arrow.triangle.2.circlepath")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundColor(XingGuangTheme.secondaryText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 14)
-                    } else if !localMediaError.isEmpty {
-                        Label(localMediaError, systemImage: "xmark.octagon.fill")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundColor(.red)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 14)
-                            .accessibilityIdentifier("settings.localMedia.failed")
-                    }
-
-                    Divider().padding(.leading, 48)
-
-                    Button {
-                        clearCache()
-                    } label: {
-                        settingsRow(
-                            title: "缓存",
-                            value: cacheIsWorking ? "正在清理" : cacheSizeText,
-                            systemName: "trash"
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(cacheIsWorking)
-                    .accessibilityIdentifier("settings.cache.clear")
-
-                    if !cacheError.isEmpty {
-                        Label(cacheError, systemImage: "xmark.octagon.fill")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundColor(.red)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 14)
-                    }
-
-                    Divider().padding(.leading, 48)
-
-                    NavigationLink(destination: PlayerSettingsPreviewView(model: model)) {
-                        settingsRow(title: "播放器设置", value: "进入", systemName: "slider.horizontal.3")
-                    }
-                    .buttonStyle(.plain)
-
-                    Divider().padding(.leading, 48)
-
-                    Toggle(isOn: $model.incognito) {
-                        settingsLabel(title: "隐身模式", systemName: "eye.slash")
-                    }
-                    .tint(XingGuangTheme.primary)
-                    .padding(.horizontal, 14)
-                    .frame(minHeight: 52)
-
-                    Divider().padding(.leading, 48)
-
-                    Toggle(isOn: $model.automaticLineChange) {
-                        settingsLabel(title: "直播自动换线", systemName: "arrow.triangle.2.circlepath")
-                    }
-                    .tint(XingGuangTheme.primary)
-                    .padding(.horizontal, 14)
-                    .frame(minHeight: 52)
-
-                    Divider().padding(.leading, 48)
-
-                    HStack(spacing: 0) {
-                        Button {
-                            isImportingBackup = true
-                        } label: {
-                            settingsCommand(title: "导入备份", systemName: "square.and.arrow.down")
-                        }
-                        .buttonStyle(.plain)
-                        .frame(maxWidth: .infinity)
-                        .accessibilityIdentifier("settings.backupRestore.import")
-
-                        Divider().frame(height: 30)
-
-                        Button {
-                            startBackupExport()
-                        } label: {
-                            settingsCommand(title: "导出备份", systemName: "square.and.arrow.up")
-                        }
-                        .buttonStyle(.plain)
-                        .frame(maxWidth: .infinity)
-                        .accessibilityIdentifier("settings.backupRestore.export")
-                    }
-                    .frame(minHeight: 52)
-                    .accessibilityIdentifier("settings.backupRestore")
-
-                    backupImportStatus
-                    backupExportStatus
-
-                    Divider().padding(.leading, 48)
-
-                    HStack(spacing: 10) {
-                        settingsLabel(title: "版本", systemName: "info.circle")
-                        Spacer()
-                        Text(appVersionText)
-                            .font(.subheadline)
-                            .foregroundColor(XingGuangTheme.secondaryText)
-                            .accessibilityIdentifier("settings.version.value")
-                    }
-                    .padding(.horizontal, 14)
-                    .frame(minHeight: 52)
-                }
-                .xingGuangPanel()
+            LazyVStack(alignment: .leading, spacing: 16) {
+                sourceSettingsPanel
+                playbackSettingsPanel
+                storageSettingsPanel
             }
+            .frame(maxWidth: 720, alignment: .leading)
+            .frame(maxWidth: .infinity)
             .padding(16)
         }
         .background(XingGuangTheme.background.ignoresSafeArea())
@@ -266,6 +110,323 @@ public struct SettingsView: View {
             )
         }
         .accessibilityIdentifier("settings.home")
+    }
+
+    private var sourceSettingsPanel: some View {
+        VStack(spacing: 16) {
+            configurationSourceCard(for: .vod)
+            configurationSourceCard(for: .live)
+        }
+    }
+
+    private var playbackSettingsPanel: some View {
+        VStack(spacing: 16) {
+            NavigationLink(destination: PlayerSettingsPreviewView(model: model)) {
+                settingsRow(
+                    title: "播放器设置",
+                    value: playerEngineTitle,
+                    systemName: "slider.horizontal.3"
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("settings.player.open")
+            .xingGuangPanel()
+
+            Toggle(isOn: $model.incognito) {
+                settingsLabel(title: "无痕模式", systemName: "eye.slash")
+            }
+            .tint(XingGuangTheme.primary)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 52)
+            .accessibilityIdentifier("settings.incognito")
+            .xingGuangPanel()
+
+            Menu {
+                ForEach(CatalogDisplaySize.allCases) { size in
+                    Button {
+                        model.catalogDisplaySize = size
+                    } label: {
+                        Label(size.title, systemImage: size == model.catalogDisplaySize ? "checkmark" : "rectangle.grid.2x2")
+                    }
+                }
+            } label: {
+                settingsRow(
+                    title: "图片尺寸",
+                    value: model.catalogDisplaySize.title,
+                    systemName: "rectangle.grid.2x2"
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("settings.catalogDisplaySize")
+            .xingGuangPanel()
+
+            settingsRow(title: "DNS", value: "跟随系统", systemName: "globe", showsDisclosure: false)
+                .xingGuangPanel()
+        }
+    }
+
+    private var storageSettingsPanel: some View {
+        VStack(spacing: 16) {
+            Button {
+                clearCache()
+            } label: {
+                settingsRow(
+                    title: "缓存",
+                    value: cacheIsWorking ? "正在清理" : cacheSizeText,
+                    systemName: "trash"
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(cacheIsWorking)
+            .accessibilityIdentifier("settings.cache.clear")
+            .xingGuangPanel()
+
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    Button {
+                        isImportingBackup = true
+                    } label: {
+                        settingsCommand(title: "导入备份", systemName: "square.and.arrow.down")
+                    }
+                    .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("settings.backupRestore.import")
+
+                    Divider().frame(height: 30)
+
+                    Button {
+                        startBackupExport()
+                    } label: {
+                        settingsCommand(title: "导出备份", systemName: "square.and.arrow.up")
+                    }
+                    .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("settings.backupRestore.export")
+                }
+                .frame(minHeight: 52)
+                .accessibilityIdentifier("settings.backupRestore")
+
+                backupImportStatus
+                backupExportStatus
+            }
+            .xingGuangPanel()
+
+            VStack(spacing: 0) {
+                Button {
+                    localMediaError = ""
+                    isImportingLocalMedia = true
+                } label: {
+                    settingsRow(title: "打开本地媒体", value: "选择文件", systemName: "folder.badge.play")
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("settings.localMedia.open")
+
+                if localMediaLoading {
+                    Label("正在准备本地媒体", systemImage: "arrow.triangle.2.circlepath")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundColor(XingGuangTheme.secondaryText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 14)
+                        .padding(.bottom, 12)
+                } else if !localMediaError.isEmpty {
+                    Label(localMediaError, systemImage: "xmark.octagon.fill")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 14)
+                        .padding(.bottom, 12)
+                        .accessibilityIdentifier("settings.localMedia.failed")
+                }
+            }
+            .xingGuangPanel()
+
+            HStack(spacing: 10) {
+                settingsLabel(title: "版本", systemName: "info.circle")
+                Spacer()
+                Text(appVersionText)
+                    .font(.subheadline)
+                    .foregroundColor(XingGuangTheme.secondaryText)
+                    .accessibilityIdentifier("settings.version.value")
+            }
+            .padding(.horizontal, 14)
+            .frame(minHeight: 52)
+            .xingGuangPanel()
+
+            if !cacheError.isEmpty {
+                Label(cacheError, systemImage: "xmark.octagon.fill")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 14)
+            }
+        }
+    }
+
+    private func configurationSourceCard(for kind: ConfigurationKind) -> some View {
+        HStack(spacing: 4) {
+            NavigationLink(destination: configurationEditor(for: kind)) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(configurationTitle(for: kind))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(XingGuangTheme.text)
+                    Text(configurationSummary(configurationURL(for: kind)))
+                        .font(.caption)
+                        .foregroundColor(XingGuangTheme.secondaryText)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("settings.\(kind.rawValue).open")
+
+            configurationHomeMenu(for: kind)
+
+            NavigationLink(destination: configurationHistoryScreen(for: kind)) {
+                ActionIcon(
+                    systemName: "clock.arrow.circlepath",
+                    label: "\(configurationTitle(for: kind))历史"
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("settings.\(kind.rawValue).history")
+        }
+        .padding(.leading, 14)
+        .padding(.trailing, 4)
+        .xingGuangPanel()
+    }
+
+    @ViewBuilder
+    private func configurationHomeMenu(for kind: ConfigurationKind) -> some View {
+        switch kind {
+        case .vod:
+            Menu {
+                ForEach(visibleSites) { site in
+                    Button {
+                        model.selectSite(site)
+                    } label: {
+                        Label(site.name, systemImage: site.key == model.selectedSite.key ? "checkmark" : "house")
+                    }
+                }
+            } label: {
+                ActionIcon(systemName: "house", label: "选择点播主页")
+            }
+            .buttonStyle(.plain)
+            .disabled(!canChangeVodHome)
+            .accessibilityIdentifier("settings.vod.home")
+        case .live:
+            Menu {
+                ForEach(model.liveSources.indices, id: \.self) { index in
+                    let source = model.liveSources[index]
+                    Button {
+                        model.selectLiveSource(source)
+                    } label: {
+                        Label(source.name, systemImage: source.name == model.selectedLiveSourceName ? "checkmark" : "tv")
+                    }
+                }
+            } label: {
+                ActionIcon(systemName: "house", label: "选择直播主页")
+            }
+            .buttonStyle(.plain)
+            .disabled(!canChangeLiveHome)
+            .accessibilityIdentifier("settings.live.home")
+        }
+    }
+
+    private var canChangeVodHome: Bool {
+        visibleSites.count > 1 && model.selectedSite.changeable != 0
+    }
+
+    private var canChangeLiveHome: Bool {
+        model.liveSources.count > 1
+    }
+
+    private func configurationHistoryScreen(for kind: ConfigurationKind) -> some View {
+        ScrollView {
+            configurationHistoryPanel(for: kind)
+                .frame(maxWidth: 720, alignment: .leading)
+                .frame(maxWidth: .infinity)
+                .padding(16)
+        }
+        .background(XingGuangTheme.background.ignoresSafeArea())
+        .navigationTitle("\(configurationTitle(for: kind))历史")
+        .navigationBarTitleDisplayMode(.inline)
+        .accessibilityIdentifier("settings.\(kind.rawValue).history.screen")
+    }
+
+    private func configurationTitle(for kind: ConfigurationKind) -> String {
+        kind == .vod ? "点播配置" : "直播配置"
+    }
+
+    private func configurationURL(for kind: ConfigurationKind) -> String {
+        kind == .vod ? model.vodConfigURL : model.liveConfigURL
+    }
+
+    private func configurationEditor(for kind: ConfigurationKind) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                switch kind {
+                case .vod:
+                    configurationPanel(
+                        title: "点播配置",
+                        systemName: "film",
+                        placeholder: "https://example.com/vod.json",
+                        value: $model.vodConfigURL,
+                        kind: .vod
+                    )
+                case .live:
+                    configurationPanel(
+                        title: "直播配置",
+                        systemName: "play.tv",
+                        placeholder: "https://example.com/live.json",
+                        value: $model.liveConfigURL,
+                        kind: .live
+                    )
+                }
+
+                Button {
+                    model.saveConfiguration(kind)
+                } label: {
+                    Label("保存并加载", systemImage: "tray.and.arrow.down.fill")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                        .background(XingGuangTheme.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .accessibilityIdentifier("settings.save")
+
+                configurationStatus
+                configurationImportStatus
+            }
+            .frame(maxWidth: 720, alignment: .leading)
+            .frame(maxWidth: .infinity)
+            .padding(16)
+        }
+        .background(XingGuangTheme.background.ignoresSafeArea())
+        .navigationTitle(kind == .vod ? "点播配置" : "直播配置")
+        .navigationBarTitleDisplayMode(.inline)
+        .accessibilityIdentifier("settings.\(kind.rawValue).editor")
+    }
+
+    private var visibleSites: [Site] {
+        model.configuration.sites.filter { $0.hide != 1 && !$0.key.isEmpty }
+    }
+
+    private var playerEngineTitle: String {
+        switch model.playerPreference {
+        case .mpv: return "MPV"
+        case .mdk: return "MDK"
+        case .avPlayer: return "AVPlayer"
+        }
+    }
+
+    private func configurationSummary(_ value: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "未配置" }
+        return trimmed.replacingOccurrences(of: "https://", with: "")
+            .replacingOccurrences(of: "http://", with: "")
     }
 
     private var configurationContentTypes: [UTType] {
@@ -587,21 +748,17 @@ public struct SettingsView: View {
         }
     }
 
-    private var configurationHistoryPanel: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Label("配置历史", systemImage: "clock.arrow.circlepath")
-                .font(.headline)
-                .foregroundColor(XingGuangTheme.text)
-                .padding(14)
-
-            if visibleConfigurationHistory.isEmpty {
+    private func configurationHistoryPanel(for kind: ConfigurationKind) -> some View {
+        let records = model.configurationHistory.filter { $0.type == configurationType(for: kind) }
+        return VStack(alignment: .leading, spacing: 0) {
+            if records.isEmpty {
                 Text("暂无配置记录")
                     .font(.subheadline)
                     .foregroundColor(XingGuangTheme.secondaryText)
                     .padding(.horizontal, 14)
                     .padding(.bottom, 14)
             } else {
-                ForEach(Array(visibleConfigurationHistory.enumerated()), id: \.element.id) { index, record in
+                ForEach(Array(records.enumerated()), id: \.element.id) { index, record in
                     if index > 0 { Divider().padding(.leading, 48) }
                     configurationHistoryRow(record)
                 }
@@ -676,8 +833,8 @@ public struct SettingsView: View {
         .padding(.vertical, 10)
     }
 
-    private var visibleConfigurationHistory: [ConfigRecord] {
-        model.configurationHistory.filter { $0.type == 0 || $0.type == 1 }
+    private func configurationType(for kind: ConfigurationKind) -> Int {
+        kind == .vod ? 0 : 1
     }
 
     private func configurationUpdatedText(_ milliseconds: Int64) -> String {
@@ -697,16 +854,26 @@ public struct SettingsView: View {
         }
     }
 
-    private func settingsRow(title: String, value: String, systemName: String) -> some View {
+    private func settingsRow(
+        title: String,
+        value: String,
+        systemName: String,
+        showsDisclosure: Bool = true
+    ) -> some View {
         HStack(spacing: 10) {
             settingsLabel(title: title, systemName: systemName)
             Spacer()
             Text(value)
                 .font(.subheadline)
                 .foregroundColor(XingGuangTheme.secondaryText)
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.semibold))
-                .foregroundColor(XingGuangTheme.secondaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .truncationMode(.middle)
+            if showsDisclosure {
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(XingGuangTheme.secondaryText)
+            }
         }
         .padding(.horizontal, 14)
         .frame(minHeight: 52)
@@ -772,55 +939,200 @@ private struct PlayerSettingsPreviewView: View {
     @ObservedObject var model: XingGuangAppModel
 
     var body: some View {
-        Form {
-            Section("播放") {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 16) {
+                playbackPanel
+                timedTextPanel
+                networkPanel
+            }
+            .frame(maxWidth: 720, alignment: .leading)
+            .frame(maxWidth: .infinity)
+            .padding(16)
+        }
+        .background(XingGuangTheme.background.ignoresSafeArea())
+        .navigationTitle("播放器设置")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var playbackPanel: some View {
+        VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 10) {
+                playerLabel(title: "播放内核", systemName: "play.rectangle")
+                Picker("播放内核", selection: $model.playerPreference) {
+                    Text("MPV").tag(PlayerEnginePreference.mpv)
+                    Text("MDK").tag(PlayerEnginePreference.mdk)
+                    Text("AVPlayer").tag(PlayerEnginePreference.avPlayer)
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("settings.player.engine")
+            }
+            .padding(14)
+            .xingGuangPanel()
+
+            Toggle(isOn: $model.automaticLineChange) {
+                playerLabel(title: "直播自动换线", systemName: "arrow.triangle.2.circlepath")
+            }
+            .tint(XingGuangTheme.primary)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 52)
+            .xingGuangPanel()
+
+            pickerRow(title: "默认画面比例", systemName: "rectangle.expand.vertical", selection: $model.defaultAspectMode)
+                .xingGuangPanel()
+
+            pickerRow(title: "直播画面比例", systemName: "tv", selection: $model.liveAspectMode)
+                .xingGuangPanel()
+
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("播放内核")
+                    playerLabel(title: "默认倍速", systemName: "speedometer")
                     Spacer()
-                    Text(playerEngineTitle)
-                        .foregroundColor(.secondary)
+                    Text("\(model.defaultPlaybackSpeed, specifier: "%.2g")x")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(XingGuangTheme.primary)
                 }
-                Toggle("直播自动换线", isOn: $model.automaticLineChange)
-                Picker("默认画面比例", selection: $model.defaultAspectMode) {
-                    ForEach(PlayerAspectMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
-                }
-                Picker("直播画面比例", selection: $model.liveAspectMode) {
-                    ForEach(PlayerAspectMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
-                }
-            }
-
-            Section("速度") {
                 Slider(value: $model.defaultPlaybackSpeed, in: 0.5...2.0, step: 0.25)
-                Text("\(model.defaultPlaybackSpeed, specifier: "%.2g")x")
-                    .foregroundColor(XingGuangTheme.primary)
+                    .tint(XingGuangTheme.primary)
             }
+            .padding(14)
+            .xingGuangPanel()
 
-            Section("字幕") {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    playerLabel(title: "长按倍速", systemName: "hand.tap")
+                    Spacer()
+                    Text("\(model.longPressPlaybackSpeed, specifier: "%.2g")x")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(XingGuangTheme.primary)
+                }
+                Slider(value: $model.longPressPlaybackSpeed, in: 2...5, step: 0.25)
+                    .tint(XingGuangTheme.primary)
+                    .accessibilityIdentifier("settings.player.longPressSpeed")
+            }
+            .padding(14)
+            .xingGuangPanel()
+        }
+    }
+
+    private var timedTextPanel: some View {
+        VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    playerLabel(title: "字幕字号", systemName: "textformat.size")
+                    Spacer()
+                    Text("\(Int(model.subtitleTextSize))")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(XingGuangTheme.primary)
+                }
                 Slider(value: $model.subtitleTextSize, in: 14...42, step: 1)
-                Text("字号 \(Int(model.subtitleTextSize))")
-                    .foregroundColor(XingGuangTheme.primary)
+                    .tint(XingGuangTheme.primary)
+            }
+            .padding(14)
+            .xingGuangPanel()
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    playerLabel(title: "字幕底部位置", systemName: "text.alignleft")
+                    Spacer()
+                    Text("\(Int(model.subtitleBottomOffset))")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(XingGuangTheme.primary)
+                }
                 Slider(value: $model.subtitleBottomOffset, in: 8...120, step: 4)
-                Text("底部位置 \(Int(model.subtitleBottomOffset))")
-                    .foregroundColor(XingGuangTheme.primary)
+                    .tint(XingGuangTheme.primary)
             }
+            .padding(14)
+            .xingGuangPanel()
 
-            Section("弹幕") {
-                Toggle("显示弹幕", isOn: $model.danmakuEnabled)
+            Toggle(isOn: $model.danmakuLoadEnabled) {
+                playerLabel(title: "加载弹幕", systemName: "arrow.down.circle")
             }
+            .tint(XingGuangTheme.primary)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 52)
+            .accessibilityIdentifier("settings.player.danmakuLoad")
+            .xingGuangPanel()
 
-            Section("网络") {
-                TextField("User-Agent", text: $model.globalUserAgent)
+            Toggle(isOn: $model.danmakuEnabled) {
+                playerLabel(title: "显示弹幕", systemName: "text.bubble")
+            }
+            .tint(XingGuangTheme.primary)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 52)
+            .xingGuangPanel()
+        }
+    }
+
+    private var networkPanel: some View {
+        VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                playerLabel(title: "User-Agent", systemName: "network")
+                TextField("未填写时使用来源配置", text: $model.globalUserAgent)
+                    .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.never)
                     .disableAutocorrection(true)
                     .accessibilityIdentifier("settings.player.userAgent")
             }
+            .padding(14)
+            .xingGuangPanel()
+
+            VStack(alignment: .leading, spacing: 4) {
+                Toggle(isOn: $model.adHostBlockingEnabled) {
+                    playerLabel(title: "广告主机拦截", systemName: "shield.lefthalf.filled")
+                }
+                .tint(XingGuangTheme.primary)
+                Text("对 App 请求和网页嗅探生效")
+                    .font(.caption)
+                    .foregroundColor(XingGuangTheme.secondaryText)
+                    .padding(.leading, 34)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .accessibilityIdentifier("settings.player.adHostBlocking")
+            .xingGuangPanel()
+
+            HStack(spacing: 10) {
+                playerLabel(title: "DNS", systemName: "globe")
+                Spacer()
+                Text("跟随系统")
+                    .font(.subheadline)
+                    .foregroundColor(XingGuangTheme.secondaryText)
+            }
+            .padding(.horizontal, 14)
+            .frame(minHeight: 52)
+            .xingGuangPanel()
         }
-        .navigationTitle("播放器设置")
-        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func pickerRow(
+        title: String,
+        systemName: String,
+        selection: Binding<PlayerAspectMode>
+    ) -> some View {
+        HStack(spacing: 10) {
+            playerLabel(title: title, systemName: systemName)
+            Spacer()
+            Picker(title, selection: selection) {
+                ForEach(PlayerAspectMode.allCases) { mode in
+                    Text(mode.title).tag(mode)
+                }
+            }
+            .pickerStyle(.menu)
+            .tint(XingGuangTheme.primary)
+        }
+        .padding(.horizontal, 14)
+        .frame(minHeight: 52)
+    }
+
+    private func playerLabel(title: String, systemName: String) -> some View {
+        Label {
+            Text(title)
+                .foregroundColor(XingGuangTheme.text)
+        } icon: {
+            Image(systemName: systemName)
+                .foregroundColor(XingGuangTheme.primary)
+                .frame(width: 24)
+        }
     }
 
     private var playerEngineTitle: String {

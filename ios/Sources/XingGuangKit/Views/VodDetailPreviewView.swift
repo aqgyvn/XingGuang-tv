@@ -119,6 +119,12 @@ struct VodDetailPreviewView: View {
             selectedVideoTrackID = retainedTrackID(selectedVideoTrackID, in: tracks)
             selectedSubtitleTrackID = retainedTrackID(selectedSubtitleTrackID, in: tracks)
         }
+        .onChange(of: model.danmakuLoadEnabled) { enabled in
+            guard !enabled else { return }
+            overlayTask?.cancel()
+            danmakuCues = []
+            selectedDanmakuResourceID = ""
+        }
         .onDisappear {
             playbackTask?.cancel()
             overlayTask?.cancel()
@@ -143,6 +149,7 @@ struct VodDetailPreviewView: View {
                 TimedOverlaySettingsView(
                     subtitleTextSize: $model.subtitleTextSize,
                     subtitleBottomOffset: $model.subtitleBottomOffset,
+                    danmakuLoadEnabled: $model.danmakuLoadEnabled,
                     danmakuEnabled: $model.danmakuEnabled
                 )
             }
@@ -172,8 +179,8 @@ struct VodDetailPreviewView: View {
                     zoomScale: $zoomScale,
                     onSeek: session.seek,
                     onTogglePlayback: session.togglePlayback,
-                    speedBoostRate: isPlaying ? model.defaultPlaybackSpeed : nil,
-                    onSpeedBoostStart: { session.setRate(Float(model.defaultPlaybackSpeed)) },
+                    speedBoostRate: isPlaying ? model.longPressPlaybackSpeed : nil,
+                    onSpeedBoostStart: { session.setRate(Float(model.longPressPlaybackSpeed)) },
                     onSpeedBoostEnd: { session.setRate(Float(speed)) },
                     swipeUpTitle: reverseSort ? "上一集" : "下一集",
                     swipeDownTitle: reverseSort ? "下一集" : "上一集",
@@ -356,10 +363,12 @@ struct VodDetailPreviewView: View {
                     Button { loadDanmaku(resource) } label: {
                         Label(resource.name.isEmpty ? resource.url : resource.name, systemImage: selectedDanmakuResourceID == resource.id ? "checkmark" : "circle")
                     }
+                    .disabled(!model.danmakuLoadEnabled)
                 }
                 Button { isImportingDanmaku = true } label: {
                     Label("选择弹幕文件", systemImage: "doc.badge.plus")
                 }
+                .disabled(!model.danmakuLoadEnabled)
             }
             Button { showsOverlaySettings = true } label: {
                 Label("字幕与弹幕设置", systemImage: "textformat.size")
@@ -825,7 +834,7 @@ struct VodDetailPreviewView: View {
             if let subtitle = request.subtitles.first {
                 await loadSubtitle(subtitle, request: request)
             }
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, model.danmakuLoadEnabled else { return }
             if let danmaku = request.danmaku.first {
                 await loadDanmaku(danmaku, request: request)
             }
@@ -853,7 +862,7 @@ struct VodDetailPreviewView: View {
     }
 
     private func loadDanmaku(_ resource: DanmakuResource) {
-        guard let request = currentPlaybackRequest else { return }
+        guard model.danmakuLoadEnabled, let request = currentPlaybackRequest else { return }
         overlayTask?.cancel()
         overlayTask = Task { @MainActor in
             await loadDanmaku(resource, request: request)
@@ -861,6 +870,7 @@ struct VodDetailPreviewView: View {
     }
 
     private func loadDanmaku(_ resource: DanmakuResource, request: PlaybackRequest) async {
+        guard model.danmakuLoadEnabled else { return }
         do {
             let cues = try await model.loadDanmaku(resource, request: request)
             try Task.checkCancellation()
@@ -892,6 +902,7 @@ struct VodDetailPreviewView: View {
     }
 
     private func handleDanmakuSelection(_ result: Result<[URL], Error>) {
+        guard model.danmakuLoadEnabled else { return }
         guard case .success(let urls) = result, let url = urls.first else {
             if case .failure(let error) = result { detailError = error.localizedDescription }
             return
@@ -942,6 +953,7 @@ struct VodDetailPreviewView: View {
 private struct TimedOverlaySettingsView: View {
     @Binding var subtitleTextSize: Double
     @Binding var subtitleBottomOffset: Double
+    @Binding var danmakuLoadEnabled: Bool
     @Binding var danmakuEnabled: Bool
     @Environment(\.dismiss) private var dismiss
 
@@ -962,6 +974,7 @@ private struct TimedOverlaySettingsView: View {
                 }
             }
             Section("弹幕") {
+                Toggle("加载弹幕", isOn: $danmakuLoadEnabled)
                 Toggle("显示弹幕", isOn: $danmakuEnabled)
             }
         }

@@ -114,7 +114,8 @@ final class AppDatabaseTests: XCTestCase {
         let database = try AppDatabase.inMemory()
         let keys = [
             "ios.incognito", "ios.automaticLineChange", "ios.playerEngine", HTTPUserAgent.preferenceKey,
-            "incognito", "change", "player_engine", "ua"
+            "ios.catalogDisplaySize", "ios.adHostBlockingEnabled",
+            "incognito", "change", "player_engine", "ad_host_block", "size", "ua"
         ]
         defer { keys.forEach { UserDefaults.standard.removeObject(forKey: $0) } }
         let document = BackupDocument(
@@ -123,6 +124,8 @@ final class AppDatabaseTests: XCTestCase {
                 "incognito": .bool(true),
                 "change": .bool(false),
                 "player_engine": .number(2),
+                "size": .number(Double(CatalogDisplaySize.compact.rawValue)),
+                "ad_host_block": .bool(false),
                 "ua": .string("Android-UA")
             ]
         )
@@ -132,6 +135,8 @@ final class AppDatabaseTests: XCTestCase {
         XCTAssertEqual(UserDefaults.standard.object(forKey: "ios.incognito") as? Bool, true)
         XCTAssertEqual(UserDefaults.standard.object(forKey: "ios.automaticLineChange") as? Bool, false)
         XCTAssertEqual(UserDefaults.standard.string(forKey: "ios.playerEngine"), PlayerEnginePreference.mpv.rawValue)
+        XCTAssertEqual(UserDefaults.standard.integer(forKey: "ios.catalogDisplaySize"), CatalogDisplaySize.compact.rawValue)
+        XCTAssertEqual(UserDefaults.standard.object(forKey: "ios.adHostBlockingEnabled") as? Bool, false)
         XCTAssertEqual(UserDefaults.standard.string(forKey: HTTPUserAgent.preferenceKey), "Android-UA")
     }
 

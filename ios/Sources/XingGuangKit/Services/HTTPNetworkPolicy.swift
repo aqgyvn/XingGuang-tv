@@ -28,6 +28,7 @@ public final class HTTPNetworkPolicyStore: @unchecked Sendable {
     private var headerRules: [HTTPHeaderRule] = []
     private var blockedHosts: [String] = []
     private var dohServers: [DoHServer] = []
+    private var adHostBlockingEnabled = true
 
     public init() {}
 
@@ -36,6 +37,12 @@ public final class HTTPNetworkPolicyStore: @unchecked Sendable {
         headerRules = configuration.headers
         blockedHosts = configuration.ads.filter { !$0.isEmpty }
         dohServers = configuration.doh
+        lock.unlock()
+    }
+
+    public func setAdHostBlockingEnabled(_ enabled: Bool) {
+        lock.lock()
+        adHostBlockingEnabled = enabled
         lock.unlock()
     }
 
@@ -61,7 +68,9 @@ public final class HTTPNetworkPolicyStore: @unchecked Sendable {
 
     public func isBlocked(_ url: URL) -> Bool {
         let host = url.host ?? ""
-        return snapshot().ads.contains { Self.matches(host, pattern: $0) }
+        let snapshot = snapshot()
+        guard snapshot.adHostBlockingEnabled else { return false }
+        return snapshot.ads.contains { Self.matches(host, pattern: $0) }
     }
 
     public func configuredDoHServers() -> [DoHServer] {
@@ -73,7 +82,9 @@ public final class HTTPNetworkPolicyStore: @unchecked Sendable {
     }
 
     func webKitContentBlockerRules() -> String? {
-        let rules: [[String: Any]] = adPatterns().map { pattern in
+        let snapshot = snapshot()
+        guard snapshot.adHostBlockingEnabled else { return nil }
+        let rules: [[String: Any]] = snapshot.ads.map { pattern in
             let escaped = NSRegularExpression.escapedPattern(for: pattern)
             return [
                 "trigger": [
@@ -87,10 +98,15 @@ public final class HTTPNetworkPolicyStore: @unchecked Sendable {
         return String(data: data, encoding: .utf8)
     }
 
-    private func snapshot() -> (headers: [HTTPHeaderRule], ads: [String], doh: [DoHServer]) {
+    private func snapshot() -> (
+        headers: [HTTPHeaderRule],
+        ads: [String],
+        doh: [DoHServer],
+        adHostBlockingEnabled: Bool
+    ) {
         lock.lock()
         defer { lock.unlock() }
-        return (headerRules, blockedHosts, dohServers)
+        return (headerRules, blockedHosts, dohServers, adHostBlockingEnabled)
     }
 
     private static func matches(_ value: String, pattern: String) -> Bool {

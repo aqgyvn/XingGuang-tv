@@ -29,6 +29,51 @@ final class XingGuangAppModelTests: XCTestCase {
         XCTAssertNil(defaults.string(forKey: "ios.vodConfigURL"))
     }
 
+    func testSavingVodConfigurationDoesNotValidateOrLoadLiveConfiguration() async throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let repository = SettingsPersistenceVodRepository(
+            sites: [Site(key: "vod", name: "点播", api: "https://vod.example", type: 1)]
+        )
+        let model = XingGuangAppModel(
+            defaults: defaults,
+            repository: repository,
+            liveRepository: ConfigurationHistoryLiveRepository(),
+            usePreviewData: false
+        )
+        model.vodConfigURL = " https://example.com/vod.json "
+        model.liveConfigURL = "not a URL"
+
+        model.saveConfiguration(.vod)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(model.configurationSaveState, .saved)
+        XCTAssertEqual(model.selectedSite.key, "vod")
+        XCTAssertEqual(model.liveState, .idle)
+        XCTAssertEqual(defaults.string(forKey: "ios.vodConfigURL"), "https://example.com/vod.json")
+        XCTAssertNil(defaults.string(forKey: "ios.liveConfigURL"))
+    }
+
+    func testSavingLiveConfigurationDoesNotValidateVodConfiguration() async throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let model = XingGuangAppModel(
+            defaults: defaults,
+            liveRepository: ConfigurationHistoryLiveRepository(),
+            usePreviewData: false
+        )
+        model.vodConfigURL = "not a URL"
+        model.liveConfigURL = " https://example.com/live.txt "
+
+        model.saveConfiguration(.live)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(model.configurationSaveState, .saved)
+        XCTAssertEqual(model.liveSources.first?.name, "历史直播")
+        XCTAssertNil(defaults.string(forKey: "ios.vodConfigURL"))
+        XCTAssertEqual(defaults.string(forKey: "ios.liveConfigURL"), "https://example.com/live.txt")
+    }
+
     func testConfigurationHistoryProtectsCurrentRecordAndDeletesInactiveRecord() throws {
         let (defaults, suiteName) = makeDefaults()
         defer { defaults.removePersistentDomain(forName: suiteName) }
@@ -92,6 +137,78 @@ final class XingGuangAppModelTests: XCTestCase {
         XCTAssertEqual(record.url, "https://example.com/live.txt")
         XCTAssertEqual(record.name, "历史直播")
         XCTAssertEqual(model.configurationSaveState, .saved)
+    }
+
+    func testVodHomeSelectionPersistsAfterConfigurationReloadAndRejectsLockedSite() async throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let first = Site(key: "first", name: "第一站", api: "https://first.example", type: 1)
+        let selected = Site(key: "selected", name: "已选站点", api: "https://selected.example", type: 1)
+        var locked = Site(key: "locked", name: "锁定站点", api: "https://locked.example", type: 1)
+        locked.changeable = 0
+        let repository = SettingsPersistenceVodRepository(sites: [first, selected, locked])
+        let model = XingGuangAppModel(
+            defaults: defaults,
+            repository: repository,
+            usePreviewData: false
+        )
+        model.vodConfigURL = "https://example.com/vod.json"
+
+        model.saveConfiguration()
+        try await Task.sleep(nanoseconds: 100_000_000)
+        model.selectSite(selected)
+
+        XCTAssertEqual(model.selectedSite.key, selected.key)
+        XCTAssertEqual(defaults.string(forKey: "ios.selectedVodSiteKey"), selected.key)
+
+        model.selectSite(locked)
+
+        XCTAssertEqual(model.selectedSite.key, selected.key)
+        XCTAssertEqual(defaults.string(forKey: "ios.selectedVodSiteKey"), selected.key)
+        XCTAssertEqual(try model.makeBackupDocument().preferences["ios.selectedVodSiteKey"], .string(selected.key))
+
+        let reloaded = XingGuangAppModel(
+            defaults: defaults,
+            repository: repository,
+            usePreviewData: false
+        )
+        reloaded.bootstrap()
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(reloaded.selectedSite.key, selected.key)
+    }
+
+    func testLiveSourceURLOutranksLegacyNameWhenDuplicateNamesReload() async throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let first = Live(name: "同名直播", url: "https://example.com/first.m3u")
+        let selected = Live(name: "同名直播", url: "https://example.com/selected.m3u")
+        defaults.set(first.name, forKey: "ios.selectedLiveSourceName")
+        let repository = SettingsPersistenceVodRepository(
+            sites: [Site(key: "vod", name: "点播", api: "https://vod.example", type: 1)],
+            lives: [first, selected]
+        )
+        let model = XingGuangAppModel(
+            defaults: defaults,
+            repository: repository,
+            liveRepository: PassthroughLiveRepository(),
+            usePreviewData: false
+        )
+        model.vodConfigURL = "https://example.com/vod.json"
+
+        model.saveConfiguration()
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(model.selectedLiveSourceURL, first.url)
+
+        model.selectLiveSource(selected)
+        model.reloadLiveSources()
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(defaults.string(forKey: "ios.selectedLiveSourceName"), selected.name)
+        XCTAssertEqual(defaults.string(forKey: "ios.selectedLiveSourceURL"), selected.url)
+        XCTAssertEqual(model.selectedLiveSourceName, selected.name)
+        XCTAssertEqual(model.selectedLiveSourceURL, selected.url)
     }
 
     func testCategorySelectionUpdatesPublishedState() {
@@ -271,6 +388,82 @@ final class XingGuangAppModelTests: XCTestCase {
         XCTAssertEqual(defaults.object(forKey: "ios.defaultPlaybackSpeed") as? Double, 1.5)
     }
 
+    func testSettingsPreferencesPersistAndApplyAdHostPolicy() throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let policy = HTTPNetworkPolicyStore()
+        policy.apply(VodConfigDocument(ads: ["ads.example"]))
+        let model = XingGuangAppModel(defaults: defaults, networkPolicyStore: policy)
+
+        model.catalogDisplaySize = .extraLarge
+        model.adHostBlockingEnabled = false
+
+        XCTAssertEqual(CatalogDisplaySize.allCases.map(\.rawValue), [0, 1, 2, 3])
+        XCTAssertEqual(CatalogDisplaySize.allCases.map(\.title), ["小", "中", "大", "特大"])
+        XCTAssertEqual(defaults.integer(forKey: "ios.catalogDisplaySize"), CatalogDisplaySize.extraLarge.rawValue)
+        XCTAssertEqual(defaults.object(forKey: "ios.adHostBlockingEnabled") as? Bool, false)
+        XCTAssertFalse(policy.isBlocked(URL(string: "https://video.ads.example/content")!))
+    }
+
+    func testLongPressPlaybackSpeedUsesAndroidAliasAndExportsIt() throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set(1.25, forKey: "ios.defaultPlaybackSpeed")
+        let model = XingGuangAppModel(defaults: defaults)
+
+        XCTAssertEqual(model.defaultPlaybackSpeed, 1.25)
+        XCTAssertEqual(model.longPressPlaybackSpeed, 3)
+
+        defaults.set(4.5, forKey: "speed")
+        model.reloadPreferences()
+
+        XCTAssertEqual(model.longPressPlaybackSpeed, 4.5)
+        XCTAssertEqual(defaults.object(forKey: "ios.longPressPlaybackSpeed") as? Double, 4.5)
+
+        model.longPressPlaybackSpeed = 9
+        let backup = try model.makeBackupDocument()
+
+        XCTAssertEqual(model.longPressPlaybackSpeed, 5)
+        XCTAssertEqual(defaults.object(forKey: "ios.longPressPlaybackSpeed") as? Double, 5)
+        XCTAssertEqual(backup.preferences["ios.defaultPlaybackSpeed"], .number(1.25))
+        XCTAssertEqual(backup.preferences["ios.longPressPlaybackSpeed"], .number(5))
+        XCTAssertEqual(backup.preferences["speed"], .number(5))
+    }
+
+    func testDanmakuLoadPreferenceUsesAndroidAliasAndExportsIt() throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let model = XingGuangAppModel(defaults: defaults)
+
+        XCTAssertTrue(model.danmakuLoadEnabled)
+
+        defaults.set(false, forKey: "danmaku_load")
+        model.reloadPreferences()
+
+        XCTAssertFalse(model.danmakuLoadEnabled)
+        XCTAssertEqual(defaults.object(forKey: "ios.danmakuLoadEnabled") as? Bool, false)
+
+        let backup = try model.makeBackupDocument()
+
+        XCTAssertEqual(backup.preferences["ios.danmakuLoadEnabled"], .bool(false))
+        XCTAssertEqual(backup.preferences["danmaku_load"], .bool(false))
+    }
+
+    func testSelectedLiveSourcePersistsAndExports() throws {
+        let (defaults, suiteName) = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let model = XingGuangAppModel(defaults: defaults)
+        let source = Live(name: "备用直播", url: "https://example.com/live.txt")
+
+        model.selectLiveSource(source)
+        let backup = try model.makeBackupDocument()
+
+        XCTAssertEqual(defaults.string(forKey: "ios.selectedLiveSourceName"), "备用直播")
+        XCTAssertEqual(defaults.string(forKey: "ios.selectedLiveSourceURL"), source.url)
+        XCTAssertEqual(backup.preferences["ios.selectedLiveSourceName"], .string("备用直播"))
+        XCTAssertEqual(backup.preferences["ios.selectedLiveSourceURL"], .string(source.url))
+    }
+
     func testPlaybackSavePreservesAndroidHistoryOptions() throws {
         let (defaults, suiteName) = makeDefaults()
         defer { defaults.removePersistentDomain(forName: suiteName) }
@@ -332,6 +525,9 @@ final class XingGuangAppModelTests: XCTestCase {
         model.incognito = true
         model.automaticLineChange = false
         model.globalUserAgent = "XingGuang-UA"
+        model.catalogDisplaySize = .compact
+        model.adHostBlockingEnabled = false
+        model.selectLiveSource(Live(name: "备用直播", url: "https://example.com/backup-live.m3u"))
 
         let backup = try model.makeBackupDocument()
 
@@ -340,6 +536,11 @@ final class XingGuangAppModelTests: XCTestCase {
         XCTAssertEqual(backup.preferences["player_engine"], .number(2))
         XCTAssertEqual(backup.preferences["incognito"], .bool(true))
         XCTAssertEqual(backup.preferences["change"], .bool(false))
+        XCTAssertEqual(backup.preferences["ios.catalogDisplaySize"], .number(Double(CatalogDisplaySize.compact.rawValue)))
+        XCTAssertEqual(backup.preferences["size"], .number(Double(CatalogDisplaySize.compact.rawValue)))
+        XCTAssertEqual(backup.preferences["ad_host_block"], .bool(false))
+        XCTAssertEqual(backup.preferences["ios.selectedLiveSourceName"], .string("备用直播"))
+        XCTAssertEqual(backup.preferences["ios.selectedLiveSourceURL"], .string("https://example.com/backup-live.m3u"))
         XCTAssertEqual(backup.preferences["ua"], .string("XingGuang-UA"))
         XCTAssertEqual(backup.preferences[HTTPUserAgent.preferenceKey], .string("XingGuang-UA"))
     }
@@ -502,6 +703,28 @@ private final class ConfigurationHistoryLiveRepository: LiveRepository {
         )
     }
 
+    func loadEPG(for live: Live, channel: Channel?) async throws -> [Epg] { [] }
+}
+
+private final class SettingsPersistenceVodRepository: VodRepository, @unchecked Sendable {
+    private let document: VodConfigDocument
+
+    init(sites: [Site], lives: [Live] = []) {
+        document = VodConfigDocument(sites: sites, lives: lives)
+    }
+
+    func loadConfig(from url: URL) async throws -> VodConfigDocument { document }
+    func home(site: Site, includeFilters: Bool) async throws -> VodResult { VodResult() }
+    func category(site: Site, typeID: String, page: Int, filters: [String: String]) async throws -> VodResult { VodResult() }
+    func search(site: Site, keyword: String, page: Int) async throws -> VodResult { VodResult() }
+    func detail(site: Site, vodID: String) async throws -> VodResult { VodResult() }
+    func resolvePlayback(site: Site, flag: String, episodeURL: String) async throws -> PlaybackRequest {
+        PlaybackRequest(url: episodeURL)
+    }
+}
+
+private final class PassthroughLiveRepository: LiveRepository {
+    func load(_ live: Live) async throws -> Live { live }
     func loadEPG(for live: Live, channel: Channel?) async throws -> [Epg] { [] }
 }
 

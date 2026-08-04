@@ -357,6 +357,14 @@ public final class AppDatabase: PersistenceStore, BackupDocumentApplying, @unche
         if preferences["ios.danmakuEnabled"] == nil, let value = boolValue(preferences["danmaku_show"]) {
             UserDefaults.standard.set(value, forKey: "ios.danmakuEnabled")
         }
+        if preferences["ios.catalogDisplaySize"] == nil,
+           let value = numberValue(preferences["size"]),
+           CatalogDisplaySize(rawValue: value) != nil {
+            UserDefaults.standard.set(value, forKey: "ios.catalogDisplaySize")
+        }
+        if preferences["ios.adHostBlockingEnabled"] == nil, let value = boolValue(preferences["ad_host_block"]) {
+            UserDefaults.standard.set(value, forKey: "ios.adHostBlockingEnabled")
+        }
         if preferences[HTTPUserAgent.preferenceKey] == nil, let value = stringValue(preferences["ua"]) {
             UserDefaults.standard.set(value, forKey: HTTPUserAgent.preferenceKey)
         }

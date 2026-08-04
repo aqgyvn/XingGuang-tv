@@ -274,3 +274,11 @@ GitHub Actions 运行 `30177752122` 已通过工程生成、CocoaPods 安装和�
 - TrollStore 私人分发继续使用 GitHub Actions artifact 手动更新。iOS App 不在后台下载并替换自身，避免把 Android APK 自更新流程错误移植到 iOS。
 
 运行 `30216711028` 已通过版本行 UI 断言、全部 iPhone/iPad 测试、设备 Release、TrollStore IPA 结构和 ad-hoc 签名检查。产物为 `XingGuang-iOS-36`（artifact ID `8636151881`，`22,896,793` 字节，保留至 2026-08-09）。
+
+## 设置页对齐
+
+- 设置主页改为 Android 手机版同样的连续卡片顺序：点播配置、直播配置、播放器设置、无痕模式、图片尺寸、DNS、缓存、备份恢复、打开本地媒体和版本。点播与直播配置卡右侧固定提供主页和配置历史图标；编辑页保留 URL、Files 导入和二维码输入。
+- 点播主页只允许切换配置声明为可切换的站点，选择写入 `ios.selectedVodSiteKey` 并在重启或重载配置后恢复。多个直播源时，默认来源以 URL 优先、名称兜底写入偏好，避免同名来源恢复错误。
+- 点播与直播编辑页各自独立保存：编辑点播不会因为直播 URL 无效失败，反之亦然。配置历史按类型分别显示，可重新加载和删除非当前记录。
+- 播放器设置以逐项卡片提供 MPV、MDK、AVPlayer，默认与直播画面比例、常规播放倍速、长按倍速、字幕大小和位置、弹幕加载与显示、全局 User-Agent 以及广告主机拦截。Android `speed` 导入为 iOS 长按倍速；广告开关只影响 App 受控的 HTTP、JavaScript HTTP 和网页嗅探，播放内核内部请求仍受各内核限制。
+- 图片尺寸提供小、中、大、特大四档，写入 `ios.catalogDisplaySize` 和备份偏好；Android 备份的 `size` 在值可识别时会导入该偏好。iOS 的 DNS 行仅显示“跟随系统”，不伪造 Android DoH 的逐 App 能力。

@@ -34,6 +34,14 @@ public struct LiveHomeView: View {
         model.liveSources.indices.contains(selectedSource) ? model.liveSources[selectedSource] : model.liveSources.first
     }
 
+    private func syncSelectedSource() {
+        guard !model.liveSources.isEmpty else {
+            selectedSource = 0
+            return
+        }
+        selectedSource = model.liveSources.firstIndex(where: { $0.name == model.selectedLiveSourceName }) ?? 0
+    }
+
     private var groups: [LiveGroup] {
         guard let source else { return [] }
         let favorites = source.groups
@@ -98,9 +106,19 @@ public struct LiveHomeView: View {
         .background(XingGuangTheme.background.ignoresSafeArea())
         .navigationTitle("直播")
         .navigationBarTitleDisplayMode(.inline)
-        .task { model.reloadLiveSources() }
-        .onChange(of: model.liveSources.map(\.id)) { _ in resetSelection() }
-        .onChange(of: selectedSource) { _ in resetSelection(keepSource: true) }
+        .task {
+            model.reloadLiveSources()
+            syncSelectedSource()
+        }
+        .onChange(of: model.liveSources.map(\.id)) { _ in
+            resetSelection()
+            syncSelectedSource()
+        }
+        .onChange(of: model.selectedLiveSourceName) { _ in syncSelectedSource() }
+        .onChange(of: selectedSource) { _ in
+            if let source { model.selectLiveSource(source) }
+            resetSelection(keepSource: true)
+        }
         .onChange(of: selectedGroup) { _ in
             lineFallbackTask?.cancel()
             selectedChannel = 0
@@ -191,8 +209,8 @@ public struct LiveHomeView: View {
                     zoomScale: $zoomScale,
                     onSeek: session.seek,
                     onTogglePlayback: session.togglePlayback,
-                    speedBoostRate: isPlaying && session.time.duration > 0 ? model.defaultPlaybackSpeed : nil,
-                    onSpeedBoostStart: { session.setRate(Float(model.defaultPlaybackSpeed)) },
+                    speedBoostRate: isPlaying && session.time.duration > 0 ? model.longPressPlaybackSpeed : nil,
+                    onSpeedBoostStart: { session.setRate(Float(model.longPressPlaybackSpeed)) },
                     onSpeedBoostEnd: { session.setRate(1) },
                     swipeUpTitle: "上一频道",
                     swipeDownTitle: "下一频道",

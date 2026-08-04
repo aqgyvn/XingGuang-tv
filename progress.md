@@ -3748,3 +3748,57 @@
 - `progress.md`: appends this implementation and verification record.
 - `output/XingGuang-5.6.4-arm64.apk`: contains the verified Android arm64 debug build for delivery.
 - Rollback method before commit: run `git restore -- app/build.gradle app/src/main/java/com/fongmi/android/tv/player/exo/ColorAwareRenderersFactory.java README.md docs/release-version.md progress.md`, then run `Remove-Item -LiteralPath docs/playback-hdr-tone-mapping-20260802.md, output/XingGuang-5.6.4-arm64.apk`; after a single fix commit, run `git revert <commit>` and remove the copied APK.
+
+## 2026-08-04 - Task: Align iOS settings UI and behavior with Android mobile
+
+### What was done
+- Reorganized the iOS settings experience into data sources, playback, files and data, and configuration history so configuration editing is no longer mixed with unrelated controls.
+- Added persistent VOD home selection, default live source selection, poster-size density, and a user-controlled ad-host blocking switch that affects the App network policy and WebView media sniffing rules.
+- Reworked player settings around the three selected cores, playback proportions and speed, subtitles and danmaku, and network controls while explicitly retaining iOS DNS as a system-managed limitation.
+- Preserved the existing database schema and Android backup compatibility; new iOS preferences are included in backups, and recognized Android `size` and `ad_host_block` fields import into their iOS equivalents.
+
+### Testing
+- Passed: `git diff --check -- ios docs progress.md` completed without whitespace errors.
+- Passed: static inspection confirms the new settings identifiers, persisted preference keys, backup aliases, policy toggle, VOD grid density binding, and live-source synchronization are all referenced by their corresponding UI or service paths.
+- Not run locally: Swift compilation, iPhone and iPad UI tests, device Release build, IPA packaging, and signature verification. This Windows host has no Swift or Xcode toolchain; the next GitHub Actions macOS run is required.
+
+### Notes
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: adds persisted display, ad-filter, and default live-source state with backup export support.
+- `ios/Sources/XingGuangKit/Services/HTTPNetworkPolicy.swift`: makes configured ad-host rules user-toggleable without discarding configured rules.
+- `ios/Sources/XingGuangKit/Persistence/AppDatabase.swift`: imports compatible Android size and ad-block preference aliases without schema changes.
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: rebuilds the settings and player-settings navigation, grouping, and controls.
+- `ios/Sources/XingGuangKit/Views/LiveHomeView.swift`: restores the configured default live source when sources load or settings change.
+- `ios/Sources/XingGuangKit/Views/VodHomeView.swift`: applies the persisted poster-density choice to the responsive grid.
+- `ios/Tests/XingGuangKitTests/AppDatabaseTests.swift`: verifies Android preference alias import for display density and ad filtering.
+- `ios/Tests/XingGuangKitTests/HTTPClientTests.swift`: verifies disabled ad blocking does not discard configured rules.
+- `ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift`: verifies settings persistence, policy application, backup export, and default live-source storage.
+- `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: updates configuration navigation coverage and adds player-settings control coverage.
+- `docs/ios-compatibility-matrix.md`: records the new settings parity and platform boundaries.
+- `docs/ios-development.md`: documents the settings behavior, backup keys, and DNS limitation.
+- `progress.md`: appends this implementation and verification record.
+- Rollback point: after the dedicated iOS settings commit, run `git revert <commit>`; do not restore the whole working tree because it contains unrelated Android and documentation changes.
+
+## 2026-08-04 - Task: Refine iOS settings cards and Android-compatible behavior
+
+### What was done
+- Rebuilt the iOS root settings surface as the Android mobile-style compact card sequence, with fixed homepage and configuration-history actions on both VOD and live configuration cards.
+- Made VOD and live configuration saves independent, retained selected VOD and live home sources across reloads, and prevented locked VOD sites from being switched in settings.
+- Separated regular playback speed from Android-compatible long-press speed, added small through extra-large poster density, and separated danmaku loading from danmaku display.
+- Applied the danmaku-load preference to VOD playback so disabled loading cancels current work and blocks future automatic or manual danmaku requests.
+
+### Testing
+- Passed: `git diff --check` completed without whitespace errors.
+- Passed: static review confirms the root settings actions, independent configuration-save call, persisted homepage keys, long-press gesture rate bindings, danmaku-load gates, backup preference aliases, and updated UI-test identifiers are connected to their target paths.
+- Not run locally: Swift compilation, unit tests, iPhone/iPad UI tests, device Release build, IPA packaging, and signature verification. `swift` is unavailable on this Windows host; the next macOS GitHub Actions run is required.
+
+### Notes
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: persists configuration-home selections, separates configuration saves, adds long-press speed, four image-size options, and danmaku-load backup compatibility.
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: changes root and player settings to compact cards and exposes homepage, history, long-press-speed, and danmaku-load controls.
+- `ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift`: prevents disabled danmaku loading from fetching or retaining danmaku overlays.
+- `ios/Sources/XingGuangKit/Views/LiveHomeView.swift`: uses the dedicated long-press speed for the playback gesture.
+- `ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift`: uses the dedicated long-press speed for the playback gesture.
+- `ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift`: covers independent configuration saves, homepage restoration, Android speed/danmaku migration, and four image sizes.
+- `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: covers the new root settings actions and player setting controls.
+- `docs/ios-compatibility-matrix.md`: records the revised settings compatibility and platform boundaries.
+- `docs/ios-development.md`: documents the mobile-card layout, independent saves, selection restoration, and backup key semantics.
+- `progress.md`: appends this implementation and verification record.
