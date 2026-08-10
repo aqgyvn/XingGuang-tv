@@ -19,11 +19,3 @@ lib-*.aar
 *.p12
 *.pfx
 *.pem
-
-# Generated iOS project and local Xcode state
-/ios/XingGuang.xcodeproj/
-/ios/XingGuang.xcworkspace/
-/ios/Pods/
-/ios/.swiftpm/
-xcuserdata/
-*.xcuserstate

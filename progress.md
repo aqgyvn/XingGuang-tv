@@ -3802,3 +3802,145 @@
 - `docs/ios-compatibility-matrix.md`: records the revised settings compatibility and platform boundaries.
 - `docs/ios-development.md`: documents the mobile-card layout, independent saves, selection restoration, and backup key semantics.
 - `progress.md`: appends this implementation and verification record.
+
+## 2026-08-10 - Task: Remove conversation-produced TrollStore iOS artifacts
+
+### What was done
+- Created a local iOS-only rollback archive before deletion.
+- Removed the complete `ios/**` tree, the iOS GitHub Actions workflow, and both iOS development documents.
+- Removed only the iOS-specific Xcode ignore rules from `.gitignore` and preserved every file outside the declared iOS scope.
+
+### Testing
+- Passed: backup archive contains 126 files, has no out-of-scope entries, is 1204886 bytes, and has SHA-256 `D73F8D4C2F9199412941E9EE81C98750F9BAE1C92B0322496ED5DD288F783F1E`.
+- Passed: 124 tracked iOS files were selected for deletion and the `ios/` directory no longer exists in the isolated deletion worktree.
+- Passed: the removal allowlist is restricted to `ios/**`, `.github/workflows/ios.yml`, `docs/ios-compatibility-matrix.md`, `docs/ios-development.md`, the iOS-only `.gitignore` fragment, and this progress entry.
+- Not applicable: application compilation is not a credible verification for a source-removal task; verification uses path, tree, commit, and remote-ref checks.
+
+### Notes
+- `.github/workflows/ios.yml`: removed as a conversation-produced TrollStore iOS file.
+- `docs/ios-compatibility-matrix.md`: removed as a conversation-produced TrollStore iOS file.
+- `docs/ios-development.md`: removed as a conversation-produced TrollStore iOS file.
+- `ios/App/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png`: removed as a conversation-produced TrollStore iOS file.
+- `ios/App/Assets.xcassets/AppIcon.appiconset/Contents.json`: removed as a conversation-produced TrollStore iOS file.
+- `ios/App/Assets.xcassets/Contents.json`: removed as a conversation-produced TrollStore iOS file.
+- `ios/App/Assets.xcassets/LaunchBackground.colorset/Contents.json`: removed as a conversation-produced TrollStore iOS file.
+- `ios/App/Info.plist`: removed as a conversation-produced TrollStore iOS file.
+- `ios/App/MDKPlayerEngineAdapter.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/App/MPVPlayerEngineAdapter.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/App/UnavailablePlayerEngine.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/App/XingGuangApp.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Package.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/README.md`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CGzip/XGGzip.c`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CGzip/include/XGGzip.h`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/XGQuickJS.c`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/include/XGQuickJS.h`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/LICENSE`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/UPSTREAM_COMMIT.txt`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/cutils.c`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/cutils.h`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/dtoa.c`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/dtoa.h`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/libregexp-opcode.h`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/libregexp.c`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/libregexp.h`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/libunicode-table.h`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/libunicode.c`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/libunicode.h`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/list.h`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/quickjs-atom.h`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/quickjs-opcode.h`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/quickjs.c`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/CQuickJS/quickjs/quickjs.h`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/ChineseTextConverter.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/JavaScriptBridgeCompatibility.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/JavaScriptHTTP.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/JavaScriptRuntimeError.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/JavaScriptSpiderProtocol.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/JavaScriptVodRepository.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/LocalProxyServer.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/QuickJSHost.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/QuickJSRuntime.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/Resources/JavaScript/lib/cat.js`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/Resources/JavaScript/lib/cheerio.min.js`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/Resources/JavaScript/lib/crypto-js.js`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/Resources/JavaScript/lib/gbk.js`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/Resources/JavaScript/lib/http.js`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/Resources/JavaScript/lib/similarity.js`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangJavaScript/Resources/JavaScript/lib/spider.js`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Design/XingGuangTheme.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Fixtures/PreviewFixtures.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Models/CatalogModels.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Models/CodableDefaults.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Models/LiveModels.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Models/PersistenceModels.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Persistence/AppDatabase.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Player/AVPlayerEngine.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Player/PlayerEngineFactory.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Player/PlayerHostViewController.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Player/PlayerInteraction.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Player/PlayerSession.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Player/PreviewPlayerEngine.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Resources/PreviewLogo.png`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Resources/preview-config.json`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/ApiVodRepository.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/BackupExportService.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/BackupImportService.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/CacheManagementService.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/ConfigurationImportService.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/EpgParser.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/HTTPClient.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/HTTPNetworkPolicy.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/LivePlaylistParser.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/LiveRepository.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/LocalMediaImportService.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/PlaybackParseResolver.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/SystemGzipCompressor.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/SystemGzipDecompressor.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/TimedTextService.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/VodRepository.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/VodXMLParser.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Services/WebMediaSniffer.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/State/XingGuangAppModel.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/CollectionPreviewView.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/Components/ActionIcon.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/Components/PlayerSurfaceView.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/Components/QRCodeScannerView.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/Components/SectionTitle.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/Components/TimedOverlayViews.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/Components/VodPosterCard.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/LiveHomeView.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/LocalMediaPlayerView.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/PlaybackUtilityViews.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/SearchPreviewView.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/SettingsView.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/VodDetailPreviewView.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/VodHomeView.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Sources/XingGuangKit/Views/XingGuangRootView.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/AVPlayerEngineTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/ApiVodRepositoryTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/AppDatabaseTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/BackupExportServiceTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/BackupImportServiceTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/CacheManagementServiceTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/ConfigurationImportServiceTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/DomainModelsTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/HTTPClientTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/JavaScriptCryptoBridgeTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/JavaScriptHTTPTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/JavaScriptVodRepositoryTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/LiveRepositoryTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/LocalMediaImportServiceTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/PlaybackParseResolverTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/PlaybackUtilityTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/PlayerEngineFactoryTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/PlayerGestureMathTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/PlayerSessionTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/TimedTextServiceTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangKitTests/XingGuangAppModelTests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/Tests/XingGuangUITests/XingGuangUITests.swift`: removed as a conversation-produced TrollStore iOS file.
+- `ios/project.yml`: removed as a conversation-produced TrollStore iOS file.
+- `ios/scripts/package-trollstore.sh`: removed as a conversation-produced TrollStore iOS file.
+- `.gitignore`: removes only the conversation-produced iOS/Xcode ignore fragment.
+- `progress.md`: appends the backup, deletion, verification, changed-file, and rollback record.
+- Rollback point: restore `C:\Users\52396\.codex\visualizations\2026\08\10\019feaf6-603d-7343-ae72-bc369d36c968\trollstore-ios-backup-20260810.zip` or run `git revert <commit>` after the deletion commit; the archive SHA-256 is `D73F8D4C2F9199412941E9EE81C98750F9BAE1C92B0322496ED5DD288F783F1E`.
