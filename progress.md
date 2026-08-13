@@ -3749,6 +3749,66 @@
 - `output/XingGuang-5.6.4-arm64.apk`: contains the verified Android arm64 debug build for delivery.
 - Rollback method before commit: run `git restore -- app/build.gradle app/src/main/java/com/fongmi/android/tv/player/exo/ColorAwareRenderersFactory.java README.md docs/release-version.md progress.md`, then run `Remove-Item -LiteralPath docs/playback-hdr-tone-mapping-20260802.md, output/XingGuang-5.6.4-arm64.apk`; after a single fix commit, run `git revert <commit>` and remove the copied APK.
 
+## 2026-08-03 - Task: Produce UI refactor sketches for 5.6.4 mobile and TV
+
+### What was done
+- Added three static UI refactor directions for the 5.6.4 release: immersive card flow, compact information density, and dark cinema.
+- Covered the existing mobile VOD home, VOD detail and episode selection, search, favorites, live playback channel drawer, and settings surfaces.
+- Covered the existing leanback TV home, VOD library, and settings surfaces, including remote-control focus states.
+- Preserved existing controls and entry points in the sketches; the deliverable changes no Android behavior, layout XML, Java code, resources, or dependencies.
+
+### Testing
+- Passed: rendered the HTML in Chrome and verified all 27 SVG screen sketches load without console or page errors.
+- Passed: programmatic bounds check found no text or component overflow outside any phone or TV sketch viewport.
+- Passed: visually reviewed the immersive, compact, and dark directions across representative mobile and TV screenshots; no overlap or clipped content was found.
+
+### Notes
+- `docs/ui-refactor-5.6.4-sketches.html`: adds the 5.6.4 dual-platform static UI sketch deliverable with three visual directions and existing-function coverage notes.
+- `progress.md`: appends this delivery and verification record.
+- Rollback method before commit: run `git restore -- progress.md`, then run `Remove-Item -LiteralPath docs/ui-refactor-5.6.4-sketches.html`; after a single documentation commit, run `git revert <commit>`.
+
+## 2026-08-03 - Task: Remove all existing UI sketches
+
+### What was done
+- Removed every repository file identified by the `sketch` name pattern, including the 5.6.4 dual-platform board and previous futuristic sketch boards with their exported previews.
+- Kept historical progress entries unchanged so prior delivery records remain auditable.
+
+### Testing
+- Passed: repository-wide filename search for `sketch` and `草图` returns no remaining files.
+- Passed: verified no non-historical document references point to the removed sketch deliverables.
+
+### Notes
+- `docs/ui-refactor-5.6.4-sketches.html`: removed the 5.6.4 mobile and TV UI sketch board.
+- `docs/futuristic-ui-sketch.html`: removed the original futuristic UI sketch board.
+- `docs/futuristic-ui-sketch-v2.html`: removed the second futuristic UI sketch board.
+- `docs/futuristic-ui-sketch-v2.png`: removed the second futuristic UI sketch preview image.
+- `docs/futuristic-ui-five-sketches.html`: removed the five-direction futuristic UI sketch board.
+- `docs/futuristic-ui-five-sketches.png`: removed the five-direction futuristic UI sketch preview image.
+- `progress.md`: appends this removal and verification record.
+- Rollback method before commit: run `git restore -- docs/futuristic-ui-sketch.html docs/futuristic-ui-sketch-v2.html docs/futuristic-ui-sketch-v2.png docs/futuristic-ui-five-sketches.html docs/futuristic-ui-five-sketches.png progress.md`; the untracked 5.6.4 sketch file cannot be restored after deletion because it was never committed.
+
+## 2026-08-04 - Task: Remove Android TV leanback code and configuration
+
+### What was done
+- Removed the Android TV leanback source set, including its manifest, activities, resources, receiver, updater and remote-control UI implementation.
+- Removed the leanback product flavor and its two flavor-specific dependencies from the Android build configuration.
+- Removed the shared file-picker branch that targeted the deleted leanback flavor while preserving mobile behavior and shared cast device classification.
+- Recorded that Android delivery is mobile-only in the release version documentation.
+
+### Testing
+- Passed: `:app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed successfully after the removal.
+- Passed: the leanback source directory is absent and no removed leanback flavor, dependency or shared utility branch remains in the Android source and build configuration.
+- Passed: `:app:tasks --all --no-daemon --no-parallel --max-workers=1` reports no leanback television build task.
+
+### Notes
+- `app/src/leanback`: removed the Android TV code, manifest and resources.
+- `app/build.gradle`: removes the leanback product flavor and leanback-only dependencies.
+- `app/src/main/java/com/fongmi/android/tv/utils/Util.java`: removes the deleted leanback flavor check.
+- `app/src/main/java/com/fongmi/android/tv/utils/FileChooser.java`: keeps the mobile file-picker fallback without the television branch.
+- `docs/release-version.md`: records the mobile-only Android package scope.
+- `progress.md`: appends this implementation and verification record.
+- Rollback method before commit: run `git restore -- app/build.gradle app/src/leanback app/src/main/java/com/fongmi/android/tv/utils/Util.java app/src/main/java/com/fongmi/android/tv/utils/FileChooser.java docs/release-version.md`, then remove only this `2026-08-04` task section from `progress.md`; after a dedicated commit, run `git revert <commit>`.
+
 ## 2026-08-04 - Task: Align iOS settings UI and behavior with Android mobile
 
 ### What was done
@@ -3778,6 +3838,79 @@
 - `progress.md`: appends this implementation and verification record.
 - Rollback point: after the dedicated iOS settings commit, run `git revert <commit>`; do not restore the whole working tree because it contains unrelated Android and documentation changes.
 
+## 2026-08-04 - Task: Correct Android VOD homepage structure to the August 4 draft
+
+### What was done
+- Replaced the remaining old VOD homepage card stack with the draft's full-bleed feature hero, underline category tabs, horizontal trending rail, and one-line continue-watching entry.
+- Kept the existing search, favorites, history, source selection, category switching, filtering, folder opening, indexed-source search, and video playback routes intact.
+- Rendered the existing home result in the new horizontal rail so the new layout uses live source data rather than static poster placeholders.
+- Removed the paper-card frame from the default VOD grid so content following the homepage flow remains poster-led.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed successfully.
+- Not run: runtime screenshot and installation verification. The device was not modified in this task.
+
+### Notes
+- `app/src/mobile/java/com/fongmi/android/tv/ui/fragment/VodFragment.java`: connects the home rail and continuation entry to the existing routes.
+- `app/src/mobile/java/com/fongmi/android/tv/ui/adapter/HomeVodAdapter.java`: renders home-result posters in the new horizontal rail.
+- `app/src/mobile/res/color/home_type_text.xml`: defines selected and inactive category label colors.
+- `app/src/mobile/res/drawable/ic_home_play.xml`: adds the homepage playback icon.
+- `app/src/mobile/res/drawable/selector_home_type.xml`: renders the selected category underline.
+- `app/src/mobile/res/drawable/shape_home_action_primary.xml`: renders the primary Hero action.
+- `app/src/mobile/res/drawable/shape_home_action_secondary.xml`: renders the secondary Hero action.
+- `app/src/mobile/res/drawable/shape_home_poster_badge.xml`: renders home-rail poster metadata.
+- `app/src/mobile/res/layout/adapter_home_vod.xml`: defines the horizontal home poster item.
+- `app/src/mobile/res/layout/adapter_type.xml`: converts category pills to underline tabs.
+- `app/src/mobile/res/layout/adapter_vod_rect.xml`: removes the default grid paper-card frame.
+- `app/src/mobile/res/layout/fragment_vod.xml`: rebuilds the VOD homepage hierarchy around the August 4 draft.
+- `app/src/mobile/res/values/colors.xml`: adds the Hero overlay color.
+- `app/src/mobile/res/values/styles.xml`: adds the home poster shape appearance.
+- `app/src/mobile/res/values/strings.xml`: adds the English home-flow labels.
+- `app/src/mobile/res/values-zh-rCN/strings.xml`: adds Simplified Chinese home-flow labels.
+- `app/src/mobile/res/values-zh-rTW/strings.xml`: adds Traditional Chinese home-flow labels.
+- `docs/mobile-ui-refactor-20260804.md`: records the homepage correction and preserved behavior.
+- `progress.md`: appends this implementation and verification record.
+- Rollback point: after a dedicated commit, run `git revert <commit>`; before committing, restore only the files listed above and do not restore the whole working tree because it contains unrelated changes.
+
+## 2026-08-04 - Task: Refactor Android mobile UI structure from the planning draft
+
+### What was done
+- Rebuilt the Android mobile visual hierarchy around the August 4 planning-session draft: dark cinema surfaces, blue selection states, labeled primary navigation, profile-centered organization, and framed playback controls.
+- Kept the established mobile behavior intact: VOD and live use their current activity routes, live still opens the existing player directly, and every existing configuration, playback, history, backup, restore, gesture, and player-control handler remains in place.
+- Reorganized the existing settings surface as the draft's profile destination, adding direct favorites and viewing-history entry points while retaining all original configuration controls and their binding IDs.
+- Restyled the existing VOD and live player control layers into distinct header, transport, progress, function-strip, and channel-drawer regions without changing controller bindings or gestures.
+
+### Testing
+- Passed: git diff --check -- app/src/mobile completed without whitespace errors.
+- Passed: .gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace completed successfully.
+- Not run: runtime screenshot validation. The local adb devices query did not return within 40 seconds and was terminated before any installation or device-data operation.
+
+### Notes
+- app/src/mobile/java/com/fongmi/android/tv/ui/fragment/SettingFragment.java: wires the existing favorites and history activities into the redesigned profile surface.
+- app/src/mobile/res/drawable/ic_nav_profile.xml: adds the profile navigation icon.
+- app/src/mobile/res/drawable/shape_cloud_bottom_nav.xml: frames the dark bottom navigation surface.
+- app/src/mobile/res/drawable/shape_cloud_hero.xml: converts the continuing-viewing block to a dark hero surface.
+- app/src/mobile/res/drawable/shape_control.xml: aligns player control outlines with the dark theme.
+- app/src/mobile/res/drawable/shape_live_list.xml: makes the live channel drawer opaque and framed over video.
+- app/src/mobile/res/drawable/shape_paper_card.xml: increases dark card interior spacing.
+- app/src/mobile/res/drawable/shape_paper_panel.xml: increases dark panel spacing.
+- app/src/mobile/res/drawable/shape_player_control.xml: adds selected and normal states for the horizontal player function strip.
+- app/src/mobile/res/layout/activity_home.xml: makes the three primary destinations labeled and touch-stable.
+- app/src/mobile/res/layout/fragment_setting.xml: reorganizes the profile, source, playback, preference, and data-management hierarchy while preserving existing IDs.
+- app/src/mobile/res/layout/view_control_live.xml: separates live player header, transport controls, and bottom control surface.
+- app/src/mobile/res/layout/view_control_live_action.xml: frames the live horizontal function strip.
+- app/src/mobile/res/layout/view_control_vod.xml: separates VOD player header, transport controls, and bottom control surface.
+- app/src/mobile/res/layout/view_control_vod_action.xml: frames the VOD horizontal function strip.
+- app/src/mobile/res/menu/menu_nav.xml: changes the visible third destination to the profile label and icon without changing its existing ID.
+- app/src/mobile/res/values/colors.xml: replaces the prior cloud-white palette with the dark cinema palette from the planning draft.
+- app/src/mobile/res/values/styles.xml: applies dark navigation bars and player-function control styling.
+- app/src/mobile/res/values/strings.xml: adds English profile labels.
+- app/src/mobile/res/values-zh-rCN/strings.xml: adds Simplified Chinese profile labels.
+- app/src/mobile/res/values-zh-rTW/strings.xml: adds Traditional Chinese profile labels.
+- docs/mobile-ui-refactor-20260804.md: documents scope, behavior boundaries, verification, and rollback.
+- progress.md: appends this implementation record.
+- Rollback point: after a dedicated commit, run git revert <commit>. Before committing, restore only the mobile files listed above, remove docs/mobile-ui-refactor-20260804.md, and remove this final progress entry; do not restore the whole working tree because it contains unrelated changes.
+
 ## 2026-08-04 - Task: Refine iOS settings cards and Android-compatible behavior
 
 ### What was done
@@ -3802,6 +3935,453 @@
 - `docs/ios-compatibility-matrix.md`: records the revised settings compatibility and platform boundaries.
 - `docs/ios-development.md`: documents the mobile-card layout, independent saves, selection restoration, and backup key semantics.
 - `progress.md`: appends this implementation and verification record.
+- Rollback point: after the dedicated iOS settings commit, run `git revert <commit>`; do not restore the whole working tree because it contains unrelated Android and documentation changes.
+
+## 2026-08-04 - Task: Fix Android VOD homepage overlap above bottom navigation
+
+### What was done
+- Reduced the expanded VOD Hero to the device-appropriate height so the initial page no longer leaves only a clipped fragment of the content list above the fixed navigation.
+- Kept the bottom navigation container unchanged because it already reserves its own layout area.
+- Hid the source and filter floating actions while the expanded homepage is visible; they return after the AppBar fully collapses, so their existing actions stay available without covering the continue-watching row.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed successfully.
+- Not run: runtime screenshot verification after installation. The device was not modified in this task.
+
+### Notes
+- `app/src/mobile/java/com/fongmi/android/tv/ui/fragment/VodFragment.java`: controls homepage floating-action visibility from the AppBar collapse state.
+- `app/src/mobile/res/layout/fragment_vod.xml`: reduces the expanded Hero height while preserving the page hierarchy and bindings.
+- `docs/mobile-ui-refactor-20260804.md`: records the density and floating-action correction.
+- `progress.md`: appends this implementation and verification record.
+- Rollback point: after a dedicated commit, run `git revert <commit>`; before committing, restore only the files listed above and do not restore the whole working tree because it contains unrelated changes.
+
+## 2026-08-04 - Task: Fix VOD homepage first-row clipping above bottom navigation
+
+### What was done
+- Reduced the expanded VOD homepage header and compacted the category and continue-watching spacing so the first dynamic portrait card, its remark, and its title are all visible above the fixed navigation.
+- Kept the existing bottom navigation, poster sizing rules, data bindings, category paging, search, history, filters, playback routes, and scrolling behavior unchanged.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed successfully.
+- Passed: installed the rebuilt APK with `adb install -r` on the 1080 x 1920 MuMu instance without clearing application data; the expanded homepage screenshot confirms the complete first-row card text is above the navigation.
+- Passed: a follow-up scroll screenshot confirms normal grid browsing and the existing return-to-top control after the AppBar collapses.
+
+### Notes
+- `app/src/mobile/res/layout/fragment_vod.xml`: compacts the expanded home header and continue-watching block to reserve a full first-row viewport.
+- `docs/mobile-ui-refactor-20260804.md`: records the updated homepage sizing and runtime verification.
+- `progress.md`: appends this implementation and verification record.
+- Rollback point: after a dedicated commit, run `git revert <commit>`; before committing, restore only the three files listed above and do not restore the whole working tree because it contains unrelated changes.
+
+## 2026-08-04 - Task: Fix bottom navigation label clipping
+
+### What was done
+- Increased the labeled bottom navigation height from `72dp` to `80dp` so its icon and Chinese text have a complete rendering area.
+- Removed only the matching `8dp` of empty space below the homepage continue-watching block, keeping the first dynamic content row fully visible above the taller navigation.
+- Kept all navigation IDs, routes, content paging, playback, search, history, filters, and poster sizing behavior unchanged.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed successfully.
+- Passed: installed the rebuilt APK with `adb install -r` on the 1080 x 1920 MuMu instance without clearing application data; the expanded homepage screenshot shows complete bottom labels and complete first-row content text.
+- Passed: the runtime hierarchy reports the fixed navigation bounds as `[0,1680][1080,1920]` and the selected `点播` label bounds as `[143,1824][217,1872]`, providing a `48px` text viewport.
+- Passed: a follow-up scroll screenshot confirms normal grid browsing, the existing return-to-top control, and complete navigation labels.
+
+### Notes
+- `app/src/mobile/res/layout/activity_home.xml`: increases the labeled bottom navigation height to `80dp`.
+- `app/src/mobile/res/layout/fragment_vod.xml`: removes the corresponding empty bottom spacing below the continue-watching block.
+- `docs/mobile-ui-refactor-20260804.md`: records the final navigation sizing and runtime verification.
+- `progress.md`: appends this implementation and verification record.
+- Rollback point: after a dedicated commit, run `git revert <commit>`; before committing, restore only the four files listed above and do not restore the whole working tree because it contains unrelated changes.
+
+## 2026-08-04 - Task: Fix fullscreen player text contrast and selected-state consistency
+
+### What was done
+- Added stable dark overlay surfaces to the VOD and live fullscreen headers and action strips so their text no longer depends on the video frame underneath.
+- Unified fullscreen action selections to a dark active fill, blue outline, and white text for visible contrast.
+- Made player-engine, audio/video track, and parse options recognize their existing selected or activated state and use the same visible selection treatment.
+- Reworked live group, channel, and programme item surfaces so their labels remain readable over video.
+- Corrected the track-selection dialog heading to follow the light dialog surface; its title is no longer pale on a pale background.
+- Kept all player, source, channel, parser, track, and gesture behavior unchanged.
+
+### Testing
+- Passed: `./gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed successfully after the final dialog-title correction.
+- Passed: installed the rebuilt `mobile-arm64_v8a.apk` with `adb install -r` on the 1080 x 1920 MuMu instance without clearing application data.
+- Passed: runtime VOD fullscreen screenshots confirm readable top and bottom control text over varying video frames, a visible selected player-engine choice, and a readable `选择音轨` dialog title with a selected `立体声` row.
+- Passed: the live fullscreen channel-drawer screenshot confirms selected group and channel items render with a dark surface, blue outline, and white text.
+- Not used as a UI result: the final live-stream availability check returned `连接超时`; it does not affect the static control and drawer contrast verification.
+
+### Notes
+- `app/src/mobile/res/drawable/shape_player_control.xml`: provides the high-contrast active and normal fullscreen action states.
+- `app/src/mobile/res/drawable/shape_live.xml`: provides readable live drawer item states over video.
+- `app/src/mobile/res/color/live.xml`: keeps live drawer labels white in each state.
+- `app/src/mobile/res/color/player_option_text.xml`: provides unified selected and activated player-option text color.
+- `app/src/mobile/res/drawable/shape_player_option.xml`: styles full player-engine and track option states.
+- `app/src/mobile/res/drawable/shape_player_option_compact.xml`: styles compact parse option states.
+- `app/src/mobile/res/layout/view_control_vod.xml`: adds stable VOD fullscreen header and footer surfaces.
+- `app/src/mobile/res/layout/view_control_live.xml`: adds stable live fullscreen header and footer surfaces.
+- `app/src/mobile/res/layout/view_control_vod_action.xml`: applies the VOD action-strip overlay.
+- `app/src/mobile/res/layout/view_control_live_action.xml`: applies the live action-strip overlay.
+- `app/src/mobile/res/layout/dialog_player_engine.xml`: applies the player-engine option states.
+- `app/src/mobile/res/layout/dialog_track.xml`: makes the track dialog title readable on its sheet.
+- `app/src/mobile/res/layout/adapter_track.xml`: applies track option states.
+- `app/src/mobile/res/layout/adapter_parse_dark.xml`: applies parse option states.
+- `docs/mobile-ui-refactor-20260804.md`: documents the fullscreen readability correction and validation boundary.
+- `progress.md`: appends this implementation and verification record.
+- Rollback point: after a dedicated commit, run `git revert <commit>`; before committing, restore only the files listed above and do not restore the whole working tree because it contains unrelated changes.
+
+## 2026-08-06 - Task: Space fullscreen player action groups and verify in MuMu
+
+### What was done
+- Reorganized the existing VOD and live fullscreen action strips into left and right groups with a flexible center gap, preventing the controls from reading as one crowded row.
+- Kept the full action set, view IDs, ordering within each group, click and long-click listeners, gestures, playback logic, and settings behavior unchanged.
+- Made normal actions visually transparent and retained the high-contrast dark fill, blue outline, and white text for activated actions.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed successfully.
+- Passed: installed `app\build\outputs\apk\mobileArm64_v8a\debug\mobile-arm64-v8a.apk` on MuMu through `adb install -r` without clearing application data.
+- Passed: the 1920 x 1080 VOD fullscreen capture shows all twelve existing actions, a visible center gap, no clipped label, and a readable activated state.
+- Passed: the 1920 x 1080 live fullscreen capture shows all ten visible actions, a visible center gap, and no clipped label. The runtime hierarchy keeps the visible action bounds within `x=48` through `x=1842` and reports each action as clickable.
+- Passed: `git diff --check -- app/src/mobile/res/layout/view_control_vod_action.xml app/src/mobile/res/layout/view_control_live_action.xml app/src/mobile/res/values/styles.xml app/src/mobile/res/drawable/shape_player_control.xml` completed without whitespace errors.
+- Environment note: the selected live stream returned `连接超时`; stream availability was not treated as a UI failure because the complete control layer and hierarchy remained testable.
+
+### Notes
+- `app/src/mobile/res/layout/view_control_vod_action.xml`: fills the VOD action strip, adds stable edge padding, and separates the existing action groups with a flexible spacer.
+- `app/src/mobile/res/layout/view_control_live_action.xml`: applies the same grouped structure to the existing live actions.
+- `app/src/mobile/res/values/styles.xml`: compacts fullscreen action labels and preserves a stable touch height and spacing.
+- `app/src/mobile/res/drawable/shape_player_control.xml`: keeps normal actions transparent and activated actions high contrast.
+- `docs/mobile-ui-refactor-20260804.md`: records the grouped layout, preserved behavior, and MuMu verification evidence.
+- `progress.md`: appends this implementation and verification record.
+- Rollback point: after a dedicated commit containing this task, run `git revert <commit>`; before committing, reverse only the August 6 action-strip hunks listed above and remove this documentation entry, without restoring the whole working tree.
+
+## 2026-08-07 - Task: Remove persistent fullscreen action state frames
+
+### What was done
+- Removed the persistent blue activated-state fill and outline from the fullscreen function strip so `跨类` and `换源` display as ordinary controls without abrupt boxes.
+- Kept the existing state storage, click handlers, channel-group traversal, and automatic line-switch behavior unchanged.
+- Left player-engine, track, parser, and live drawer selection surfaces unchanged because they communicate a concrete choice rather than a background toggle.
+
+### Testing
+- Passed: `gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed successfully.
+- Passed: installed `app\build\outputs\apk\mobileArm64_v8a\debug\mobile-arm64_v8a.apk` on the 1080 x 1920 MuMu instance with `adb install -r` without clearing application data.
+- Passed: the 1920 x 1080 live fullscreen capture shows `跨类` and `换源` as plain white text with no blue state frames; the runtime hierarchy still reports both controls as clickable.
+- Passed: `git diff --check -- app/src/mobile/res/drawable/shape_player_control.xml docs/mobile-ui-refactor-20260804.md progress.md` completed without whitespace errors.
+- Environment note: MuMu's Android instance briefly restarted during the first ADB install attempt; the final reconnect and installation completed successfully.
+
+### Notes
+- `app/src/mobile/res/drawable/shape_player_control.xml`: removes the persistent activated background while retaining the transparent action surface.
+- `docs/mobile-ui-refactor-20260804.md`: documents the state-display correction and preserved toggle behavior.
+- `progress.md`: appends this implementation and verification record.
+- Rollback point: after a dedicated commit containing this task, run `git revert <commit>`; before committing, restore only the previous activated item in `shape_player_control.xml` and remove this entry, without restoring the whole working tree.
+
+## 2026-08-07 - Task: Optimize resource parse task scheduling
+
+### What was done
+- Replaced the nested two-worker scheduling in `ParseJob` with one direct single-worker task submission, removing an unnecessary scheduling layer from episode-to-URL parsing.
+- Preserved the existing 15-second parse timeout and made timeout or playback stop cancel the active parse task.
+- Kept parser branches, parse source order, request URLs, request headers, authentication data, WebView detection, fallback behavior, and playback behavior unchanged.
+- Confirmed that parse callbacks remain serialized on the Android main thread, so no additional callback-state lock is required.
+
+### Testing
+- Passed: `git diff --check -- app/src/main/java/com/fongmi/android/tv/player/ParseJob.java` completed without whitespace errors.
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: installed the rebuilt APK on MuMu device `127.0.0.1:16384` with an overwrite install and without clearing application data.
+- Passed: the home and detail screens launched without an application crash.
+- Passed with an external-source limitation: a real `parse=1` route started `CustomWebView`; the selected remote iQIYI parse source then returned a parse failure, so this verifies the new scheduling route but not an end-to-end speed improvement.
+- Passed: a direct-play resource entered its detail screen in about 1.6 seconds and returned a direct playback URL in about 2.7 seconds.
+
+### Notes
+- `app/src/main/java/com/fongmi/android/tv/player/ParseJob.java`: removes nested executor scheduling and cancels the active parse task on timeout or stop.
+- `docs/resource-parse-scheduling-20260807.md`: records the scope, unchanged behavior, expected effect, verification evidence, and remote-source test boundary.
+- `progress.md`: appends this implementation and verification record.
+- Rollback point: after a dedicated commit containing this task, run `git revert <commit>`; before committing, restore only the `ParseJob.java` scheduling hunk and remove `docs/resource-parse-scheduling-20260807.md` plus this progress entry, without restoring the whole working tree.
+
+## 2026-08-07 - Task: Bump APK version for the updated build
+
+### What was done
+- Bumped the mobile APK version from `5.6.4 (564)` to `5.6.5 (565)` so the updated build is distinguishable from the previous installation.
+- Updated the release-version reference while keeping application behavior unchanged.
+
+### Testing
+- Pending: rebuild and inspect APK/package version before installation.
+
+### Notes
+- `app/build.gradle`: updates `versionCode` and `versionName`.
+- `docs/release-version.md`: records the new current APK version and matching rule example.
+- `progress.md`: appends this version bump record.
+- Rollback point: restore `versionCode 564` and `versionName "5.6.4"` in `app/build.gradle`, then restore the previous values in `docs/release-version.md` and remove this progress entry.
+
+## 2026-08-07 - Task: Verify APK version 5.6.5
+
+### What was done
+- Completed the version-bump build and installed it over the existing MuMu installation without clearing application data.
+- Confirmed the package reports the new version and the launcher activity starts normally.
+
+### Testing
+- Passed: `:app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: APK badging reports `versionCode=565` and `versionName=5.6.5`.
+- Passed: MuMu package state reports `versionCode=565` and `versionName=5.6.5` after `adb install -r`.
+- Passed: `HomeActivity` starts on device `127.0.0.1:16384` and process `com.xingguang.video` is running.
+- Passed: `git diff --check -- app/build.gradle docs/release-version.md progress.md` completed without whitespace errors.
+
+### Notes
+- `app/build.gradle`: built and packaged the distinguishable `5.6.5 (565)` APK.
+- `docs/release-version.md`: provides the version reference used during verification.
+- `progress.md`: appends the completed verification record.
+- Rollback point: after a dedicated commit, run `git revert <commit>`; before committing, restore only the version fields and documentation entries listed above.
+
+## 2026-08-08 - Task: Apply transparent glass floating navigation
+
+### What was done
+- Restyled the mobile home bottom navigation as a floating semi-transparent glass surface with rounded corners, a light outline, and elevation.
+- Added horizontal and bottom spacing while keeping the existing 80dp labeled navigation height, menu entries, IDs, click listeners, and fragment routes unchanged.
+- Reduced the VOD hero height so the first-page content remains above the reserved navigation area and Chinese labels remain fully visible.
+- Lowered the navigation gradient opacity to make the transparent effect more apparent on the dark surface while preserving selected-state contrast.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: installed `app\build\outputs\apk\mobileArm64_v8a\debug\mobile-arm64_v8a.apk` on MuMu device `127.0.0.1:16384` with `adb install -r` without clearing data.
+- Passed: `HomeActivity` launched after installation and the runtime navigation bounds were `[48,1650][1032,1890]` on the 1080 x 1920 device.
+- Passed: the selected `点播` label remained fully visible in its 48px text viewport; the final capture shows no content overlap.
+- Passed: tapping `我的` selected the settings destination, then tapping `点播` returned to the VOD destination; both selected states were confirmed in the runtime hierarchy.
+- Passed: final screenshot inspection confirmed the transparent gradient, rounded outline, readable labels, and unchanged navigation layout.
+
+### Notes
+- `app/src/mobile/res/layout/activity_home.xml`: adds the floating navigation margins, clipping, elevation, and labeled 80dp surface.
+- `app/src/mobile/res/drawable/shape_cloud_bottom_nav.xml`: defines the rounded translucent gradient and outline.
+- `app/src/mobile/res/values/colors.xml`: defines the translucent navigation colors and selected indicator color.
+- `app/src/mobile/res/layout/fragment_vod.xml`: reserves space by reducing the expanded hero to 230dp.
+- `docs/mobile-glass-navigation-20260808.md`: records the visual scope, compatibility choice, verification evidence, and rollback point.
+- `progress.md`: appends this implementation and verification record.
+- Rollback point: before committing, reverse only the listed navigation, color, and hero-height hunks and remove `docs/mobile-glass-navigation-20260808.md` plus this entry; do not restore the whole working tree.
+
+## 2026-08-08 - Task: Compact the transparent glass navigation
+
+### What was done
+- Reduced the floating navigation height from 80dp to 70dp and narrowed its usable width with 24dp horizontal margins.
+- Reduced the bottom gap from 10dp to 6dp, the icon from 22dp to 20dp, the label to 11sp, and the selected indicator to 52dp by 28dp.
+- Reduced the corner radius and elevation to keep the transparent glass surface proportional to the compact dimensions.
+- Kept all menu entries, IDs, selected-state behavior, click listeners, fragment routes, and content-reservation behavior unchanged.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: installed `app\build\outputs\apk\mobileArm64_v8a\debug\mobile-arm64_v8a.apk` on MuMu device `127.0.0.1:16384` with `adb install -r` without clearing data.
+- Passed: the runtime navigation bounds changed from `[48,1650][1032,1890]` to `[72,1692][1008,1902]`, confirming the container is shorter and narrower.
+- Passed: all three label bounds remain 48px high; the selected VOD label is `[194,1821][262,1869]` and renders completely.
+- Passed: tapping `我的` selected the settings destination and tapping `点播` returned to VOD; both selected states were confirmed in the runtime hierarchy.
+- Passed: final screenshot inspection confirmed the smaller glass container, icon, label, indicator, bottom gap, and absence of content overlap.
+
+### Notes
+- `app/src/mobile/res/layout/activity_home.xml`: compacts the navigation container, margins, icons, padding, text appearances, and elevation.
+- `app/src/mobile/res/drawable/shape_cloud_bottom_nav.xml`: reduces the glass container corner radius.
+- `app/src/mobile/res/values/styles.xml`: defines the compact selected indicator and 11sp navigation label.
+- `docs/mobile-glass-navigation-20260808.md`: updates the current compact dimensions and MuMu verification evidence.
+- `progress.md`: appends this compact-navigation implementation and verification record.
+- Rollback point: before committing, restore only the compact-navigation hunks in the four files listed above and remove this progress entry; do not restore the whole working tree.
+
+## 2026-08-08 - Task: Further reduce the glass navigation footprint
+
+### What was done
+- Reduced the floating navigation height from 70dp to 60dp and increased the horizontal margins from 24dp to 32dp.
+- Reduced the bottom gap from 6dp to 4dp, the icon from 20dp to 18dp, the label from 11sp to 10sp, and the selected indicator from 52dp by 28dp to 44dp by 24dp.
+- Reduced the corner radius and elevation again so the outline and shadow remain proportional to the smaller surface.
+- Kept all navigation destinations, IDs, listeners, selected states, routes, and content-reservation behavior unchanged.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: installed `app\build\outputs\apk\mobileArm64_v8a\debug\mobile-arm64_v8a.apk` on MuMu device `127.0.0.1:16384` with `adb install -r` without clearing data.
+- Passed: the runtime navigation bounds changed from `[72,1692][1008,1902]` to `[96,1728][984,1908]`, reducing the surface from 210px to 180px high and from 936px to 888px wide.
+- Passed: all three labels remain in complete 48px-high viewports; the selected VOD label is `[213,1836][275,1884]`.
+- Passed: tapping `我的` selected the settings destination and tapping `点播` returned to VOD; both selected states were confirmed in the runtime hierarchy.
+- Passed: final screenshot inspection confirmed the smaller transparent surface, bottom gap, icons, labels, selected indicator, and absence of overlap.
+
+### Notes
+- `app/src/mobile/res/layout/activity_home.xml`: further reduces the navigation container, margins, icon, padding, and elevation.
+- `app/src/mobile/res/drawable/shape_cloud_bottom_nav.xml`: reduces the corner radius to match the 60dp surface.
+- `app/src/mobile/res/values/styles.xml`: reduces the selected indicator and navigation label.
+- `docs/mobile-glass-navigation-20260808.md`: records the final compact dimensions and runtime bounds.
+- `progress.md`: appends this additional compact-navigation implementation and verification record.
+- Rollback point: before committing, restore only the latest compact-navigation hunks in the four files listed above and remove this progress entry; do not restore the whole working tree.
+
+## 2026-08-08 - Task: Match the supplied dark capsule navigation style
+
+### What was done
+- Restyled the existing three-destination navigation to match the supplied reference's dark floating capsule without adding or removing application destinations.
+- Removed the separate blue selected indicator and changed the selected destination to gold icon and label color.
+- Changed inactive navigation icons and labels to white, increased the container radius to a full capsule, darkened the translucent surface, and reduced the outline contrast.
+- Preserved the current 60dp compact height, 32dp horizontal margins, 4dp bottom gap, 18dp icons, 10sp labels, IDs, listeners, routes, and content-reservation behavior.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: installed `app\build\outputs\apk\mobileArm64_v8a\debug\mobile-arm64_v8a.apk` on MuMu device `127.0.0.1:16384` with `adb install -r` without clearing data.
+- Passed: the final capture shows a dark fully rounded capsule, gold selected VOD icon and label, white inactive icons and labels, and no blue selected block.
+- Passed: the runtime hierarchy reports zero `navigation_bar_item_active_indicator_view` nodes in both VOD and settings states.
+- Passed: the navigation remains `[96,1728][984,1908]`; all three labels retain complete 48px-high viewports and the selected VOD label is `[213,1827][275,1875]`.
+- Passed: tapping `我的` selected the settings destination and tapping `点播` returned to VOD with both selected states confirmed.
+
+### Notes
+- `app/src/mobile/res/layout/activity_home.xml`: disables the separate Material active-indicator surface while preserving the compact layout.
+- `app/src/mobile/res/drawable/shape_cloud_bottom_nav.xml`: changes the surface to a fully rounded capsule.
+- `app/src/mobile/res/color/nav.xml`: applies gold selected and white inactive navigation colors.
+- `app/src/mobile/res/color-night/nav.xml`: applies the same navigation colors in night mode.
+- `app/src/mobile/res/values/colors.xml`: defines the gold navigation accent and darker translucent capsule colors.
+- `docs/mobile-glass-navigation-20260808.md`: records the reference-matched visual treatment and verification evidence.
+- `progress.md`: appends this navigation-style implementation and verification record.
+- Rollback point: before committing, restore only the reference-style hunks in the six files listed above and remove this progress entry; do not restore the whole working tree.
+
+## 2026-08-08 - Task: Reduce the dark capsule base
+
+### What was done
+- Reduced only the visible capsule base from 60dp to 56dp high and increased its horizontal margins from 32dp to 40dp.
+- Reduced the capsule radius from 30dp to 28dp so the fully rounded shape remains proportional.
+- Kept the 18dp icons, 10sp labels, gold selected state, white inactive state, bottom offset, destinations, IDs, listeners, routes, and content-reservation behavior unchanged.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: installed `app\build\outputs\apk\mobileArm64_v8a\debug\mobile-arm64_v8a.apk` on MuMu device `127.0.0.1:16384` with `adb install -r` without clearing data.
+- Passed: the runtime navigation bounds changed from `[96,1728][984,1908]` to `[120,1740][960,1908]`, reducing the visible base from 888px by 180px to 840px by 168px.
+- Passed: all three labels remain in complete 48px-high viewports; the selected VOD label is `[229,1833][291,1881]`.
+- Passed: tapping `我的` selected the settings destination and tapping `点播` returned to VOD with both selected states confirmed.
+- Passed: final screenshot inspection confirmed the smaller base, unchanged icon and label readability, and absence of content overlap.
+
+### Notes
+- `app/src/mobile/res/layout/activity_home.xml`: reduces the capsule height and width without shrinking its navigation content.
+- `app/src/mobile/res/drawable/shape_cloud_bottom_nav.xml`: reduces the corner radius proportionally.
+- `docs/mobile-glass-navigation-20260808.md`: updates the final capsule dimensions and runtime evidence.
+- `progress.md`: appends this capsule-size implementation and verification record.
+- Rollback point: before committing, restore only the latest size hunks in the four files listed above and remove this progress entry; do not restore the whole working tree.
+
+## 2026-08-08 - Task: Remove the dark strip behind the floating navigation
+
+### What was done
+- Removed the home fragment container's `layout_above` constraint so page content and background extend behind the floating navigation capsule instead of ending at its top edge.
+- Added 80dp bottom scroll padding to the settings and player-settings pages so their final rows remain reachable above the overlay.
+- Added explicit margins to the VOD floating actions and placed them 76dp from the bottom so the expanded container does not move them into the navigation capsule.
+- Kept all destinations, IDs, listeners, routes, and navigation dimensions unchanged.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL` after the final layout changes.
+- Passed: installed `app\build\outputs\apk\mobileArm64_v8a\debug\mobile-arm64_v8a.apk` on MuMu `127.0.0.1:16384` with `adb install -r`.
+- Passed: runtime home container bounds are `[0,72][1080,1920]` and navigation bounds remain `[120,1740][960,1908]`; visual capture shows page artwork beneath the capsule with no full-width black strip.
+- Passed: the collapsed VOD top action is `[864,1524][1032,1692]`, leaving a clear gap above the capsule.
+- Passed: settings bottom capture shows the complete version row; player-settings bottom capture shows the complete User-Agent row.
+- Passed: navigation selection and return flow remain functional (`我的` -> settings, `点播` -> VOD), and labels remain fully visible.
+
+### Notes
+- `app/src/mobile/res/layout/activity_home.xml`: removes the content reservation above the navigation overlay.
+- `app/src/mobile/res/layout/fragment_vod.xml`: keeps floating actions above the overlay with explicit margins.
+- `app/src/mobile/res/layout/fragment_setting.xml`: adds bottom scroll safety space.
+- `app/src/mobile/res/layout/fragment_setting_player.xml`: adds bottom scroll safety space.
+- `docs/mobile-glass-navigation-20260808.md`: documents the cause, overlay correction, verification evidence, and rollback scope.
+- `progress.md`: appends this implementation and verification record.
+- Rollback point: restore only the layout hunks listed above (plus the preceding navigation changes if needed); do not reset or restore the whole working tree.
+
+## 2026-08-10 - Task: Bump the user-facing APK version after the navigation fix
+
+### What was done
+- Increased the Android package version from `5.6.5 (565)` to `5.6.6 (566)` so the updated APK is distinguishable from the preceding installation.
+- Synchronized the release-version document with the packaged version.
+- Kept application behavior, UI layout, package ID, signing configuration, and user data unchanged.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: `aapt2 dump badging` reports package `com.xingguang.video`, `versionCode='566'`, and `versionName='5.6.6'`.
+- Passed: MuMu `127.0.0.1:16384` installed the APK with `adb install -r`; device package metadata reports `versionCode=566` and `versionName=5.6.6`.
+- Passed: the application launched successfully and the settings page hierarchy displays version `5.6.6`.
+- Final APK SHA-256: `FA9345794B34F679796F3F253D50FD5DCA9B4150856122526BBFF999FB533537`.
+
+### Notes
+- `app/build.gradle`: updates `versionCode` to `566` and `versionName` to `5.6.6`.
+- `docs/release-version.md`: updates the current APK version and alignment example.
+- `progress.md`: appends the version-bump implementation and verification record.
+- Rollback point: restore `versionCode 565` and `versionName "5.6.5"` in `app/build.gradle`, restore `565 / 5.6.5` in `docs/release-version.md`, remove this entry, and rebuild the APK; do not restore the whole working tree.
+
+## 2026-08-10 - Task: Remove the duplicate homepage continue-playing hero
+
+### What was done
+- Removed the large full-width continue-playing title, description, and action buttons from the VOD homepage because they duplicated the compact continue-watching row below.
+- Reduced the former hero container to a 58dp top toolbar so the category tabs and movie content move upward by 172dp while source selection, search, favorites, and history remain available.
+- Kept the compact continue-watching row as the single resume entry and preserved its existing playback route.
+- Increased the user-facing APK version from `5.6.6 (566)` to `5.6.7 (567)` and synchronized the UI-refactor and release-version documents.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: `aapt2 dump badging` and the installed MuMu package both report `versionCode=567` and `versionName=5.6.7`.
+- Passed: installed `app\build\outputs\apk\mobileArm64_v8a\debug\mobile-arm64_v8a.apk` on MuMu `127.0.0.1:16384` with `adb install -r` without clearing user data.
+- Passed: runtime bounds changed to top toolbar `[0,72][1080,246]`, category tabs `[0,246][1080,366]`, compact continue-watching row `[0,465][1080,657]`, and content pager starting at `y=660`; the previous hero had extended to `y=762`.
+- Passed: final screenshot inspection confirms the duplicate hero is absent, category content has moved upward, the compact continue-watching row remains complete, and the bottom navigation does not cover content.
+- Passed: tapping search, favorites, history, compact continue watching, and live navigation opened `SearchActivity`, `KeepActivity`, `HistoryActivity`, `VideoActivity`, and `LiveActivity` respectively.
+- Passed: the settings page displays version `5.6.7` above the floating navigation without overlap.
+- Final APK SHA-256: `2FF311CDB879893D0DD9BAC19817E3929F9DA013745D59CA876F871040E61033`.
+
+### Notes
+- `app/src/mobile/res/layout/fragment_vod.xml`: removes the duplicate hero body and keeps only the compact top toolbar above the existing category and continue-watching sections.
+- `app/src/mobile/java/com/fongmi/android/tv/ui/fragment/VodFragment.java`: removes the listener for the deleted duplicate search control while preserving the toolbar search listener.
+- `app/build.gradle`: updates the APK version to `5.6.7 (567)`.
+- `docs/mobile-ui-refactor-20260804.md`: records the compact toolbar structure and duplicate-hero removal.
+- `docs/release-version.md`: records the current packaged version.
+- `home-density-567.png`: stores the final MuMu homepage verification capture.
+- `progress.md`: appends this implementation and verification record.
+- Rollback point: before committing, restore only the removed hero-body and search-listener hunks, change the version fields and release document back to `5.6.6 (566)`, remove `home-density-567.png` and this entry, then rebuild; do not restore the whole working tree.
+
+## 2026-08-10 - Task: Extend the homepage background behind the status bar
+
+### What was done
+- Made the Home activity draw edge to edge so the VOD artwork continues to the physical top of the screen instead of leaving a separate black status strip.
+- Switched Home status icons to the light appearance and added a short dark-to-transparent top scrim so time, network, and battery remain readable over both the header artwork and bright posters after scrolling.
+- Applied the real status-bar inset only to the toolbar controls, preserving their previous safe position while allowing the background to extend underneath the system bar.
+- Preserved the original top inset for settings fragments and the bottom system inset for the floating navigation.
+- Increased the user-facing APK version from `5.6.7 (567)` to `5.6.8 (568)` and synchronized the release and UI-refactor documents.
+
+### Testing
+- Passed: final `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`; the edge-to-edge implementation and the final contrast-scrim build both compiled successfully.
+- Passed: `aapt2 dump badging` reports package `com.xingguang.video`, `versionCode='568'`, and `versionName='5.6.8'`.
+- Passed: MuMu `127.0.0.1:16384` installed the final APK with `adb install -r` without clearing user data.
+- Passed: runtime hierarchy reports the VOD container and artwork beginning at `y=0`, toolbar artwork `[0,0][1080,246]`, unchanged toolbar controls around `y=99..219`, and unchanged category tabs beginning at `y=246`.
+- Passed: expanded-state screenshot inspection confirms there is no solid black strip, the artwork continues behind white system icons, and the toolbar controls do not overlap the status bar.
+- Passed: collapsed-state screenshot inspection confirms the fading scrim keeps white time, network, and battery icons readable over bright poster artwork without creating a hard edge.
+- Passed: the settings destination remains selected and safely inset below the system bar; tapping the final toolbar search control still opens `SearchActivity`.
+- Passed: `git diff --check` reports no whitespace errors in the task files.
+- Final APK SHA-256: `3FA92A4D4A26BAD2E14439A0BEC587389FAAF7B45DCD0567B4D3BFEFCB32CCFC`.
+
+### Notes
+- `app/src/mobile/java/com/fongmi/android/tv/ui/activity/HomeActivity.java`: enables the Home-only transparent status bar, light system icons, and fragment-specific safe insets.
+- `app/src/mobile/java/com/fongmi/android/tv/ui/fragment/VodFragment.java`: expands only the artwork container by the status inset and applies that inset to toolbar content.
+- `app/src/mobile/res/layout/activity_home.xml`: removes automatic full-root system fitting and adds the non-interactive top contrast scrim.
+- `app/src/mobile/res/layout/fragment_vod.xml`: identifies the toolbar content layer and lets it fill the inset-aware artwork container.
+- `app/src/mobile/res/drawable/shape_status_bar_scrim.xml`: defines the short dark-to-transparent readability fade.
+- `app/build.gradle`: updates the APK version to `5.6.8 (568)`.
+- `docs/mobile-ui-refactor-20260804.md`: records the edge-to-edge status-bar treatment and control safety behavior.
+- `docs/release-version.md`: records the current packaged version.
+- `home-status-final-568.png`: stores the final expanded-state MuMu verification capture.
+- `home-collapsed-final-568.png`: stores the final collapsed-state MuMu verification capture.
+- `progress.md`: appends this implementation and verification record.
+- Rollback point: before committing, restore the Home root's previous `fitsSystemWindows` behavior, remove the status scrim view and drawable, restore only the Home/VOD status-inset hunks, change the version and release document back to `5.6.7 (567)`, remove the two `568` screenshots and this entry, then rebuild; do not restore the whole working tree.
+
+## 2026-08-10 - Task: Complete the 5.6.8 MuMu UI regression test
+
+### What was done
+- Completed the installed `5.6.8 (568)` UI regression on MuMu and left the application on the VOD homepage.
+- Confirmed the edge-to-edge status-bar treatment, page transitions, safe top insets, version display, and compact floating bottom navigation without changing application code.
+- Removed only the temporary regression screenshots and UI hierarchy dumps; retained the two final `568` verification captures.
+
+### Testing
+- Passed: ADB reports MuMu `127.0.0.1:16384` in `device` state and the foreground activity is `HomeActivity` after tapping the VOD destination.
+- Passed: expanded and collapsed homepage states show artwork behind readable white status icons without a black strip or hard scrim edge; toolbar controls remain below the status bar.
+- Passed: search, profile, player settings, and version destinations open correctly; settings titles remain safely inset and the version row displays `5.6.8` without bottom-navigation overlap.
+- Passed: the final hierarchy reports VOD selected, navigation bounds `[120,1740][960,1908]`, and the VOD label bounds `[229,1833][291,1881]`, so the label is fully visible.
+- Passed: all nine temporary regression files are absent and `home-status-final-568.png` plus `home-collapsed-final-568.png` remain present.
+
+### Notes
+- `status-regression-home.png`: removed the temporary expanded-home regression capture.
+- `status-regression-home.xml`: removed the temporary expanded-home hierarchy dump.
+- `status-regression-collapsed.png`: removed the temporary collapsed-home regression capture.
+- `status-regression-settings.png`: removed the temporary settings regression capture.
+- `status-regression-settings.xml`: removed the temporary settings hierarchy dump.
+- `status-regression-player-settings.png`: removed the temporary player-settings regression capture.
+- `status-regression-player-settings.xml`: removed the temporary player-settings hierarchy dump.
+- `status-regression-version.png`: removed the temporary version-page regression capture.
+- `status-regression-version.xml`: removed the temporary version-page hierarchy dump.
+- `progress.md`: appends the regression completion, evidence, and temporary-artifact cleanup record.
+- Rollback point: no application-code rollback is required; to recreate temporary evidence, navigate to each recorded screen and run `adb exec-out screencap -p` for PNG captures and `adb exec-out uiautomator dump /dev/tty` for hierarchy dumps.
 
 ## 2026-08-10 - Task: Remove conversation-produced TrollStore iOS artifacts
 
@@ -3944,3 +4524,38 @@
 - `.gitignore`: removes only the conversation-produced iOS/Xcode ignore fragment.
 - `progress.md`: appends the backup, deletion, verification, changed-file, and rollback record.
 - Rollback point: restore `C:\Users\52396\.codex\visualizations\2026\08\10\019feaf6-603d-7343-ae72-bc369d36c968\trollstore-ios-backup-20260810.zip` or run `git revert <commit>` after the deletion commit; the archive SHA-256 is `D73F8D4C2F9199412941E9EE81C98750F9BAE1C92B0322496ED5DD288F783F1E`.
+
+## 2026-08-11 - Task: Fix low-contrast text and icons in Material dialogs
+
+### What was done
+- Bound the Material 3 high dialog-container token to the existing dark panel surface, replacing the light lavender dialog background that conflicted with the app's white text and icons.
+- Preserved source selection, search, refresh, long-press, standard dialog, and selected-state behavior; no handler or data path changed.
+- Increased the user-facing APK version from `5.6.8 (568)` to `5.6.9 (569)` and synchronized the release and UI-refactor documents.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors in the scoped text files.
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: `aapt2 dump badging` and the installed MuMu package both report `versionCode=569`, `versionName=5.6.9`, package `com.xingguang.video`, and arm64-v8a native code.
+- Passed: the APK installed with `adb -s emulator-5554 install -r` without clearing application data.
+- Passed: the profile source dialog exposes six source labels, six search controls, and six refresh controls; all action controls remain enabled and clickable.
+- Passed: the rendered dialog container is `#181B20`; white source text measures `17.26:1`, light action icons measure `15.83:1`, and blue selected text measures `4.6:1` contrast, meeting the `4.5:1` normal-text threshold.
+- Passed: the standard image-size dialog renders its title, four choices, selected radio state, and cancel action clearly on the dark surface; the profile version row displays `5.6.9`.
+- Final APK SHA-256: `D68AA8DDA901675FE59912E61A5684A101D94B9FA6B705AB6D70164B3509FAD9`.
+
+### Notes
+- `app/src/mobile/res/values/styles.xml`: maps the Material 3 high container surface used by dialogs to the existing dark panel color.
+- `app/build.gradle`: updates the APK version to `5.6.9 (569)`.
+- `docs/release-version.md`: records the current packaged version.
+- `docs/mobile-ui-refactor-20260804.md`: records the dialog contrast rule and runtime verification.
+- `site-contrast-after-569.png`: stores the final source-dialog MuMu verification capture.
+- `standard-dialog-569.png`: stores the final standard-dialog MuMu verification capture.
+- `site-contrast-before-568.png`: removed the temporary pre-fix capture after comparison.
+- `site-contrast-before-568.xml`: removed the temporary pre-fix hierarchy dump after comparison.
+- `profile-569.png`: removed the temporary profile-navigation capture after locating the source control.
+- `profile-569.xml`: removed the temporary profile hierarchy dump after locating the source control.
+- `home-wait-569.xml`: removed the temporary configuration-readiness hierarchy dump.
+- `settings-scroll-569.xml`: removed the temporary settings hierarchy dump after version verification.
+- `site-contrast-after-569.xml`: removed the temporary post-fix source-dialog hierarchy dump after control verification.
+- `standard-dialog-569.xml`: removed the temporary standard-dialog hierarchy dump after control verification.
+- `progress.md`: appends this implementation, verification, cleanup, and rollback record.
+- Rollback point: remove only the `colorSurfaceContainerHigh` item added to `Theme.Base`, restore `app/build.gradle` and `docs/release-version.md` to `5.6.8 (568)`, remove the dialog-contrast additions from `docs/mobile-ui-refactor-20260804.md`, delete the two `569` screenshots, and remove this entry; do not restore the whole working tree.

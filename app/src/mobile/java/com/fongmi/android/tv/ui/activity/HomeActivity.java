@@ -3,6 +3,7 @@ package com.fongmi.android.tv.ui.activity;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -10,8 +11,12 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
+import androidx.core.graphics.Insets;
 import androidx.core.graphics.drawable.IconCompat;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.viewbinding.ViewBinding;
 
@@ -52,11 +57,17 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
 
     private FragmentStateManager mManager;
     private ActivityHomeBinding mBinding;
+    private int statusBarInset;
     private int orientation;
 
     @Override
     protected ViewBinding getBinding() {
         return mBinding = ActivityHomeBinding.inflate(getLayoutInflater());
+    }
+
+    @Override
+    protected boolean lightSystemBars() {
+        return false;
     }
 
     @Override
@@ -75,6 +86,7 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
     protected void initView(Bundle savedInstanceState) {
         orientation = getResources().getConfiguration().orientation;
         initFragment(savedInstanceState);
+        initSystemBars();
         initConfig();
     }
 
@@ -110,7 +122,31 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
                 return null;
             }
         };
-        if (savedInstanceState == null) mManager.change(0);
+        if (savedInstanceState == null) changeFragment(0);
+    }
+
+    private void initSystemBars() {
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
+        ViewCompat.setOnApplyWindowInsetsListener(mBinding.getRoot(), (view, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            statusBarInset = bars.top;
+            view.setPadding(bars.left, 0, bars.right, bars.bottom);
+            setContentInset(mManager == null || mManager.isVisible(0));
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(mBinding.getRoot());
+    }
+
+    private void setContentInset(boolean vodVisible) {
+        int top = vodVisible ? 0 : statusBarInset;
+        if (mBinding.container.getPaddingTop() == top) return;
+        mBinding.container.setPadding(0, top, 0, 0);
+    }
+
+    private boolean changeFragment(int position) {
+        setContentInset(position == 0);
+        return mManager.change(position);
     }
 
     private void initConfig() {
@@ -171,7 +207,7 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
     }
 
     public void change(int position) {
-        mManager.change(position);
+        changeFragment(position);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -188,8 +224,8 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         if (mBinding.navigation.getSelectedItemId() == item.getItemId()) return false;
-        if (item.getItemId() == R.id.setting) return mManager.change(1);
-        if (item.getItemId() == R.id.vod) return mManager.change(0);
+        if (item.getItemId() == R.id.setting) return changeFragment(1);
+        if (item.getItemId() == R.id.vod) return changeFragment(0);
         if (item.getItemId() == R.id.live) return openLive();
         return false;
     }

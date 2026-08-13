@@ -1,15 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
-    android:color="#80FFF176">
+    android:color="@color/xg_control_ripple">
+    <item>
+        <selector>
+            <item android:state_selected="true">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/xg_control_fill_active" />
+                    <stroke android:width="1dp" android:color="@color/xg_primary" />
+                    <corners android:radius="4dp" />
+                    <padding
+                        android:bottom="8dp"
+                        android:left="12dp"
+                        android:right="12dp"
+                        android:top="8dp" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/xg_overlay_strong" />
+                    <stroke android:width="1dp" android:color="@color/xg_line" />
+                    <corners android:radius="4dp" />
+                    <padding
+                        android:bottom="8dp"
+                        android:left="12dp"
+                        android:right="12dp"
+                        android:top="8dp" />
+                </shape>
+            </item>
+        </selector>
+    </item>
     <item android:id="@android:id/mask">
         <shape android:shape="rectangle">
             <solid android:color="#f5f5f5" />
             <corners android:radius="4dp" />
-            <padding
-                android:bottom="8dp"
-                android:left="12dp"
-                android:right="12dp"
-                android:top="8dp" />
         </shape>
     </item>
 </ripple>

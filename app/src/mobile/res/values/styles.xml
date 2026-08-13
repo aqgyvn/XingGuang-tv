@@ -6,6 +6,7 @@
         <item name="colorPrimaryDark">@color/primaryDark</item>
         <item name="colorSurface">@color/xg_surface</item>
         <item name="colorSurfaceVariant">@color/xg_card_fill</item>
+        <item name="colorSurfaceContainerHigh">@color/xg_panel_soft</item>
         <item name="colorOnSurface">@color/xg_text_primary</item>
         <item name="colorOnSurfaceVariant">@color/xg_nav_inactive</item>
         <item name="colorControlNormal">@color/xg_icon_default</item>
@@ -18,14 +19,14 @@
         <item name="android:colorControlActivated">@color/xg_primary</item>
         <item name="android:colorControlHighlight">@color/xg_control_ripple</item>
         <item name="android:statusBarColor">@color/transparent</item>
-        <item name="android:navigationBarColor">@color/xg_surface</item>
+        <item name="android:navigationBarColor">@color/xg_background</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="bottomSheetDialogTheme">@style/BottomSheetDialog</item>
     </style>
 
     <style name="Theme.Splash" parent="Theme.SplashScreen">
         <item name="postSplashScreenTheme">@style/Theme.App</item>
-        <item name="windowSplashScreenBackground">@color/xg_surface</item>
+        <item name="windowSplashScreenBackground">@color/xg_background</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
     </style>
 
@@ -40,11 +41,14 @@
 
     <style name="Control">
         <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
-        <item name="android:padding">8dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:layout_marginEnd">10dp</item>
+        <item name="android:background">@drawable/shape_player_control</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingEnd">4dp</item>
         <item name="android:textColor">@color/white</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">12sp</item>
     </style>
 
     <style name="BottomSheetDialog" parent="Theme.Material3.DayNight.BottomSheetDialog">
@@ -54,7 +58,7 @@
         <item name="android:windowIsFloating">false</item>
         <item name="android:backgroundDimEnabled">false</item>
         <item name="android:statusBarColor">@color/transparent</item>
-        <item name="android:navigationBarColor">@color/xg_surface</item>
+        <item name="android:navigationBarColor">@color/xg_background</item>
         <item name="bottomSheetStyle">@style/ModalBottomSheetDialog</item>
     </style>
 
@@ -68,12 +72,24 @@
 
     <style name="Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
         <item name="android:color">@color/indicator</item>
+        <item name="android:width">44dp</item>
+        <item name="android:height">24dp</item>
+        <item name="marginHorizontal">3dp</item>
+    </style>
+
+    <style name="BottomNavigationText" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">10sp</item>
     </style>
 
     <style name="ToolbarTextAppearance" parent="TextAppearance.Material3.TitleLarge">
         <item name="android:textSize">16sp</item>
         <item name="android:textColor">@color/xg_text_primary</item>
         <item name="titleTextColor">@color/xg_text_primary</item>
+    </style>
+
+    <style name="Home.Poster" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">7dp</item>
     </style>
 
 </resources>

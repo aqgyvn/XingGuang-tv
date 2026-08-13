@@ -28,15 +28,17 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 
 import okhttp3.Response;
 
 public class ParseJob implements ParseCallback {
 
     private final List<CustomWebView> webViews;
+    private final Runnable timeout;
     private ExecutorService executor;
     private ExecutorService infinite;
+    private Future<?> future;
     private ParseCallback callback;
     private Parse parse;
 
@@ -45,9 +47,16 @@ public class ParseJob implements ParseCallback {
     }
 
     public ParseJob(ParseCallback callback) {
-        this.executor = Executors.newFixedThreadPool(2);
+        this.executor = Executors.newSingleThreadExecutor();
         this.infinite = Executors.newCachedThreadPool();
         this.webViews = new ArrayList<>();
+        this.timeout = () -> {
+            Future<?> task = future;
+            if (task != null && !task.isDone()) {
+                task.cancel(true);
+                onParseError();
+            }
+        };
         this.callback = callback;
     }
 
@@ -73,13 +82,12 @@ public class ParseJob implements ParseCallback {
     }
 
     private void execute(Result result) {
-        executor.execute(() -> {
-            try {
-                executor.submit(getTask(result)).get(Constant.TIMEOUT_PARSE_DEF, TimeUnit.MILLISECONDS);
-            } catch (Throwable e) {
-                onParseError();
-            }
-        });
+        try {
+            future = executor.submit(getTask(result));
+            App.post(timeout, Constant.TIMEOUT_PARSE_DEF);
+        } catch (Throwable e) {
+            onParseError();
+        }
     }
 
     private Runnable getTask(Result result) {
@@ -222,6 +230,8 @@ public class ParseJob implements ParseCallback {
     }
 
     public void stop() {
+        App.removeCallbacks(timeout);
+        if (future != null) future.cancel(true);
         if (executor != null) executor.shutdownNow();
         if (infinite != null) infinite.shutdownNow();
         infinite = null;
