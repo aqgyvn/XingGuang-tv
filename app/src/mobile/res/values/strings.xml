@@ -8,6 +8,15 @@
     <string name="nav_vod">Vod</string>
     <string name="nav_live">Live</string>
     <string name="nav_setting">Setting</string>
+    <string name="nav_profile">My</string>
+
+    <!-- Profile -->
+    <string name="profile_subtitle">Library, sources and playback</string>
+    <string name="profile_library">My library</string>
+    <string name="profile_sources">Content sources</string>
+    <string name="profile_playback">Playback</string>
+    <string name="profile_preferences">Preferences</string>
+    <string name="profile_data">Data and storage</string>
 
     <!-- Menu -->
     <string name="menu_sync">Sync</string>
@@ -18,6 +27,16 @@
 
     <!-- Vod -->
     <string name="vod_home">Home</string>
+
+    <string name="vod_home_featured">Featured today</string>
+    <string name="vod_home_resume_title">Resume your last watch</string>
+    <string name="vod_home_resume_meta">Your recent playback</string>
+    <string name="vod_home_resume_summary">Continue from where you stopped.</string>
+    <string name="vod_home_resume_action">Continue</string>
+    <string name="vod_home_hot">Trending now</string>
+    <string name="vod_home_all">All</string>
+    <string name="vod_home_continue">Continue watching</string>
+    <string name="vod_home_continue_hint">Open a title to continue playback</string>
 
     <!-- Detail -->
     <string name="detail_flag">Flag</string>

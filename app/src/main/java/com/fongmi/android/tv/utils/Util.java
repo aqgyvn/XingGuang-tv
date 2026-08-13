@@ -180,10 +180,6 @@ public class Util {
         return formats.stream().map(format -> parse(format, source)).map(Date::getTime).filter(time -> time > 0).findFirst().orElse(0L);
     }
 
-    public static boolean isLeanback() {
-        return "leanback".equals(BuildConfig.FLAVOR_mode);
-    }
-
     public static boolean isMobile() {
         return "mobile".equals(BuildConfig.FLAVOR_mode);
     }

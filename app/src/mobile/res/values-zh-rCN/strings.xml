@@ -8,6 +8,15 @@
     <string name="nav_vod">点播</string>
     <string name="nav_live">直播</string>
     <string name="nav_setting">设置</string>
+    <string name="nav_profile">&#x6211;&#x7684;</string>
+
+    <!-- Profile -->
+    <string name="profile_subtitle">&#x7247;&#x5355;&#x3001;&#x5185;&#x5bb9;&#x6e90;&#x548c;&#x64ad;&#x653e;&#x504f;&#x597d;</string>
+    <string name="profile_library">&#x6211;&#x7684;&#x7247;&#x5355;</string>
+    <string name="profile_sources">&#x5185;&#x5bb9;&#x6e90;</string>
+    <string name="profile_playback">&#x64ad;&#x653e;</string>
+    <string name="profile_preferences">&#x504f;&#x597d;</string>
+    <string name="profile_data">&#x6570;&#x636e;&#x4e0e;&#x5b58;&#x50a8;</string>
 
     <!-- Menu -->
     <string name="menu_sync">同步</string>
@@ -18,6 +27,16 @@
 
     <!-- Vod -->
     <string name="vod_home">推荐</string>
+
+    <string name="vod_home_featured">&#x4ECA;&#x65E5;&#x7CBE;&#x9009;</string>
+    <string name="vod_home_resume_title">&#x4ECE;&#x4E0A;&#x6B21;&#x64AD;&#x653E;&#x4F4D;&#x7F6E;&#x7EE7;&#x7EED;</string>
+    <string name="vod_home_resume_meta">&#x64AD;&#x653E;&#x8BB0;&#x5F55;</string>
+    <string name="vod_home_resume_summary">&#x4ECE;&#x4E0A;&#x6B21;&#x89C2;&#x770B;&#x7684;&#x4F4D;&#x7F6E;&#x7EE7;&#x7EED;&#x64AD;&#x653E;&#x3002;</string>
+    <string name="vod_home_resume_action">&#x7EE7;&#x7EED;&#x64AD;&#x653E;</string>
+    <string name="vod_home_hot">&#x6B63;&#x5728;&#x70ED;&#x64AD;</string>
+    <string name="vod_home_all">&#x5168;&#x90E8;</string>
+    <string name="vod_home_continue">&#x7EE7;&#x7EED;&#x89C2;&#x770B;</string>
+    <string name="vod_home_continue_hint">&#x70B9;&#x51FB;&#x5F71;&#x7247;&#x7EE7;&#x7EED;&#x64AD;&#x653E;</string>
 
     <!-- Detail -->
     <string name="detail_flag">线路</string>

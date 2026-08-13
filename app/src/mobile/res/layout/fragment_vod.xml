@@ -1,47 +1,325 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout android:background="@color/xg_background" android:layout_width="fill_parent" android:layout_height="fill_parent"
-  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
-    <com.google.android.material.appbar.AppBarLayout android:id="@+id/appBar" android:background="@color/transparent" android:layout_width="fill_parent" android:layout_height="wrap_content" android:elevation="0.0dip" app:elevation="0.0dip" app:liftOnScrollColor="@color/transparent">
-        <LinearLayout android:orientation="vertical" android:paddingTop="14.0dip" android:paddingBottom="8.0dip" android:clipChildren="false" android:clipToPadding="false" android:layout_width="fill_parent" android:layout_height="wrap_content" android:paddingStart="16.0dip" android:paddingEnd="16.0dip" app:layout_scrollFlags="scroll|enterAlways">
-            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:background="@drawable/shape_paper_panel" android:layout_width="fill_parent" android:layout_height="wrap_content">
-                <ImageView android:id="@+id/logo" android:background="?selectableItemBackgroundBorderless" android:layout_width="34.0dip" android:layout_height="34.0dip" android:src="@mipmap/ic_launcher" />
-                <LinearLayout android:gravity="center_vertical" android:orientation="vertical" android:layout_width="0.0dip" android:layout_height="wrap_content" android:layout_weight="1.0" android:layout_marginStart="12.0dip" android:layout_marginEnd="12.0dip">
-                    <com.google.android.material.textview.MaterialTextView android:textSize="16.0sp" android:textColor="@color/xg_text_primary" android:ellipsize="marquee" android:gravity="start" android:id="@+id/title" android:layout_width="fill_parent" android:layout_height="wrap_content" android:singleLine="true" />
-                    <TextView android:textSize="11.0sp" android:textColor="@color/xg_nav_inactive" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2.0dip" android:text="线路优先 · 自动测速 · 片单视图" android:singleLine="true" />
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/xg_background">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/transparent"
+        android:elevation="0dp"
+        app:elevation="0dp"
+        app:liftOnScrollColor="@color/transparent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_scrollFlags="scroll|enterAlways">
+
+            <FrameLayout
+                android:id="@+id/vodHistory"
+                android:layout_width="match_parent"
+                android:layout_height="58dp"
+                android:background="@color/xg_media_fill"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@null"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/artwork" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/xg_home_hero_overlay" />
+
+                <LinearLayout
+                    android:id="@+id/topBarContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
+
+                    <ImageView
+                        android:id="@+id/logo"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="?selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/app_history"
+                        android:src="@mipmap/ic_launcher" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:ellipsize="marquee"
+                        android:singleLine="true"
+                        android:textColor="@color/xg_text_primary"
+                        android:textSize="18sp" />
+
+                    <ImageView
+                        android:id="@+id/searchIcon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/menu_search"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_action_search" />
+
+                    <ImageView
+                        android:id="@+id/keep"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/app_keep"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_action_keep" />
+
+                    <ImageView
+                        android:id="@+id/history"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/app_history"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_action_history" />
                 </LinearLayout>
-                <ImageView android:id="@+id/searchIcon" android:background="?selectableItemBackgroundBorderless" android:visibility="visible" android:layout_width="24.0dip" android:layout_height="24.0dip" android:src="@drawable/ic_action_search" android:layout_marginEnd="12.0dip" />
-                <ImageView android:id="@+id/keep" android:background="?selectableItemBackgroundBorderless" android:layout_width="24.0dip" android:layout_height="24.0dip" android:src="@drawable/ic_action_keep" android:layout_marginEnd="12.0dip" />
-                <ImageView android:id="@+id/download" android:background="?selectableItemBackgroundBorderless" android:visibility="gone" android:layout_width="24.0dip" android:layout_height="24.0dip" android:src="@drawable/ic_action_download" android:layout_marginEnd="12.0dip" />
-                <ImageView android:id="@+id/history" android:background="?selectableItemBackgroundBorderless" android:layout_width="24.0dip" android:layout_height="24.0dip" android:src="@drawable/ic_action_history" />
-            </LinearLayout>
-            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:id="@+id/searchInput" android:background="@drawable/shape_paper_panel" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="10.0dip">
-                <TextView android:textSize="14.0sp" android:textColor="@color/xg_text_primary" android:id="@+id/hot" android:layout_width="0.0dip" android:layout_height="wrap_content" android:singleLine="true" android:layout_weight="1.0" android:layout_marginEnd="8.0dip" />
-                <ImageView android:id="@+id/search" android:layout_width="24.0dip" android:layout_height="24.0dip" android:src="@drawable/ic_action_search" />
-            </LinearLayout>
-            <LinearLayout android:orientation="vertical" android:id="@+id/vodHistory" android:background="@drawable/shape_cloud_hero" android:focusable="true" android:clickable="true" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="8.0dip">
-                <TextView android:textSize="11.0sp" android:textColor="@color/xg_primary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="继续观看" android:singleLine="true" />
-                <TextView android:textSize="15.0sp" android:textColor="@color/xg_text_primary" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="3.0dip" android:text="上次播放记录 · 点击影片继续" android:singleLine="true" />
-                <LinearLayout android:orientation="horizontal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6.0dip">
-                    <TextView android:textSize="11.0sp" android:textColor="@color/xg_text_primary" android:background="@drawable/shape_vod_year" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="EXO" android:singleLine="true" />
-                    <TextView android:textSize="11.0sp" android:textColor="@color/control" android:background="@drawable/shape_vod_site" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="线路优先" android:singleLine="true" android:layout_marginStart="6.0dip" />
+
+            </FrameLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/type"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:orientation="horizontal"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+            <LinearLayout
+                android:id="@+id/hotRail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="10dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="32dp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/vod_home_hot"
+                        android:textColor="@color/xg_text_primary"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/vod_home_all"
+                        android:textColor="@color/xg_nav_inactive"
+                        android:textSize="13sp" />
                 </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/hot"
+                    android:layout_width="match_parent"
+                    android:layout_height="229dp"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingTop="11dp"
+                    android:paddingEnd="4dp"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
             </LinearLayout>
-        </LinearLayout>
-        <LinearLayout android:orientation="vertical" android:paddingBottom="6.0dip" android:layout_width="fill_parent" android:layout_height="wrap_content">
-            <LinearLayout android:gravity="center_vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:paddingStart="16.0dip" android:paddingEnd="16.0dip">
-                <TextView android:textSize="13.0sp" android:textColor="@color/xg_text_primary" android:layout_width="0.0dip" android:layout_height="wrap_content" android:text="片库分类" android:singleLine="true" android:layout_weight="1.0" />
-                <TextView android:textSize="11.0sp" android:textColor="@color/xg_nav_inactive" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="筛选 / 置顶" android:singleLine="true" />
-            </LinearLayout>
-            <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content">
-                <androidx.recyclerview.widget.RecyclerView android:orientation="horizontal" android:id="@+id/type" android:paddingTop="8.0dip" android:paddingBottom="10.0dip" android:clipChildren="false" android:clipToPadding="false" android:layout_width="0.0dip" android:layout_height="wrap_content" android:layout_weight="1.0" android:paddingStart="8.0dip" android:paddingEnd="8.0dip" app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-                <ImageView android:layout_gravity="center" android:id="@+id/expand" android:background="?selectableItemBackgroundBorderless" android:visibility="gone" android:layout_width="24.0dip" android:layout_height="24.0dip" android:src="@drawable/ic_action_menu" android:layout_marginStart="8.0dip" android:layout_marginEnd="8.0dip" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="4dp"
+                android:paddingBottom="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="28dp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/vod_home_continue"
+                        android:textColor="@color/xg_text_primary"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/app_history"
+                        android:textColor="@color/xg_nav_inactive"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@color/xg_line" />
+
+                <LinearLayout
+                    android:id="@+id/continueWatch"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:layout_width="76dp"
+                        android:layout_height="52dp"
+                        android:contentDescription="@null"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/artwork"
+                        app:shapeAppearanceOverlay="@style/Home.Poster" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="11dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:singleLine="true"
+                            android:text="@string/vod_home_continue"
+                            android:textColor="@color/xg_text_primary"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:ellipsize="end"
+                            android:singleLine="true"
+                            android:text="@string/vod_home_continue_hint"
+                            android:textColor="@color/xg_nav_inactive"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_home_play"
+                        android:tint="@color/xg_primary" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@color/xg_line" />
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
-    <com.fongmi.android.tv.ui.custom.CustomViewPager android:id="@+id/pager" android:layout_width="fill_parent" android:layout_height="fill_parent" app:layout_behavior="@string/appbar_scrolling_view_behavior" />
-    <ImageView android:layout_gravity="center" android:id="@+id/retry" android:background="?selectableItemBackgroundBorderless" android:visibility="gone" android:layout_width="56.0dip" android:layout_height="56.0dip" android:src="@drawable/ic_action_retry" />
-    <include android:id="@+id/progress" android:visibility="gone" layout="@layout/view_progress" />
-    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/filter" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_margin="16.0dip" app:backgroundTint="@color/xg_primary" app:layout_anchor="@id/pager" app:layout_anchorGravity="end|bottom" app:layout_behavior="com.fongmi.android.tv.ui.custom.CustomFabBehavior" app:srcCompat="@drawable/ic_fab_filter" app:tint="@color/white" />
-    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/link" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_margin="16.0dip" app:backgroundTint="@color/xg_primary" app:layout_anchor="@id/pager" app:layout_anchorGravity="end|bottom" app:layout_behavior="com.fongmi.android.tv.ui.custom.CustomFabBehavior" app:srcCompat="@drawable/ic_fab_link" app:tint="@color/white" />
-    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/top" android:tag="top" android:visibility="invisible" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_margin="16.0dip" app:backgroundTint="@color/xg_primary" app:layout_anchor="@id/pager" app:layout_anchorGravity="end|bottom" app:layout_behavior="com.fongmi.android.tv.ui.custom.CustomFabBehavior" app:srcCompat="@drawable/ic_fab_top" app:tint="@color/white" />
+
+    <com.fongmi.android.tv.ui.custom.CustomViewPager
+        android:id="@+id/pager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <ImageView
+        android:id="@+id/retry"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center"
+        android:background="?selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_action_retry"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/progress"
+        layout="@layout/view_progress"
+        android:visibility="gone" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/filter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="76dp"
+        android:visibility="gone"
+        app:backgroundTint="@color/xg_primary"
+        app:layout_anchor="@id/pager"
+        app:layout_anchorGravity="end|bottom"
+        app:layout_behavior="com.fongmi.android.tv.ui.custom.CustomFabBehavior"
+        app:srcCompat="@drawable/ic_fab_filter"
+        app:tint="@color/white" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/link"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="76dp"
+        app:backgroundTint="@color/xg_primary"
+        app:layout_anchor="@id/pager"
+        app:layout_anchorGravity="end|bottom"
+        app:layout_behavior="com.fongmi.android.tv.ui.custom.CustomFabBehavior"
+        app:srcCompat="@drawable/ic_fab_link"
+        app:tint="@color/white" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/top"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="76dp"
+        android:tag="top"
+        android:visibility="invisible"
+        app:backgroundTint="@color/xg_primary"
+        app:layout_anchor="@id/pager"
+        app:layout_anchorGravity="end|bottom"
+        app:layout_behavior="com.fongmi.android.tv.ui.custom.CustomFabBehavior"
+        app:srcCompat="@drawable/ic_fab_top"
+        app:tint="@color/white" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

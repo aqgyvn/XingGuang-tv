@@ -11,6 +11,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
@@ -26,6 +28,7 @@ import com.fongmi.android.tv.bean.History;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.bean.Value;
+import com.fongmi.android.tv.bean.Vod;
 import com.fongmi.android.tv.databinding.FragmentVodBinding;
 import com.fongmi.android.tv.event.CastEvent;
 import com.fongmi.android.tv.event.RefreshEvent;
@@ -39,6 +42,7 @@ import com.fongmi.android.tv.ui.activity.HistoryActivity;
 import com.fongmi.android.tv.ui.activity.KeepActivity;
 import com.fongmi.android.tv.ui.activity.SearchActivity;
 import com.fongmi.android.tv.ui.activity.VideoActivity;
+import com.fongmi.android.tv.ui.adapter.HomeVodAdapter;
 import com.fongmi.android.tv.ui.adapter.TypeAdapter;
 import com.fongmi.android.tv.ui.base.BaseFragment;
 import com.fongmi.android.tv.ui.dialog.FilterDialog;
@@ -56,15 +60,18 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
-public class VodFragment extends BaseFragment implements ConfigCallback, SiteCallback, FilterCallback, TypeAdapter.OnClickListener {
+public class VodFragment extends BaseFragment implements ConfigCallback, SiteCallback, FilterCallback, TypeAdapter.OnClickListener, HomeVodAdapter.OnClickListener {
 
     private FragmentVodBinding mBinding;
     private SiteViewModel mViewModel;
     private TypeAdapter mAdapter;
+    private HomeVodAdapter mHomeAdapter;
     private Result mResult;
+    private boolean mHomeHeaderVisible = true;
 
     public static VodFragment newInstance() {
         return new VodFragment();
@@ -90,6 +97,7 @@ public class VodFragment extends BaseFragment implements ConfigCallback, SiteCal
     @Override
     protected void initView() {
         EventBus.getDefault().register(this);
+        setStatusBarInset();
         mBinding.title.setSelected(true);
         setRecyclerView();
         setViewModel();
@@ -98,25 +106,48 @@ public class VodFragment extends BaseFragment implements ConfigCallback, SiteCal
         setLogo();
     }
 
+    private void setStatusBarInset() {
+        int toolbarHeight = mBinding.vodHistory.getLayoutParams().height;
+        ViewCompat.setOnApplyWindowInsetsListener(mBinding.getRoot(), (view, insets) -> {
+            int top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+            ViewGroup.LayoutParams params = mBinding.vodHistory.getLayoutParams();
+            if (params.height != toolbarHeight + top) {
+                params.height = toolbarHeight + top;
+                mBinding.vodHistory.setLayoutParams(params);
+            }
+            if (mBinding.topBarContent.getPaddingTop() != top) {
+                mBinding.topBarContent.setPaddingRelative(mBinding.topBarContent.getPaddingStart(), top, mBinding.topBarContent.getPaddingEnd(), mBinding.topBarContent.getPaddingBottom());
+            }
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(mBinding.getRoot());
+    }
+
     @Override
     protected void initEvent() {
         mBinding.top.setOnClickListener(this::onTop);
         mBinding.logo.setOnClickListener(this::onLogo);
         mBinding.link.setOnClickListener(this::onLink);
         mBinding.title.setOnClickListener(this::onSite);
-        mBinding.search.setOnClickListener(this::onSearch);
         mBinding.searchIcon.setOnClickListener(this::onSearch);
         mBinding.keep.setOnClickListener(this::onKeep);
         mBinding.history.setOnClickListener(this::onHistory);
         mBinding.vodHistory.setOnClickListener(this::onVodHistory);
+        mBinding.continueWatch.setOnClickListener(this::onVodHistory);
         mBinding.retry.setOnClickListener(this::onRetry);
         mBinding.filter.setOnClickListener(this::onFilter);
         mBinding.filter.setOnLongClickListener(this::onLink);
         mBinding.appBar.addOnOffsetChangedListener((appBarLayout, verticalOffset) -> {
-            float factor = Math.abs(verticalOffset * 1f / appBarLayout.getTotalScrollRange());
+            int range = appBarLayout.getTotalScrollRange();
+            float factor = range == 0 ? 0 : Math.abs(verticalOffset * 1f / range);
             int padding = (int) (ResUtil.dp2px(12) * factor);
-            if (mBinding.type.getPaddingTop() == padding) return;
-            mBinding.type.setPadding(mBinding.type.getPaddingStart(), padding, mBinding.type.getPaddingEnd(), mBinding.type.getPaddingBottom());
+            if (mBinding.type.getPaddingTop() != padding) {
+                mBinding.type.setPadding(mBinding.type.getPaddingStart(), padding, mBinding.type.getPaddingEnd(), mBinding.type.getPaddingBottom());
+            }
+            boolean visible = range == 0 || Math.abs(verticalOffset) < range;
+            if (mHomeHeaderVisible == visible) return;
+            mHomeHeaderVisible = visible;
+            setFabVisible(mBinding.pager.getCurrentItem());
         });
         mBinding.pager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
@@ -132,6 +163,9 @@ public class VodFragment extends BaseFragment implements ConfigCallback, SiteCal
         mBinding.type.setHasFixedSize(true);
         mBinding.type.setItemAnimator(null);
         mBinding.type.setAdapter(mAdapter = new TypeAdapter(this));
+        mBinding.hot.setHasFixedSize(true);
+        mBinding.hot.setItemAnimator(null);
+        mBinding.hot.setAdapter(mHomeAdapter = new HomeVodAdapter(this));
         mBinding.pager.setAdapter(new PageAdapter(getChildFragmentManager()));
     }
 
@@ -142,6 +176,8 @@ public class VodFragment extends BaseFragment implements ConfigCallback, SiteCal
 
     private void setAdapter(Result result) {
         mAdapter.addAll(mResult = result);
+        mHomeAdapter.setItems(result.getList());
+        mBinding.hotRail.setVisibility(result.getList().isEmpty() ? View.GONE : View.VISIBLE);
         mBinding.pager.getAdapter().notifyDataSetChanged();
         setFabVisible(0);
         mBinding.retry.setVisibility(View.GONE);
@@ -149,6 +185,12 @@ public class VodFragment extends BaseFragment implements ConfigCallback, SiteCal
     }
 
     private void setFabVisible(int position) {
+        if (mHomeHeaderVisible) {
+            mBinding.top.setVisibility(View.INVISIBLE);
+            mBinding.link.setVisibility(View.INVISIBLE);
+            mBinding.filter.setVisibility(View.INVISIBLE);
+            return;
+        }
         if (mAdapter.getItemCount() == 0) {
             mBinding.top.setVisibility(View.INVISIBLE);
             mBinding.link.setVisibility(View.VISIBLE);
@@ -324,6 +366,27 @@ public class VodFragment extends BaseFragment implements ConfigCallback, SiteCal
     public void onItemClick(int position, Class item) {
         mBinding.pager.setCurrentItem(position);
         mAdapter.setActivated(position);
+    }
+
+    @Override
+    public void onItemClick(Vod item) {
+        if (item.isAction()) {
+            mViewModel.action(getHome().getKey(), item.getAction());
+        } else if (item.isFolder()) {
+            mBinding.pager.setCurrentItem(0);
+            getFragment().openFolder(item.getId(), new HashMap<>());
+        } else if (getHome().isIndex()) {
+            SearchActivity.start(requireActivity(), item.getName());
+        } else {
+            VideoActivity.start(requireActivity(), getHome().getKey(), item.getId(), item.getName(), item.getPic(), null);
+        }
+    }
+
+    @Override
+    public boolean onLongClick(Vod item) {
+        if (item.isAction() || item.isFolder()) return false;
+        SearchActivity.start(requireActivity(), item.getName());
+        return true;
     }
 
     @Override

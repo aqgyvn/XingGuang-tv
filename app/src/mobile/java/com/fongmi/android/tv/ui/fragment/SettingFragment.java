@@ -28,7 +28,9 @@ import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.impl.ConfigCallback;
 import com.fongmi.android.tv.impl.LiveCallback;
 import com.fongmi.android.tv.impl.SiteCallback;
+import com.fongmi.android.tv.ui.activity.HistoryActivity;
 import com.fongmi.android.tv.ui.activity.HomeActivity;
+import com.fongmi.android.tv.ui.activity.KeepActivity;
 import com.fongmi.android.tv.ui.base.BaseFragment;
 import com.fongmi.android.tv.ui.dialog.ConfigDialog;
 import com.fongmi.android.tv.ui.dialog.HistoryDialog;
@@ -112,6 +114,8 @@ public class SettingFragment extends BaseFragment implements ConfigCallback, Sit
 
     @Override
     protected void initEvent() {
+        mBinding.keep.setOnClickListener(view -> KeepActivity.start(requireActivity()));
+        mBinding.history.setOnClickListener(view -> HistoryActivity.start(requireActivity()));
         mBinding.vod.setOnClickListener(this::onVod);
         mBinding.doh.setOnClickListener(this::setDoh);
         mBinding.live.setOnClickListener(this::onLive);
