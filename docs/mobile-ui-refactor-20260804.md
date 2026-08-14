@@ -26,6 +26,10 @@ The refactor keeps the current Android behavior and ViewBinding contracts:
 - The duplicate full-width continue-playing hero was removed on August 10, 2026. The category bar and all content below it move upward, while the compact continue-watching row remains the single playback-resume entry.
 - The homepage artwork now extends behind the transparent status bar. Status icons use the light appearance with a short fading contrast scrim, while the toolbar controls retain a status-bar-safe top inset so system and application controls do not overlap.
 - The compact homepage spacing keeps a dynamic portrait card and its title above the fixed bottom navigation. Homepage floating actions remain hidden until the AppBar has fully collapsed.
+- The category tabs now sit immediately above the category pager they control. Site recommendations and continue-watching remain earlier homepage sections, so switching a category no longer changes content across an unrelated fixed middle block.
+- Continue-watching now appears before site recommendations, and the recommendation rail uses compact `96dp` by `144dp` posters with tighter spacing so it does not dominate the first viewport.
+- The site recommendation rail owns the homepage list returned by the active source. The synthetic recommendation tab was removed, so the category row now contains only real source categories and no longer repeats the same homepage movies.
+- Continue-watching now binds the latest history record: its poster, title, and episode remark are populated from the saved playback entry, and the section hides when no history exists.
 - The labeled bottom navigation uses an `80dp` height so its icon and Chinese label have a complete text viewport. The existing content container continues to reserve this space through `layout_above`.
 
 ## Fullscreen Readability Correction
@@ -55,11 +59,30 @@ The refactor keeps the current Android behavior and ViewBinding contracts:
 - Kept the state values and click behavior for `跨类` and `换源`; only their background drawable no longer changes for an activated state.
 - Player-engine, track, parse, and live channel selection surfaces retain their separate selected treatments where a choice needs to remain visible.
 
+## VOD Transport Button Correction
+
+- The VOD back, previous, play/pause, and next controls use transparent borderless touch feedback instead of persistent blue circular containers.
+- The visible icons use compact internal padding and `78%` opacity while retaining their existing touch bounds; the play control spacing is slightly tighter.
+- Click handlers, playback state changes, and the separate buffering indicator remain unchanged.
+
+## VOD Action Strip Overlay Correction
+
+- The VOD action strip no longer draws a second near-opaque background over the bottom controller.
+- It inherits the existing soft bottom-controller overlay, keeping action labels readable without appearing as a separate black bar.
+- Action order, state values, click handlers, scrolling, and the live-player layout remain unchanged.
+- The action strip uses compact `2dp` vertical padding and a `4dp` controller bottom inset, moving its upper edge downward while retaining the existing `40dp` action touch height.
+- The complete VOD bottom controller is further compacted to approximately `60dp`: the seek row is constrained to `24dp`, its fullscreen control uses `28dp`, VOD-only actions use a `32dp` height, and redundant vertical controller insets are removed. Live controls retain the shared `40dp` action style.
+- The VOD top and bottom controller containers are transparent, so controls float directly over the video without full-width translucent black bands. Live controls remain unchanged.
+
 ## Verification
 
 - git diff --check -- app/src/mobile completed without whitespace errors.
 - .\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace completed successfully on August 4, 2026.
 - The same Android build completed successfully again after the homepage correction on August 4, 2026.
+- Runtime verification passed on the 1080 x 1920 MuMu Android 15 instance after a data-preserving APK replacement on August 14, 2026. The category row stayed at the same bounds while taps on recommendation, enhanced-visual, and doll-movie categories moved the selected underline and replaced only the movie pager content directly below it; trending and continue-watching remained above the category-content pair.
+- Runtime verification passed again after placing continue-watching first and compacting trending. Three full trending posters plus part of a fourth fit across the viewport, horizontal scrolling loaded later items, the category row moved upward from `y=1353` to `y=1170`, category switching still replaced the correct pager content, and continue-watching still opened `VideoActivity` and returned to the homepage.
+- Runtime verification passed after replacing the duplicate trending label with site recommendations on August 14, 2026. The homepage shows `站点推荐`, the synthetic `推荐` tab is absent, the first category is the real source category `臻彩视觉`, and tapping `玩偶电影` loads its own movie set below the tabs.
+- Runtime verification passed after binding continue-watching to history on August 14, 2026. The MuMu homepage rendered poster `俩祖三爹争着宠娃` with title `俩祖三爹争着宠娃` and episode remark `1` in the continue section; the activity remained on `HomeActivity`.
 - The Android build completed successfully after the expanded-home first-row clipping correction on August 4, 2026.
 - Runtime verification passed on the 1080 x 1920 MuMu instance after a data-preserving APK replacement: the expanded homepage shows the complete first-row portrait cards, their remarks, and their titles above the navigation; a subsequent content scroll preserves normal grid browsing and the existing return-to-top control.
 - Runtime verification passed again after the final bottom-navigation correction: the navigation occupies `y=1680` through `y=1920`, while the selected Chinese label receives a `48px` text viewport and renders completely in both expanded and scrolled homepage states.
@@ -72,6 +95,12 @@ The refactor keeps the current Android behavior and ViewBinding contracts:
 - The live source returned a connection timeout during this verification. This affected stream availability only; the fullscreen control layer and its action hierarchy were still available for layout verification.
 - The Android build completed successfully after removing the fullscreen action-strip state frame on August 7, 2026, and the rebuilt APK was installed on MuMu without clearing application data.
 - Runtime live verification confirms `跨类` and `换源` remain visible and clickable as plain text with no persistent blue frame.
+- Runtime VOD verification on August 14, 2026 confirms the back, previous, play, and next controls render as plain white icons without persistent blue circular fills. The blue buffering arc remains separate and visible at `0 KB/s`, and the back control still returns to `HomeActivity`.
+- Runtime VOD verification on August 14, 2026 confirms the same four controls render with smaller visible icons at `78%` opacity while preserving their touch bounds. Playback remained active, and the compact back control returned to `HomeActivity`.
+- Runtime fullscreen VOD verification on August 14, 2026 confirms the action strip shares the soft controller overlay instead of drawing a separate near-black band. Video remains visible beneath the complete action row, and tapping `EXO` still opens the player-core selector.
+- Runtime fullscreen VOD verification on August 14, 2026 confirms the action row's total bottom allocation is reduced from approximately `64dp` to `48dp`, moving its upper edge downward while retaining `40dp` action targets. The current stream URL failed during this check, but the complete row remained visible and `EXO` still opened the player-core selector.
+- Runtime fullscreen VOD verification on August 14, 2026 confirms the complete bottom controller is approximately `60dp` high and starts around `y=900` on the 1920 x 1080 viewport. The active video remains visible behind both compact rows, all labels render completely, the `28dp` fullscreen control enters fullscreen, and the `32dp` `EXO` action still opens the player-core selector.
+- Runtime fullscreen VOD verification on August 14, 2026 confirms the full-width top and bottom dark overlays are absent. Video pixels remain continuous behind the title, progress, and action controls; the title and controls stay readable on the tested mixed-brightness frame, and fullscreen, `EXO`, and back interactions remain functional.
 
 - The Android build completed successfully after the dialog contrast correction on August 11, 2026, and APK `5.6.9 (569)` was installed on MuMu without clearing application data.
 - Runtime source-dialog verification confirms six source labels, six search controls, and six refresh controls remain present and clickable on the dark `#181B20` container. White text reaches `17.26:1`, light icons reach `15.83:1`, and the blue selected text reaches `4.6:1` contrast.

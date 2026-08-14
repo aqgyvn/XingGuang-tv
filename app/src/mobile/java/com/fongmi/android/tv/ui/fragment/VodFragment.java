@@ -104,6 +104,7 @@ public class VodFragment extends BaseFragment implements ConfigCallback, SiteCal
         showProgress();
         setTitle();
         setLogo();
+        setContinueWatch();
     }
 
     private void setStatusBarInset() {
@@ -299,6 +300,20 @@ public class VodFragment extends BaseFragment implements ConfigCallback, SiteCal
         ImgUtil.logo(mBinding.logo);
     }
 
+    private void setContinueWatch() {
+        List<History> items = History.get();
+        if (items.isEmpty()) {
+            mBinding.continueSection.setVisibility(View.GONE);
+            return;
+        }
+        History item = items.get(0);
+        mBinding.continueSection.setVisibility(View.VISIBLE);
+        mBinding.continueTitle.setText(item.getVodName());
+        String hint = TextUtils.isEmpty(item.getVodRemarks()) ? getString(R.string.vod_home_continue_hint) : item.getVodRemarks();
+        mBinding.continueHint.setText(hint);
+        ImgUtil.load(item.getVodName(), item.getVodPic(), mBinding.continuePoster);
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onRefreshEvent(RefreshEvent event) {
         switch (event.getType()) {
@@ -308,6 +323,9 @@ public class VodFragment extends BaseFragment implements ConfigCallback, SiteCal
             case VIDEO:
             case SIZE:
                 homeContent();
+                break;
+            case HISTORY:
+                setContinueWatch();
                 break;
         }
     }
