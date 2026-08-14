@@ -6,11 +6,9 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.bean.Class;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.databinding.AdapterTypeBinding;
-import com.fongmi.android.tv.utils.ResUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,13 +28,6 @@ public class TypeAdapter extends RecyclerView.Adapter<TypeAdapter.ViewHolder> {
         void onItemClick(int position, Class item);
     }
 
-    private Class home() {
-        Class type = new Class();
-        type.setTypeName(ResUtil.getString(R.string.vod_home));
-        type.setTypeId("home");
-        return type;
-    }
-
     public void clear() {
         mItems.clear();
         notifyDataSetChanged();
@@ -44,7 +35,6 @@ public class TypeAdapter extends RecyclerView.Adapter<TypeAdapter.ViewHolder> {
 
     public void addAll(Result result) {
         mItems.addAll(result.getTypes());
-        if (!result.getList().isEmpty()) mItems.add(0, home());
         if (!mItems.isEmpty()) mItems.get(0).setActivated(true);
         notifyDataSetChanged();
     }

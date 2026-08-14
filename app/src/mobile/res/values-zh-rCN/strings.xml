@@ -33,7 +33,7 @@
     <string name="vod_home_resume_meta">&#x64AD;&#x653E;&#x8BB0;&#x5F55;</string>
     <string name="vod_home_resume_summary">&#x4ECE;&#x4E0A;&#x6B21;&#x89C2;&#x770B;&#x7684;&#x4F4D;&#x7F6E;&#x7EE7;&#x7EED;&#x64AD;&#x653E;&#x3002;</string>
     <string name="vod_home_resume_action">&#x7EE7;&#x7EED;&#x64AD;&#x653E;</string>
-    <string name="vod_home_hot">&#x6B63;&#x5728;&#x70ED;&#x64AD;</string>
+    <string name="vod_home_recommend">&#x7AD9;&#x70B9;&#x63A8;&#x8350;</string>
     <string name="vod_home_all">&#x5168;&#x90E8;</string>
     <string name="vod_home_continue">&#x7EE7;&#x7EED;&#x89C2;&#x770B;</string>
     <string name="vod_home_continue_hint">&#x70B9;&#x51FB;&#x5F71;&#x7247;&#x7EE7;&#x7EED;&#x64AD;&#x653E;</string>

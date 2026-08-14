@@ -51,6 +51,10 @@
         <item name="android:textSize">12sp</item>
     </style>
 
+    <style name="ControlVod" parent="Control">
+        <item name="android:layout_height">32dp</item>
+    </style>
+
     <style name="BottomSheetDialog" parent="Theme.Material3.DayNight.BottomSheetDialog">
         <item name="colorAccent">@color/accent</item>
         <item name="colorPrimary">@color/primary</item>

@@ -99,61 +99,8 @@
 
             </FrameLayout>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/type"
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:clipChildren="false"
-                android:clipToPadding="false"
-                android:orientation="horizontal"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-
             <LinearLayout
-                android:id="@+id/hotRail"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingTop="10dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="32dp"
-                    android:gravity="center_vertical"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/vod_home_hot"
-                        android:textColor="@color/xg_text_primary"
-                        android:textSize="18sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/vod_home_all"
-                        android:textColor="@color/xg_nav_inactive"
-                        android:textSize="13sp" />
-                </LinearLayout>
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/hot"
-                    android:layout_width="match_parent"
-                    android:layout_height="229dp"
-                    android:clipChildren="false"
-                    android:clipToPadding="false"
-                    android:orientation="horizontal"
-                    android:paddingStart="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingEnd="4dp"
-                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-            </LinearLayout>
-
-            <LinearLayout
+                android:id="@+id/continueSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -203,6 +150,7 @@
                     android:paddingEnd="16dp">
 
                     <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/continuePoster"
                         android:layout_width="76dp"
                         android:layout_height="52dp"
                         android:contentDescription="@null"
@@ -218,6 +166,7 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/continueTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ellipsize="end"
@@ -227,6 +176,7 @@
                             android:textSize="14sp" />
 
                         <TextView
+                            android:id="@+id/continueHint"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
@@ -252,6 +202,60 @@
                     android:layout_marginEnd="16dp"
                     android:background="@color/xg_line" />
             </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/hotRail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="6dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="28dp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/vod_home_recommend"
+                        android:textColor="@color/xg_text_primary"
+                        android:textSize="17sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/vod_home_all"
+                        android:textColor="@color/xg_nav_inactive"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/hot"
+                    android:layout_width="match_parent"
+                    android:layout_height="176dp"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingTop="8dp"
+                    android:paddingEnd="4dp"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/type"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:orientation="horizontal"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
         </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 

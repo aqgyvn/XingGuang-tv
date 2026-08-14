@@ -33,7 +33,7 @@
     <string name="vod_home_resume_meta">Your recent playback</string>
     <string name="vod_home_resume_summary">Continue from where you stopped.</string>
     <string name="vod_home_resume_action">Continue</string>
-    <string name="vod_home_hot">Trending now</string>
+    <string name="vod_home_recommend">Site recommendations</string>
     <string name="vod_home_all">All</string>
     <string name="vod_home_continue">Continue watching</string>
     <string name="vod_home_continue_hint">Open a title to continue playback</string>

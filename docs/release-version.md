@@ -2,15 +2,15 @@
 
 ## Current APK Version
 
-- `versionCode`: `569`
-- `versionName`: `5.6.9`
+- `versionCode`: `570`
+- `versionName`: `5.7.0`
 
 ## Version Bump Rule
 
 Each user-facing APK update must bump both Android version fields in `app/build.gradle` before building:
 
 - Increase `versionCode` by 1.
-- Keep `versionName` aligned with `versionCode`; for example, `versionCode 569` uses `versionName 5.6.9`.
+- Keep `versionName` aligned with `versionCode`; for example, `versionCode 570` uses `versionName 5.7.0`.
 
 Verification command:
 

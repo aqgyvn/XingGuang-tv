@@ -4559,3 +4559,276 @@
 - `standard-dialog-569.xml`: removed the temporary standard-dialog hierarchy dump after control verification.
 - `progress.md`: appends this implementation, verification, cleanup, and rollback record.
 - Rollback point: remove only the `colorSurfaceContainerHigh` item added to `Theme.Base`, restore `app/build.gradle` and `docs/release-version.md` to `5.6.8 (568)`, remove the dialog-contrast additions from `docs/mobile-ui-refactor-20260804.md`, delete the two `569` screenshots, and remove this entry; do not restore the whole working tree.
+
+## 2026-08-14 - Task: Keep homepage category tabs with their movie content
+
+### What was done
+- Moved the VOD category tab row below the trending and continue-watching sections so each selected category sits immediately above the movie pager it controls.
+- Preserved the existing category click, pager switching, filtering, source, history, and playback behavior; no Java handler or data path changed.
+- Updated the mobile UI structure document with the corrected homepage content order.
+
+### Testing
+- Passed: `git diff --check -- app/src/mobile/res/layout/fragment_vod.xml docs/mobile-ui-refactor-20260804.md` reports no whitespace errors.
+- Passed: `\.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Passed: the generated APK is `app/build/outputs/apk/mobileArm64_v8a/debug/mobile-arm64_v8a.apk`, size `82639347` bytes, written on `2026-08-14 15:47:08`.
+- Not run: runtime screenshot and category-tap verification because `D:\xingkong\android-sdk\platform-tools\adb.exe devices` reported no connected Android device.
+
+### Notes
+- `app/src/mobile/res/layout/fragment_vod.xml`: moves the existing category tab RecyclerView below the continue-watching section without changing IDs or bindings.
+- `docs/mobile-ui-refactor-20260804.md`: records that category tabs and their controlled movie pager are now adjacent.
+- `progress.md`: appends this implementation, verification, device gap, changed-file, and rollback record.
+- Rollback point: before later edits, run `git restore --source=HEAD -- app/src/mobile/res/layout/fragment_vod.xml docs/mobile-ui-refactor-20260804.md progress.md`; after a dedicated commit, run `git revert <commit>`.
+
+## 2026-08-14 - Task: Runtime-verify homepage category and movie grouping
+
+### What was done
+- Started the existing MuMu Android 15 instance, connected through its reported ADB endpoint, and replaced the installed APK without clearing application data.
+- Opened the VOD homepage and switched from recommendation to enhanced-visual and doll-movie categories to verify the selected title and its movie content as one adjacent visual group.
+- Kept the final doll-movie screenshot as runtime evidence and removed intermediate screenshots and UI hierarchy dumps after comparison.
+
+### Testing
+- Passed: MuMu instance `0` reached `player_state=start_finished`, Android reported `sys.boot_completed=1`, and ADB connected at `127.0.0.1:16384`.
+- Passed: `adb install -r` installed the `82639347` byte APK successfully while preserving application data.
+- Passed: the category bounds remained stable at `y=1353..1461` for all three tested states, directly above the changing movie pager.
+- Passed: recommendation showed `T教授 第五季`, `遗产之影`, and `等一下啦，春虎同学`; enhanced-visual showed `九门（臻彩）`, `火遮眼（臻彩）`, and `天才，女友（臻彩）`; doll-movie showed `推理竞技场`, `青铜护卫队`, and `我家这本难念的经`.
+- Passed: the selected blue underline moved to each tapped category, while trending and continue-watching stayed above the category row instead of between the category title and its movies.
+- Passed: the foreground activity remained `com.xingguang.video/com.fongmi.android.tv.ui.activity.HomeActivity` with no crash or empty state.
+- Final screenshot SHA-256: `FA494D238DACF5824E3C965C2D1E5F572EE0C26F2530DBEBE5293A095A137D60`.
+
+### Notes
+- `home-category-adjacent-569.png`: stores the final 1080 x 1920 MuMu verification capture with the doll-movie category selected and its posters immediately below.
+- `docs/mobile-ui-refactor-20260804.md`: records the completed runtime verification for the corrected homepage grouping.
+- `progress.md`: appends the installation, interaction, visual verification, cleanup, changed-file, and rollback record.
+- Rollback point: delete `home-category-adjacent-569.png` and remove only this runtime-verification addition from `docs/mobile-ui-refactor-20260804.md` and `progress.md`; after a dedicated commit, run `git revert <commit>`.
+
+## 2026-08-14 - Task: Put continue-watching first and compact the trending rail
+
+### What was done
+- Swapped the homepage sections so continue-watching appears before trending, while the category tabs remain directly above their movie pager.
+- Reduced each trending poster from `128dp` by `192dp` to `96dp` by `144dp` and tightened its badge, title, spacing, heading, and rail height.
+- Preserved the existing continue-watching, trending item, horizontal scrolling, category switching, filtering, and playback handlers.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors in the scoped XML and documentation files.
+- Passed: `\.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Passed: `adb install -r` replaced the `82639346` byte APK on the MuMu Android 15 instance without clearing application data.
+- Passed: the runtime hierarchy orders continue-watching before trending and places the category row at `y=1170..1278`, compared with `y=1353..1461` before this density change.
+- Passed: three complete trending posters and part of a fourth are visible at once; a horizontal swipe changed the visible items from `T教授 第五季`, `遗产之影`, and `等一下啦，春虎同学` to later trending items.
+- Passed: tapping doll-movie displayed `推理竞技场`, `青铜护卫队`, and `我家这本难念的经` in the category pager.
+- Passed: continue-watching remained clickable, opened `VideoActivity`, and returned normally to `HomeActivity`.
+- Final screenshot SHA-256: `194934E027265744032E53A148219ABA4A51DD55F1A38AACD85FA7AA38EA98B9`.
+
+### Notes
+- `app/src/mobile/res/layout/fragment_vod.xml`: places continue-watching before trending and reduces the trending heading and rail height.
+- `app/src/mobile/res/layout/adapter_home_vod.xml`: reduces the trending poster, badge, title, and spacing dimensions.
+- `docs/mobile-ui-refactor-20260804.md`: records the compact trending rule and completed runtime verification.
+- `home-continue-first-compact-hot-569.png`: stores the final 1080 x 1920 MuMu verification capture.
+- `progress.md`: appends the implementation, build, interaction, visual verification, changed-file, and rollback record.
+- Rollback point: restore the trending item to `128dp` by `192dp`, restore its original spacing and text dimensions, move `hotRail` before the continue-watching section, and restore the hot rail to `229dp`; after a dedicated commit, run `git revert <commit>`.
+
+## 2026-08-14 - Task: Replace duplicate trending with site recommendations
+
+### What was done
+- Renamed the homepage rail from trending to site recommendations because it displays the active source's homepage list rather than an independent popularity ranking.
+- Removed the synthetic recommendation category from the category adapter, leaving only the real categories returned by the source.
+- Preserved site-recommendation item clicks, horizontal scrolling, category paging, filtering, continue-watching, and playback handlers.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors in the scoped Java, XML, and documentation files.
+- Passed: `\.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Passed: `adb install -r` installed the `84579265` byte APK on MuMu Android 15 without clearing application data.
+- Passed: the runtime hierarchy contains `站点推荐`, reports zero nodes with exact text `推荐`, and starts the category row with the real source category `臻彩视觉`.
+- Passed: tapping `玩偶电影` loads `推理竞技场`, `青铜护卫队`, and `我家这本难念的经` in the pager; the foreground activity remains `HomeActivity`.
+- Final screenshot SHA-256: `E015824F8C1828E2C92783298D19313B944E140FFC93E8AD3E588552B4894F3B`.
+
+### Notes
+- `app/src/mobile/java/com/fongmi/android/tv/ui/adapter/TypeAdapter.java`: removes synthetic Home category creation and the now-unused imports.
+- `app/src/mobile/res/layout/fragment_vod.xml`: uses the site-recommendation string for the homepage rail heading.
+- `app/src/mobile/res/values/strings.xml`: changes the default rail label to `Site recommendations`.
+- `app/src/mobile/res/values-zh-rCN/strings.xml`: changes the simplified Chinese rail label to `站点推荐`.
+- `app/src/mobile/res/values-zh-rTW/strings.xml`: changes the traditional Chinese rail label to `站點推薦`.
+- `docs/mobile-ui-refactor-20260804.md`: records the source-category-only rule and runtime verification.
+- `home-site-recommend-doll-569.png`: stores the final 1080 x 1920 MuMu verification capture with site recommendations and a real category selected.
+- `progress.md`: appends this implementation, build, runtime verification, changed-file, and rollback record.
+- Rollback point: restore `TypeAdapter.addAll` to insert the synthetic Home category, restore the `vod_home_hot` string key and old translations, and restore the layout reference; after a dedicated commit, run `git revert <commit>`.
+
+## 2026-08-14 - Task: Bind continue-watching to the latest history record
+
+### What was done
+- Bound the continue-watching poster, title, and episode hint to the latest `History` record for the active site.
+- Hid the continue-watching section when there is no history instead of showing a generic artwork placeholder.
+- Refreshed the binding on startup and on the existing `RefreshEvent.HISTORY` event; playback and history click handlers remain unchanged.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors in the scoped Java, XML, and documentation files.
+- Passed: `\.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Passed: `adb install -r` installed the `84577213` byte APK on MuMu Android 15 without clearing application data.
+- Passed: the continue section is visible with poster bounds `[48,363][276,519]`, title `俩祖三爹争着宠娃`, and episode hint `1`; the foreground activity remains `HomeActivity`.
+- Final screenshot SHA-256: `648DEB3AA533361B64C92328477A2B52B0FE4A701D078FDA9059DFA4D9457FE1`.
+
+### Notes
+- `app/src/mobile/res/layout/fragment_vod.xml`: adds binding IDs for the continue section, poster, title, and hint.
+- `app/src/mobile/java/com/fongmi/android/tv/ui/fragment/VodFragment.java`: loads the latest history record and refreshes it on history events.
+- `docs/mobile-ui-refactor-20260804.md`: records the history-backed continue-watching behavior and runtime result.
+- `home-history-bound-569.png`: stores the final 1080 x 1920 MuMu verification capture with a real history poster and title.
+- `progress.md`: appends this implementation, build, runtime verification, changed-file, and rollback record.
+- Rollback point: remove `setContinueWatch()`, restore the static continue poster/title/hint attributes, and remove the four new view IDs; after a dedicated commit, run `git revert <commit>`.
+
+## 2026-08-14 - Task: Remove persistent blue circles from VOD transport buttons
+
+### What was done
+- Replaced the persistent circular backgrounds on the VOD back, previous, play/pause, and next controls with transparent borderless touch feedback.
+- Preserved button bounds, white icons, click handlers, playback state changes, and the separate buffering indicator.
+- Kept live-player controls unchanged because the request and supplied screenshot target the VOD control layout.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors in the scoped layout and documentation files.
+- Passed: `\.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Passed: `adb install -r` installed the `84577213` byte APK on MuMu Android 15 without clearing application data.
+- Passed: the 1920 x 1080 runtime capture shows plain white back, previous, play, and next icons with no persistent dark-blue circular fills.
+- Passed: the blue loading arc and `0 KB/s` text remain visible during buffering, so loading status was not removed with the decorative button backgrounds.
+- Passed: the back control returned from `VideoActivity` to `HomeActivity`, and emulator auto-rotation was restored after the landscape test.
+- Final screenshot SHA-256: `0D99F05AF7DB50655A1E833A67ADE16933738C7B47BD5BCCE1ABBBC08A880BF8`.
+
+### Notes
+- `app/src/mobile/res/layout/view_control_vod.xml`: changes the four requested VOD controls from `shape_control` to borderless touch feedback.
+- `docs/mobile-ui-refactor-20260804.md`: records the VOD transport-button rule and runtime verification.
+- `vod-controls-no-circles-569.png`: stores the final 1920 x 1080 MuMu verification capture.
+- `progress.md`: appends the implementation, build, runtime verification, changed-file, and rollback record.
+- Rollback point: restore `@drawable/shape_control` as the background of `back`, `prev`, `play`, and `next`, then delete the verification screenshot and this documentation addition; after a dedicated commit, run `git revert <commit>`.
+
+## 2026-08-14 - Task: Compact and soften VOD transport buttons
+
+### What was done
+- Reduced the visible size of the VOD back, previous, play/pause, and next icons with internal padding while preserving their existing touch bounds.
+- Applied `78%` opacity and retained transparent borderless touch feedback, so the controls no longer read as large solid buttons.
+- Tightened the spacing around the center play control without changing playback behavior or the buffering indicator.
+
+### Testing
+- Passed: `git diff --check -- app/src/mobile/res/layout/view_control_vod.xml docs/mobile-ui-refactor-20260804.md` reports no whitespace errors.
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Passed: `adb install -r` installed the `84577213` byte APK on MuMu Android 15 without clearing application data.
+- Passed: the runtime VOD capture shows smaller semi-transparent back, previous, play/pause, and next icons with no persistent solid or blue circular backgrounds; video playback and the separate progress layer remain visible.
+- Passed: after the control layer was hidden and shown again, tapping the compact back control returned from `VideoActivity` to `HomeActivity`; emulator auto-rotation was restored.
+- Final screenshot SHA-256: `14F582C16C929781F71372341AFA5E388ECB57A2347B8C907DFFCB09A6320CB3`.
+
+### Notes
+- `app/src/mobile/res/layout/view_control_vod.xml`: adds compact padding and `78%` opacity to the four VOD transport controls, constrains the back icon with `centerInside`, and tightens play-control spacing.
+- `docs/mobile-ui-refactor-20260804.md`: records the compact semi-transparent transport-control rule and runtime verification.
+- `vod-controls-compact-translucent-569.png`: stores the final 1080 x 1920 MuMu verification capture.
+- `progress.md`: appends this implementation, build, interaction, visual verification, changed-file, and rollback record.
+- Rollback point: remove the four `android:alpha` and `android:padding` attributes, restore the back control to `android:scaleType="center"`, and restore the play margins to `28dp`; after a dedicated commit, run `git revert <commit>`.
+
+## 2026-08-14 - Task: Soften the VOD action-strip background
+
+### What was done
+- Removed the action strip's separate near-opaque dark background so it now inherits the existing soft bottom-controller overlay.
+- Preserved the complete action row, label contrast, horizontal layout, state values, and all existing handlers.
+- Kept the live-player control layout unchanged because the reported black band was in the VOD player.
+
+### Testing
+- Passed: `git diff --check -- app/src/mobile/res/layout/view_control_vod_action.xml docs/mobile-ui-refactor-20260804.md` reports no whitespace errors.
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Passed: `adb install -r` installed the `84577213` byte APK on MuMu Android 15 without clearing application data.
+- Passed: the 1920 x 1080 fullscreen capture shows video continuously visible beneath the progress and action rows, with no separate near-black action-strip band; all action labels remain readable.
+- Passed: tapping `EXO` from the softened action row opened the player-core selector with `EXO`, `IJK`, and `MPV`; the dialog closed normally, the app returned to `HomeActivity`, and auto-rotation was restored.
+- Final screenshot SHA-256: `A4E3A031C53ACD0A2CD62FF315E70D16799A68E17AC9DE15BC4142E78A4A3979`.
+
+### Notes
+- `app/src/mobile/res/layout/view_control_vod_action.xml`: removes the nested strong overlay so the action row uses the parent soft overlay.
+- `docs/mobile-ui-refactor-20260804.md`: records the single-layer VOD action-strip overlay and fullscreen runtime verification.
+- `vod-action-soft-overlay-569.png`: stores the final 1920 x 1080 MuMu verification capture.
+- `progress.md`: appends this implementation, build, visual and interaction verification, changed-file, and rollback record.
+- Rollback point: restore `android:background="@color/xg_overlay_strong"` on the root `HorizontalScrollView` in `view_control_vod_action.xml`; after a dedicated commit, run `git revert <commit>`.
+
+## 2026-08-14 - Task: Reduce the VOD action-strip height
+
+### What was done
+- Reduced the VOD action strip's top and bottom padding from `8dp` to `2dp` and reduced the controller's bottom inset from `8dp` to `4dp`.
+- Moved the action strip's upper edge downward by reducing its total bottom allocation from approximately `64dp` to `48dp`.
+- Preserved the existing `40dp` action touch height, full action set, horizontal spacing, soft overlay, and all handlers.
+
+### Testing
+- Passed: `git diff --check -- app/src/mobile/res/layout/view_control_vod.xml app/src/mobile/res/layout/view_control_vod_action.xml docs/mobile-ui-refactor-20260804.md` reports no whitespace errors.
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Passed: `adb install -r` installed the `84577213` byte APK on MuMu Android 15 without clearing application data.
+- Passed: the 1920 x 1080 fullscreen capture shows the complete action row closer to the bottom edge with reduced empty vertical space; labels remain fully visible without clipping.
+- Passed: tapping `EXO` from the compact row still opened the player-core selector with `EXO`, `IJK`, and `MPV`; the dialog closed normally, the app returned to `HomeActivity`, and auto-rotation was restored.
+- Limited: the selected stream URL returned `播放地址加载失败`, so stream playback was not used as evidence; this did not block layout or action-click verification.
+- Final screenshot SHA-256: `B94943095948CE73F8CBA7A8EDC34C3E82701AA1BE8A8AB22FDF563FC4387079`.
+
+### Notes
+- `app/src/mobile/res/layout/view_control_vod.xml`: reduces the bottom controller inset from `8dp` to `4dp`.
+- `app/src/mobile/res/layout/view_control_vod_action.xml`: reduces the action strip's vertical padding from `8dp` to `2dp` while preserving action height.
+- `docs/mobile-ui-refactor-20260804.md`: records the compact action-strip dimensions and runtime result.
+- `vod-action-compact-height-569.png`: stores the final 1920 x 1080 MuMu verification capture.
+- `progress.md`: appends this implementation, build, layout and interaction verification, limitation, changed-file, and rollback record.
+- Rollback point: restore the action strip's `android:paddingTop` and `android:paddingBottom` to `8dp`, and restore the bottom controller's `android:paddingBottom` to `8dp`; after a dedicated commit, run `git revert <commit>`.
+
+## 2026-08-14 - Task: Compact the complete VOD bottom controller
+
+### What was done
+- Reduced the complete VOD bottom controller to approximately `60dp` by constraining the seek view to `24dp`, reducing the fullscreen control to `28dp`, and using `32dp` VOD-only action items.
+- Removed the remaining vertical controller insets while preserving the existing horizontal padding, action order, labels, soft overlay, and handlers.
+- Added a VOD-specific control style so live-player action items retain their existing `40dp` height.
+
+### Testing
+- Passed: `git diff --check -- app/src/mobile/res/layout/view_control_vod.xml app/src/mobile/res/layout/view_control_vod_action.xml app/src/mobile/res/values/styles.xml docs/mobile-ui-refactor-20260804.md` reports no whitespace errors.
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Passed: `adb install -r` installed the `84577321` byte APK on MuMu Android 15 without clearing application data.
+- Passed: the 1920 x 1080 runtime capture places the bottom controller's upper edge around `y=900`, compared with around `y=804` before this task; time labels, progress bar, fullscreen icon, and all action labels remain fully rendered.
+- Passed: the reduced fullscreen control entered fullscreen, and tapping the compact `EXO` action opened the player-core selector with `EXO`, `IJK`, and `MPV`.
+- Passed: the dialog closed normally, the app returned to `HomeActivity`, and emulator auto-rotation was restored.
+- Final screenshot SHA-256: `E6836BE066F86A1928BC6CCEAD5658BE634150B3CF4E0C4D36DA9ADA5E7E5644`.
+
+### Notes
+- `app/src/mobile/res/layout/view_control_vod.xml`: constrains the seek row, reduces the fullscreen control, and removes redundant vertical controller insets.
+- `app/src/mobile/res/layout/view_control_vod_action.xml`: applies the VOD-specific compact control style and keeps the action strip free of extra vertical padding.
+- `app/src/mobile/res/values/styles.xml`: adds `ControlVod` with a `32dp` action height without changing live controls.
+- `docs/mobile-ui-refactor-20260804.md`: records the final compact VOD bottom-controller dimensions and runtime verification.
+- `vod-bottom-controller-ultra-compact-569.png`: stores the final 1920 x 1080 MuMu verification capture.
+- `progress.md`: appends this implementation, build, visual and interaction verification, changed-file, and rollback record.
+- Rollback point: restore the VOD seek height to `wrap_content`, restore the fullscreen control to `40dp` with `center` scale, remove `ControlVod` and restore the VOD action items to `Control`, then restore the previous vertical insets; after a dedicated commit, run `git revert <commit>`.
+
+## 2026-08-14 - Task: Remove VOD controller background bands
+
+### What was done
+- Removed the full-width semi-transparent backgrounds from the VOD top title container and compact bottom controller.
+- Kept the title, network speed, time, progress bar, transport controls, action labels, and existing compact dimensions directly over the video.
+- Kept live-player controls unchanged because the supplied screenshot and request targeted the VOD player.
+
+### Testing
+- Passed: `git diff --check -- app/src/mobile/res/layout/view_control_vod.xml docs/mobile-ui-refactor-20260804.md` reports no whitespace errors.
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Passed: `adb install -r` installed the `84577321` byte APK on MuMu Android 15 without clearing application data.
+- Passed: the 1920 x 1080 runtime capture shows continuous video behind the complete top and bottom control areas with no full-width translucent black bands; the tested title, timing, progress, and action labels remain readable.
+- Passed: the compact fullscreen control entered fullscreen, `EXO` opened the player-core selector, and the transparent top back control exited fullscreen and then returned to `HomeActivity`.
+- Passed: emulator auto-rotation was restored after the landscape test.
+- Final screenshot SHA-256: `7292EBA3CA16DE2AEAB649A06EEF16AE472875E8BF65E2E73454961256C2FFAE`.
+
+### Notes
+- `app/src/mobile/res/layout/view_control_vod.xml`: changes the VOD top and bottom container backgrounds from the soft overlay color to transparent.
+- `docs/mobile-ui-refactor-20260804.md`: records the overlay-free VOD controller rule and runtime verification.
+- `vod-controls-no-bars-569.png`: stores the final 1920 x 1080 MuMu verification capture.
+- `progress.md`: appends this implementation, build, visual and interaction verification, changed-file, and rollback record.
+- Rollback point: restore `android:background="@color/xg_overlay_soft"` on the `top` and `bottom` containers in `view_control_vod.xml`; after a dedicated commit, run `git revert <commit>`.
+
+## 2026-08-14 - Task: Package Android release 5.7.0
+
+### What was done
+- Increased the Android package version from `5.6.9 (569)` to `5.7.0 (570)` so the updated APK can be published as a distinct, traceable release instead of replacing the existing `v5.6.9` binary.
+- Rebuilt the mobile ARM64 APK with the completed homepage and VOD interface updates and synchronized the displayed and documented version.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: APK badging reports package `com.xingguang.video`, `versionCode 570`, `versionName 5.7.0`, minimum API 26 and target API 28.
+- Passed: APK Signature Scheme v2 verification reports one signer with certificate SHA-256 `775B4B773F689575D436784B1B2F7B3F08E8E8BEF6AB11276928C752C783DA24`.
+- Passed: `git diff --check` reports no whitespace errors in the scoped release files.
+- Artifact: `app/build/outputs/apk/mobileArm64_v8a/debug/mobile-arm64_v8a.apk`, `82,637,392` bytes, SHA-256 `564DE6D7F52180101192E3F55DAB43741AFB868881AFD8A32796231F2CC0BCD0`.
+
+### Notes
+- `app/build.gradle`: updates the Android package version to `5.7.0 (570)`.
+- `README.md`: updates the displayed current version to `5.7.0`.
+- `docs/release-version.md`: records the current package version and matching version example.
+- `progress.md`: appends the release build and verification evidence.
+- Rollback point: restore `app/build.gradle`, `README.md`, `docs/release-version.md` and this entry to `5.6.9 (569)` before committing; after the release commit, run `git revert <commit>`.
