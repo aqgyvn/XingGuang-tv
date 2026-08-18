@@ -4832,3 +4832,88 @@
 - `docs/release-version.md`: records the current package version and matching version example.
 - `progress.md`: appends the release build and verification evidence.
 - Rollback point: restore `app/build.gradle`, `README.md`, `docs/release-version.md` and this entry to `5.6.9 (569)` before committing; after the release commit, run `git revert <commit>`.
+
+## 2026-08-18 - Task: Soften episode selection colors
+
+### What was done
+- Replaced the episode grid's shared solid blue accent background with a dedicated translucent charcoal selector.
+- Kept the current episode visible through a restrained blue-grey fill and lower-opacity blue outline, while unselected episodes now use a neutral glass-like surface.
+- Applied the correction to both consumers of the shared episode grid adapter without changing player-engine, track, parse, live-channel, click, or selection behavior.
+- Added the dark panel surface to the side-sheet and bottom-sheet episode containers after ADB verification showed that translucent items composited poorly over the Material default light surface.
+- Kept episode labels white in all states so selection is indicated by the restrained active surface and outline alone.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors.
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Passed: MuMu's application install interface accepted the rebuilt APK for package `com.xingguang.video` without clearing application data.
+- Limited: both ADB transports, `127.0.0.1:16384` and `emulator-5554`, reported `offline`, so ADB-only launch, interaction, hierarchy inspection, and screenshot verification could not be completed.
+
+### Notes
+- `app/src/mobile/res/drawable/shape_episode.xml`: adds the dedicated normal, selected, activated, and ripple surfaces for episode items.
+- `app/src/mobile/res/layout/adapter_episode_grid.xml`: switches episode grid items from the shared accent background to the dedicated episode selector.
+- `app/src/mobile/res/layout/dialog_episode_list.xml`: gives the fullscreen episode side sheet the dark panel surface.
+- `app/src/mobile/res/layout/dialog_episode_grid.xml`: gives the paged episode bottom sheet the same dark panel surface.
+- `app/src/mobile/res/values/colors.xml`: adds the translucent neutral and restrained active episode colors.
+- `docs/mobile-ui-refactor-20260804.md`: records the episode selection surface rule and the current runtime verification limitation.
+- `progress.md`: appends this implementation, build, installation, limitation, changed-file, and rollback record.
+- Rollback point: restore `adapter_episode_grid.xml` to `@drawable/shape_accent`, remove `shape_episode.xml` and the four `xg_episode_*` colors, and remove the matching documentation entries; after a dedicated commit, run `git revert <commit>`.
+
+## 2026-08-18 - Task: Verify episode surface on MuMu through ADB
+
+### What was done
+- Reconnected to MuMu at `127.0.0.1:16384` with ADB and confirmed the transport state is `device`.
+- Installed the rebuilt ARM64 APK without clearing application data, launched the VOD home, opened the saved playback entry, entered fullscreen with ADB gesture input, and opened the right-side episode sheet.
+- Confirmed the final episode surface is a dark panel with translucent charcoal items, white labels, and a restrained blue active outline; the episode list and playback controls remained visible.
+
+### Testing
+- Passed: `adb devices -l` reports `127.0.0.1:16384 device`.
+- Passed: `adb install -r` installed the rebuilt APK for `com.xingguang.video`.
+- Passed: ADB UI hierarchy dump contains `m3_side_sheet` and all episode text nodes.
+- Passed: final 1920 x 1264 MuMu screenshot captured after opening the side sheet; SHA-256 `E697EF1A0C560A274B343599B540DF9F78B9799469EF773F1512C1B517B08E03`.
+- Passed: final APK SHA-256 `2E35BEAD219B820B6024C07FB2DAA7D6B173DF210E62646D7B4E3CA468BE07E4`.
+
+### Notes
+- `episode-style-final.png`: final ADB-only fullscreen side-sheet verification capture.
+- `app/build/outputs/apk/mobileArm64_v8a/debug/mobile-arm64_v8a.apk`: rebuilt mobile ARM64 debug APK installed on MuMu.
+- `progress.md`: appends the successful ADB-only runtime verification and hashes.
+- Rollback point: keep the current implementation and remove this verification entry plus `episode-style-final.png`; code rollback remains the episode-surface rollback point above.
+
+## 2026-08-18 - Task: Package Android release 5.7.1
+
+### What was done
+- Increased the Android package version from `5.7.0 (570)` to `5.7.1 (571)` so the verified episode-surface update is published as a distinct release.
+- Rebuilt the mobile ARM64 APK with the translucent episode selection surfaces and dark episode sheet containers.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace` completed with `BUILD SUCCESSFUL`.
+- Passed: APK badging reports package `com.xingguang.video`, `versionCode 571`, `versionName 5.7.1`, minimum API 26 and target API 28.
+- Passed: APK Signature Scheme v2 verification reports one signer with certificate SHA-256 `775B4B773F689575D436784B1B2F7B3F08E8E8BEF6AB11276928C752C783DA24`.
+- Passed: `git diff --check` reports no whitespace errors in the scoped release files.
+- Artifact: `app/build/outputs/apk/mobileArm64_v8aDebug/debug/mobile-arm64_v8a.apk`, `82,638,504` bytes, SHA-256 `FD3C172477101754FC05F28A8A22DA251649953533C1D9B8913EE6C6D0E1A63F`.
+
+### Notes
+- `app/build.gradle`: updates the Android package version to `5.7.1 (571)`.
+- `README.md`: updates the displayed current version to `5.7.1`.
+- `docs/release-version.md`: records the current package version and matching version example.
+- `app/src/mobile/res/drawable/shape_episode.xml`: adds the dedicated episode selection surfaces.
+- `app/src/mobile/res/layout/adapter_episode_grid.xml`, `dialog_episode_grid.xml`, `dialog_episode_list.xml`: applies the episode selector and dark sheet surfaces.
+- `app/src/mobile/res/values/colors.xml`: defines the neutral and active episode colors.
+- `docs/mobile-ui-refactor-20260804.md`: records the episode-surface verification limitation and ADB validation.
+- `progress.md`: appends the release build and verification evidence.
+- Rollback point: restore version metadata to `5.7.0 (570)`, remove the episode surface changes and this entry; after the release commit, run `git revert <commit>`.
+
+## 2026-08-18 - Task: Require a version bump for every APK modification
+
+### What was done
+- Increased the mobile APK from `versionCode 570` / `versionName 5.7.0` to `versionCode 571` / `versionName 5.7.1` for the latest UI changes.
+- Clarified that every task which modifies APK code, resources, configuration, or behavior must use one new version before rebuilding; implementation, documentation, and progress-log updates from the same task share that version.
+
+### Testing
+- Passed: `\.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Pending at entry time: APK badging and MuMu package metadata verification for `571 / 5.7.1`.
+
+### Notes
+- `app/build.gradle`: updates the Android package version to `571 / 5.7.1`.
+- `docs/release-version.md`: requires a new version for every APK-affecting modification task.
+- `progress.md`: records the version policy change, verification, changed files, and rollback point.
+- Rollback point: restore `versionCode 570` and `versionName "5.7.0"` in `app/build.gradle`, restore the previous version rule and values in `docs/release-version.md`, and remove this progress entry; after a dedicated commit, run `git revert <commit>` instead.

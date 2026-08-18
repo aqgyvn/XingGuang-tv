@@ -10,6 +10,10 @@
     <color name="xg_control_fill">#ff182238</color>
     <color name="xg_control_fill_active">#ff172743</color>
     <color name="xg_control_ripple">#333d81f0</color>
+    <color name="xg_episode_fill">#7a171b22</color>
+    <color name="xg_episode_fill_active">#8a2a3544</color>
+    <color name="xg_episode_line">#4dffffff</color>
+    <color name="xg_episode_line_active">#803d81f0</color>
     <color name="xg_icon_default">#fff4f5f7</color>
     <color name="xg_nav_inactive">#ff969ba3</color>
     <color name="xg_overlay_soft">#a60d0f12</color>
