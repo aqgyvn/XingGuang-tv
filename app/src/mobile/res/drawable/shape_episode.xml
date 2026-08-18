@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/xg_control_ripple">
+    <item>
+        <selector>
+            <item android:state_selected="true">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/xg_episode_fill_active" />
+                    <stroke android:width="1dp" android:color="@color/xg_episode_line_active" />
+                    <corners android:radius="8dp" />
+                </shape>
+            </item>
+            <item android:state_activated="true">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/xg_episode_fill_active" />
+                    <stroke android:width="1dp" android:color="@color/xg_episode_line_active" />
+                    <corners android:radius="8dp" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/xg_episode_fill" />
+                    <stroke android:width="1dp" android:color="@color/xg_episode_line" />
+                    <corners android:radius="8dp" />
+                </shape>
+            </item>
+        </selector>
+    </item>
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle">
+            <solid android:color="#ffffffff" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+</ripple>

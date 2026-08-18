@@ -46,6 +46,13 @@ The refactor keeps the current Android behavior and ViewBinding contracts:
 - Material 3 dialog containers now use the existing dark panel surface instead of the light-mode default container color.
 - Source names, search icons, refresh icons, standard dialog text, and the existing blue selected state remain readable on the same dark surface without changing their handlers.
 
+## Episode Selection Surface Correction
+
+- Episode items in the side-sheet list and paged episode grid now use a dedicated translucent charcoal surface instead of the shared solid blue accent button, and both episode containers use the dark panel surface rather than the Material default light container.
+- The current episode keeps a restrained blue-grey fill and low-opacity blue outline, while unselected episodes use a neutral translucent fill and soft light border.
+- Episode labels remain white in every state, so the active outline provides the selection cue without a second bright-blue text treatment.
+- Other accent buttons, player-engine choices, track choices, parse choices, and live-channel controls keep their existing styles and behavior.
+
 ## Fullscreen Action Strip Layout Correction
 
 - VOD and live fullscreen action strips now fill the available width and divide their existing actions into left and right groups with a flexible center gap.
@@ -105,6 +112,8 @@ The refactor keeps the current Android behavior and ViewBinding contracts:
 - The Android build completed successfully after the dialog contrast correction on August 11, 2026, and APK `5.6.9 (569)` was installed on MuMu without clearing application data.
 - Runtime source-dialog verification confirms six source labels, six search controls, and six refresh controls remain present and clickable on the dark `#181B20` container. White text reaches `17.26:1`, light icons reach `15.83:1`, and the blue selected text reaches `4.6:1` contrast.
 - Runtime standard-dialog verification confirms the image-size title, all four choices, the selected radio state, and the cancel action remain readable on the same dark container; the profile version row displays `5.6.9`.
+- The mobile ARM64 build completed successfully after the episode selection surface correction on August 18, 2026. Runtime screenshot verification remains pending because both MuMu ADB transports reported `offline` after the emulator started.
+- ADB-only runtime verification later completed on August 18, 2026 after the MuMu transport returned `device`: the rebuilt APK opened the VOD detail, entered fullscreen through ADB gesture input, opened the right-side episode sheet, and rendered the dark panel with translucent charcoal episode items, white labels, and a restrained blue active outline.
 
 ## Rollback
 

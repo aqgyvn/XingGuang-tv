@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.appcompat.widget.LinearLayoutCompat android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content"
+<androidx.appcompat.widget.LinearLayoutCompat android:orientation="vertical" android:background="@color/xg_panel_soft" android:layout_width="fill_parent" android:layout_height="wrap_content"
   xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
     <com.google.android.material.textview.MaterialTextView android:textSize="16.0sp" android:textColor="?android:textColorPrimary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="16.0dip" android:text="@string/detail_episode" android:layout_marginStart="16.0dip" android:layout_marginEnd="16.0dip" />
     <com.google.android.material.tabs.TabLayout android:id="@+id/tabs" android:background="@color/transparent" android:layout_width="fill_parent" android:layout_height="32.0dip" android:layout_marginTop="8.0dip" app:tabIndicatorAnimationMode="elastic" app:tabIndicatorColor="?colorControlActivated" app:tabIndicatorFullWidth="false" app:tabIndicatorHeight="2.0dip" app:tabMode="scrollable" app:tabSelectedTextColor="?colorControlActivated" app:tabTextColor="@color/grey_500" />
