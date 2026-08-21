@@ -3,6 +3,7 @@ package com.fongmi.android.tv.ui.dialog;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -18,6 +19,7 @@ import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.utils.ResUtil;
+import com.fongmi.android.tv.utils.Util;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
@@ -90,5 +92,12 @@ public abstract class BaseDialog extends BottomSheetDialogFragment {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && getDialog() != null && getDialog().getWindow() != null) {
             getDialog().getWindow().setNavigationBarContrastEnforced(false);
         }
+        Activity activity = getActivity();
+        Dialog dialog = getDialog();
+        if (activity == null || dialog == null || (activity.getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) == 0) return;
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setNavigationBarColor(Color.TRANSPARENT);
+        Util.hideSystemUI(window);
     }
 }
