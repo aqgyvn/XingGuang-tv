@@ -2135,3 +2135,17 @@
 - `progress.md`: recorded the branch correction, scope boundary, build verification, and rollback point.
 - `app/build.gradle` and Android source files: carried forward only through the migrated Android commits; no new source change was introduced in this correction.
 - Rollback method: delete the unpushed `codex/android-release` branch, or revert this progress commit if it is retained; the original `codex/ios-foundation` branch remains unchanged.
+
+## 2026-08-21 - Task: Publish Android 5.7.4 from the corrected branch
+### What was done
+- Published GitHub Release `v5.7.4` from `codex/android-release` with the formal APK filename `XingGuang-5.7.4-arm64.apk`.
+- Kept the release target separate from `codex/ios-foundation`; the public tag resolves to commit `0adfe49`.
+
+### Testing
+- Passed: public Release page shows target commit `0adfe49`, package version `5.7.4 (574)`, and the Android release notes.
+- Passed: public asset is `78.8 MB` and reports SHA-256 `D802265951B596C09ADF081042F53CEB3C3A220F4922BACB28EA036B952C851F`.
+- Passed: remote `refs/heads/codex/android-release` and `refs/tags/v5.7.4` both resolve to `0adfe493b037dc47a2da905bc2059f1073fec56c`.
+
+### Notes
+- `progress.md`: recorded the public Release publication and final remote verification.
+- Rollback method: delete the `v5.7.4` Release and tag only with explicit approval; do not move the public tag or modify `codex/ios-foundation` implicitly.
