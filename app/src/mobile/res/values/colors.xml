@@ -10,6 +10,12 @@
     <color name="xg_control_fill">#ff182238</color>
     <color name="xg_control_fill_active">#ff172743</color>
     <color name="xg_control_ripple">#333d81f0</color>
+    <color name="xg_sheet_option_fill">#665f6d7d</color>
+    <color name="xg_sheet_option_fill_active">#665c86c4</color>
+    <color name="xg_sheet_option_line">#66445060</color>
+    <color name="xg_sheet_option_line_active">#cc3d81f0</color>
+    <color name="xg_sheet_option_text">#ff253044</color>
+    <color name="xg_sheet_option_text_active">#ff183d73</color>
     <color name="xg_episode_fill">#7a171b22</color>
     <color name="xg_episode_fill_active">#8a2a3544</color>
     <color name="xg_episode_line">#4dffffff</color>
