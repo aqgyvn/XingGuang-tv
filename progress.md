@@ -2117,3 +2117,21 @@
 - `output/XingGuang-5.6.0-arm64.apk`: added the verified versioned delivery APK.
 - `progress.md`: appended this implementation, device verification, delivery artifact, and rollback record.
 - Rollback method: remove `waitingConfig` and its configuration-ready branches from `VideoActivity.java`; set `app/build.gradle`, `README.md`, and version documentation back to `559 / 5.5.9`; remove the `5.6.0 Recent Playback Cold-Start Loading` documentation, delete `output/XingGuang-5.6.0-arm64.apk`, remove this progress entry, then rebuild with `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --stacktrace`.
+
+## 2026-08-21 - Task: Correct Android release branch ownership and rebuild 5.7.4
+### What was done
+- Migrated only the Android release commits from the mixed `codex/ios-foundation` history onto a new `codex/android-release` branch based on `main`.
+- Kept all iOS commits out of the repaired branch and did not rewrite, delete, or force-push the original mixed branch.
+- Rebuilt the Android ARM64 APK from the repaired branch at version `5.7.4 (574)`.
+
+### Testing
+- Passed: `git diff --check main..HEAD`.
+- Passed: `git diff --name-only main..HEAD -- ios` returned no files.
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --gradle-user-home D:\xingkong\.gradle` completed with `BUILD SUCCESSFUL`.
+- Passed: `aapt dump badging` reported package `com.xingguang.video`, `versionCode='574'`, and `versionName='5.7.4'`.
+- Passed: rebuilt APK size is `82656716` bytes and SHA-256 is `D802265951B596C09ADF081042F53CEB3C3A220F4922BACB28EA036B952C851F`.
+
+### Notes
+- `progress.md`: recorded the branch correction, scope boundary, build verification, and rollback point.
+- `app/build.gradle` and Android source files: carried forward only through the migrated Android commits; no new source change was introduced in this correction.
+- Rollback method: delete the unpushed `codex/android-release` branch, or revert this progress commit if it is retained; the original `codex/ios-foundation` branch remains unchanged.
