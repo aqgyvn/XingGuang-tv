@@ -1,8 +1,13 @@
 package com.fongmi.android.tv.ui.dialog;
 
+import android.app.Activity;
+import android.app.Dialog;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -14,6 +19,7 @@ import androidx.viewbinding.ViewBinding;
 import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.Setting;
 import com.fongmi.android.tv.databinding.DialogPlayerEngineBinding;
+import com.fongmi.android.tv.utils.Util;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 public final class PlayerEngineDialog extends BaseDialog {
@@ -63,6 +69,18 @@ public final class PlayerEngineDialog extends BaseDialog {
         binding.exo.setOnClickListener(view -> select(Setting.PLAYER_EXO));
         binding.ijk.setOnClickListener(view -> select(Setting.PLAYER_IJK));
         binding.mpv.setOnClickListener(view -> select(Setting.PLAYER_MPV));
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Activity activity = getActivity();
+        Dialog dialog = getDialog();
+        if (activity == null || dialog == null || (activity.getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) == 0) return;
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setNavigationBarColor(Color.TRANSPARENT);
+        Util.hideSystemUI(window);
     }
 
     private void select(int player) {

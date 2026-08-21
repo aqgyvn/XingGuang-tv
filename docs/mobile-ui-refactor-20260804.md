@@ -53,6 +53,18 @@ The refactor keeps the current Android behavior and ViewBinding contracts:
 - Episode labels remain white in every state, so the active outline provides the selection cue without a second bright-blue text treatment.
 - Other accent buttons, player-engine choices, track choices, parse choices, and live-channel controls keep their existing styles and behavior.
 
+## Fullscreen Player Engine Sheet Inset Correction
+
+- The player-engine bottom sheet now keeps the fullscreen player's immersive system-bar state while it is visible.
+- The sheet no longer waits for a later navigation-bar inset before settling, so its top edge remains stable from the first frame and the black gesture-navigation strip no longer appears below it.
+- The same player-engine sheet opened from the settings screen keeps the normal system-bar behavior.
+
+## Light Sheet Option Surface Correction
+
+- Player-engine options and audio/video/subtitle track options now use a dedicated light translucent selector for the light bottom-sheet surface.
+- Unselected items use a restrained gray-blue glass fill, while selected items use a lighter blue-gray fill and a thin blue outline; labels use dark text for contrast on the light sheet.
+- Fullscreen dark-surface controls and parser choices keep their existing dark selector.
+
 ## Fullscreen Action Strip Layout Correction
 
 - VOD and live fullscreen action strips now fill the available width and divide their existing actions into left and right groups with a flexible center gap.
@@ -114,6 +126,8 @@ The refactor keeps the current Android behavior and ViewBinding contracts:
 - Runtime standard-dialog verification confirms the image-size title, all four choices, the selected radio state, and the cancel action remain readable on the same dark container; the profile version row displays `5.6.9`.
 - The mobile ARM64 build completed successfully after the episode selection surface correction on August 18, 2026. Runtime screenshot verification remains pending because both MuMu ADB transports reported `offline` after the emulator started.
 - ADB-only runtime verification later completed on August 18, 2026 after the MuMu transport returned `device`: the rebuilt APK opened the VOD detail, entered fullscreen through ADB gesture input, opened the right-side episode sheet, and rendered the dark panel with translucent charcoal episode items, white labels, and a restrained blue active outline.
+- ADB-only runtime verification completed on August 21, 2026 for the fullscreen player-engine sheet. Its bounds were `[438,907][2342,1264]` immediately after opening and remained identical four seconds later; the sheet reached the bottom of the 2780 x 1264 display without a separate navigation-bar strip. The immediate and delayed UI hierarchy dumps had the same SHA-256 `A94EEEBDC5A2138F897B64DC6B98130F0E5788DA003C5A4322DF28903D0DB6CF`.
+- ADB-only runtime verification completed on August 21, 2026 for the light player-engine options in APK `5.7.3 (573)`: EXO rendered with a light blue-gray selected fill and blue outline, while IJK and MPV rendered with light gray translucent fills and dark labels. The track-row layout is bound to the same light selector and passed resource compilation; the active test stream exposed no selectable video track, so a matching runtime track-sheet capture was not available.
 
 ## Rollback
 

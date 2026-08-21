@@ -4917,3 +4917,101 @@
 - `docs/release-version.md`: requires a new version for every APK-affecting modification task.
 - `progress.md`: records the version policy change, verification, changed files, and rollback point.
 - Rollback point: restore `versionCode 570` and `versionName "5.7.0"` in `app/build.gradle`, restore the previous version rule and values in `docs/release-version.md`, and remove this progress entry; after a dedicated commit, run `git revert <commit>` instead.
+
+## 2026-08-18 - Task: Verify version 5.7.1 on MuMu
+
+### What was done
+- Installed the rebuilt ARM64 APK over the existing MuMu application data through ADB only.
+- Confirmed the installed package now reports the new version instead of the previous `5.7.0`.
+
+### Testing
+- Passed: APK badging reports `versionCode=571` and `versionName=5.7.1`.
+- Passed: `adb install -r` completed successfully on `127.0.0.1:16384`.
+- Passed: installed package metadata reports `versionCode=571` and `versionName=5.7.1`.
+- Passed: `git diff --check` reports no whitespace errors.
+
+### Notes
+- `app/build/outputs/apk/mobileArm64_v8a/debug/mobile-arm64_v8a.apk`: rebuilt and installed APK for version `5.7.1`.
+- `progress.md`: records the successful ADB version verification.
+- Rollback point: uninstall the `5.7.1` APK or reinstall the prior `5.7.0` APK; restore `app/build.gradle` and `docs/release-version.md` to the previous values only through a dedicated commit rollback.
+
+## 2026-08-21 - Task: Stabilize fullscreen player-engine sheet height
+
+### What was done
+- Kept the player-engine bottom sheet in the fullscreen player's immersive system-bar state, preventing the navigation-bar inset from being applied after the sheet first appears.
+- Removed the separate black navigation strip below this sheet while preserving normal system-bar behavior when the same selector is opened from settings.
+- Increased the APK version from `5.7.1 (571)` to `5.7.2 (572)`.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors in the scoped implementation and documentation files.
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Passed: APK badging and installed MuMu package metadata both report `versionCode=572` and `versionName=5.7.2`.
+- Passed: ADB-only fullscreen playback verification opened the player-engine sheet at bounds `[438,907][2342,1264]`; after four seconds the bounds remained identical and the sheet still reached the display bottom without a separate navigation-bar strip.
+- Passed: the immediate and delayed UI hierarchy dumps are byte-identical with SHA-256 `A94EEEBDC5A2138F897B64DC6B98130F0E5788DA003C5A4322DF28903D0DB6CF`.
+- Artifact: `app/build/outputs/apk/mobileArm64_v8a/debug/mobile-arm64_v8a.apk`, SHA-256 `BB5AB708F3779220D13522905188F51BE54EEF556789D4DD3201AE4CB6ED2DE8`.
+
+### Notes
+- `app/src/main/java/com/fongmi/android/tv/ui/dialog/PlayerEngineDialog.java`: keeps immersive system bars for this sheet when its host activity is fullscreen.
+- `app/build.gradle`: updates the Android package version to `5.7.2 (572)`.
+- `README.md`: updates the displayed current version to `5.7.2`.
+- `docs/release-version.md`: records the current package version and matching version example.
+- `docs/mobile-ui-refactor-20260804.md`: documents the fullscreen sheet inset correction and runtime evidence.
+- `progress.md`: appends this implementation, verification, artifact, changed-file, and rollback record.
+- `player-engine-open.png`, `player-engine-open-delayed.png`, `player-engine-open.xml`, `player-engine-open-delayed.xml`: ADB-only immediate and delayed verification artifacts.
+- Rollback point: restore `PlayerEngineDialog.java` to the previous system-bar handling, restore version metadata to `5.7.1 (571)`, remove the matching documentation entries, and rebuild; after a dedicated commit, run `git revert <commit>` instead.
+
+## 2026-08-21 - Task: Lighten player-engine and track sheet options
+
+### What was done
+- Replaced the shared dark player-option selector only in the light player-engine and track sheets.
+- Added a translucent gray-blue unselected surface, a lighter blue-gray selected surface, thin borders, and dark labels for the white bottom-sheet background.
+- Kept fullscreen dark controls and parser choices on their existing dark selector.
+- Increased the APK version from `5.7.2 (572)` to `5.7.3 (573)`.
+
+### Testing
+- Pending: ARM64 build, APK badging, and ADB installation/runtime verification for `5.7.3`.
+
+### Notes
+- `app/src/mobile/res/drawable/shape_player_option_sheet.xml`: adds the light translucent selector used by sheet options.
+- `app/src/mobile/res/color/player_option_sheet_text.xml`: adds dark sheet-option text states.
+- `app/src/mobile/res/layout/dialog_player_engine.xml`: applies the light selector to EXO, IJK, and MPV.
+- `app/src/mobile/res/layout/adapter_track.xml`: applies the light selector to subtitle, audio, and video track rows.
+- `app/src/mobile/res/values/colors.xml`: defines light sheet fills, borders, and text colors.
+- `app/build.gradle`, `README.md`, `docs/release-version.md`: update the APK version to `5.7.3 (573)`.
+- `docs/mobile-ui-refactor-20260804.md`: documents the light sheet option rule.
+- `progress.md`: records this implementation and verification status.
+- Rollback point: restore the two layouts to `shape_player_option` and `player_option_text`, remove the two new resources and six sheet colors, restore version `5.7.2 (572)`, and rebuild; after a dedicated commit, run `git revert <commit>` instead.
+
+## 2026-08-21 - Task: Verify light sheet option surfaces
+
+### What was done
+- Installed APK `5.7.3 (573)` through ADB and opened the fullscreen player-engine sheet using the same playback path as the reported issue.
+- Confirmed the selected EXO option uses the new light blue-gray surface and the unselected IJK and MPV options use light gray translucent surfaces with dark labels.
+- Confirmed the track-row layout references the same light sheet selector and text-state resource.
+
+### Testing
+- Passed: `git diff --check` reports no whitespace errors in the scoped files.
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1` completed with `BUILD SUCCESSFUL`.
+- Passed: APK badging and installed MuMu package metadata both report `versionCode=573` and `versionName=5.7.3`.
+- Passed: ADB screenshot `player-option-light.png` shows light player-engine option surfaces instead of the previous opaque navy blocks.
+- Passed: `adapter_track.xml` binds track rows to `shape_player_option_sheet` and `player_option_sheet_text`, and those resources compile into the APK.
+- Limited: the current runtime stream exposed no selectable video-track entry, so the track sheet could not be opened for a second runtime screenshot.
+- Artifact: `app/build/outputs/apk/mobileArm64_v8a/debug/mobile-arm64-v8a.apk`, SHA-256 `118A56C9DC71C6F013A180E6E2C2B45B316CCE07CA4B812C2A422CA196A5BD5A`.
+
+### Notes
+- `player-option-light.png`, `player-option-light.xml`: ADB-only runtime evidence for the light player-engine options.
+- `app/src/mobile/res/layout/adapter_track.xml`: verified to use the same compiled light selector and dark text states as the player-engine sheet.
+- `progress.md`: appends the completed build, installation, runtime evidence, limitation, artifact, and rollback record.
+- Rollback point: use the implementation rollback point in the preceding `Lighten player-engine and track sheet options` entry; after a dedicated commit, run `git revert <commit>` instead.
+
+## 2026-08-21 - Task: Correct light-option APK artifact path
+
+### What was done
+- Corrected the verification reference: the generated APK filename is `mobile-arm64_v8a.apk`.
+
+### Testing
+- Passed: `app/build/outputs/apk/mobileArm64_v8a/debug/mobile-arm64_v8a.apk` exists and has SHA-256 `118A56C9DC71C6F013A180E6E2C2B45B316CCE07CA4B812C2A422CA196A5BD5A`.
+
+### Notes
+- `progress.md`: appends the corrected artifact filename without rewriting the earlier record.
+- Rollback point: remove only this correction entry; no APK implementation rollback is required.
