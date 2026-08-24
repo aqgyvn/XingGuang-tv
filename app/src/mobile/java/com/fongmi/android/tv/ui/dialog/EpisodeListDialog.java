@@ -2,6 +2,7 @@ package com.fongmi.android.tv.ui.dialog;
 
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
@@ -12,6 +13,7 @@ import com.fongmi.android.tv.databinding.DialogEpisodeListBinding;
 import com.fongmi.android.tv.ui.adapter.EpisodeAdapter;
 import com.fongmi.android.tv.ui.base.ViewType;
 import com.fongmi.android.tv.utils.ResUtil;
+import com.fongmi.android.tv.utils.Util;
 import com.google.android.material.sidesheet.SideSheetDialog;
 
 import java.util.List;
@@ -52,6 +54,8 @@ public class EpisodeListDialog implements EpisodeAdapter.OnClickListener {
         dialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         dialog.getWindow().setDimAmount(0);
         dialog.show();
+        Window window = dialog.getWindow();
+        Util.applyFullscreenWindow(activity, window);
         setWidth();
     }
 

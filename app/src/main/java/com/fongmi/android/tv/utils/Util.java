@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.IBinder;
 import android.provider.Settings;
@@ -54,6 +55,16 @@ public class Util {
         insets.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         insets.hide(WindowInsetsCompat.Type.systemBars());
+    }
+
+    public static void applyFullscreenWindow(Activity activity, Window window) {
+        if (activity == null || window == null) return;
+        if ((activity.getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) == 0) return;
+        WindowCompat.setDecorFitsSystemWindows(window, false);
+        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        window.setNavigationBarColor(Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) window.setNavigationBarContrastEnforced(false);
+        hideSystemUI(window);
     }
 
     public static void showSystemUI(Activity activity) {

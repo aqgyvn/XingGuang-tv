@@ -3,6 +3,8 @@ package com.fongmi.android.tv.ui.dialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -14,6 +16,7 @@ import androidx.viewbinding.ViewBinding;
 import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.Setting;
 import com.fongmi.android.tv.databinding.DialogPlayerEngineBinding;
+import com.fongmi.android.tv.utils.ResUtil;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 public final class PlayerEngineDialog extends BaseDialog {
@@ -63,6 +66,15 @@ public final class PlayerEngineDialog extends BaseDialog {
         binding.exo.setOnClickListener(view -> select(Setting.PLAYER_EXO));
         binding.ijk.setOnClickListener(view -> select(Setting.PLAYER_IJK));
         binding.mpv.setOnClickListener(view -> select(Setting.PLAYER_MPV));
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Window window = getDialog() == null ? null : getDialog().getWindow();
+        if (window == null) return;
+        int width = ResUtil.isLand(requireActivity()) ? ResUtil.dp2px(420) : WindowManager.LayoutParams.MATCH_PARENT;
+        window.setLayout(width, WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private void select(int player) {

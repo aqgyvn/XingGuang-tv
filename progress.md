@@ -2149,3 +2149,20 @@
 ### Notes
 - `progress.md`: recorded the public Release publication and final remote verification.
 - Rollback method: delete the `v5.7.4` Release and tag only with explicit approval; do not move the public tag or modify `codex/ios-foundation` implicitly.
+
+## 2026-08-24 - Task: Prepare and publish Android 5.7.6
+### What was done
+- Migrated only the current Android fullscreen-sheet corrections and version metadata into `codex/android-release`; unrelated Leanback deletions, screenshots, and debug XML files were excluded.
+- Rebuilt the ARM64 APK as version `5.7.6 (576)` for the new release.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --gradle-user-home D:\xingkong\.gradle` completed with `BUILD SUCCESSFUL`.
+- Passed: `aapt dump badging` reports package `com.xingguang.video`, `versionCode='576'`, and `versionName='5.7.6'`.
+- Passed: `git diff --check` reports no whitespace errors.
+- Passed: the Android release branch diff contains no `ios/` paths.
+- Artifact: `app/build/outputs/apk/mobileArm64_v8a/debug/mobile-arm64_v8a.apk`, size `82656716` bytes, SHA-256 `A6308CF459635E666E88C0D92C521607FAD4E6F8B97FAB5C4E222BDA97A74C58`.
+
+### Notes
+- `README.md`, `app/build.gradle`, Android dialog/util files, and `docs/release-version.md`: carry the 5.7.6 Android implementation and version metadata.
+- `progress.md`: records this build and upload preparation.
+- Rollback method: revert the dedicated 5.7.6 commit; do not modify `codex/ios-foundation` or move prior public tags.
