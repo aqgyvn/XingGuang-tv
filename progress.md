@@ -2179,3 +2179,17 @@
 ### Notes
 - `progress.md`: records the uploaded draft and its verification.
 - Rollback method: discard the unpublished `v5.7.6` draft; no public tag or release needs rollback.
+
+## 2026-08-24 - Task: Publish Android 5.7.6
+### What was done
+- Published GitHub Release `v5.7.6` from the corrected `codex/android-release` branch.
+- Kept the formal APK asset `XingGuang-5.7.6-arm64.apk` and marked the release as latest.
+
+### Testing
+- Passed: public Release page resolves to tag `v5.7.6` and commit `853d8db`.
+- Passed: public asset is `78.8 MB` with SHA-256 `A6308CF459635E666E88C0D92C521607FAD4E6F8B97FAB5C4E222BDA97A74C58`.
+- Passed: release notes show package `com.xingguang.video`, version `5.7.6 (576)`, and Android 8.0 minimum requirement.
+
+### Notes
+- `progress.md`: recorded the final publication and public asset verification.
+- Rollback method: delete the `v5.7.6` Release and tag only with explicit approval; do not alter the Android branch history implicitly.
