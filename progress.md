@@ -2166,3 +2166,16 @@
 - `README.md`, `app/build.gradle`, Android dialog/util files, and `docs/release-version.md`: carry the 5.7.6 Android implementation and version metadata.
 - `progress.md`: records this build and upload preparation.
 - Rollback method: revert the dedicated 5.7.6 commit; do not modify `codex/ios-foundation` or move prior public tags.
+
+## 2026-08-24 - Task: Upload Android 5.7.6 Release draft
+### What was done
+- Uploaded `XingGuang-5.7.6-arm64.apk` to the GitHub `v5.7.6` Release draft.
+- Kept the draft target on `codex/android-release`; no public release action was performed.
+
+### Testing
+- Passed: the draft page shows tag `v5.7.6`, target `codex/android-release`, and the formal APK filename.
+- Passed: the uploaded asset is shown as `78.8 MB`; its local SHA-256 is `A6308CF459635E666E88C0D92C521607FAD4E6F8B97FAB5C4E222BDA97A74C58`.
+
+### Notes
+- `progress.md`: records the uploaded draft and its verification.
+- Rollback method: discard the unpublished `v5.7.6` draft; no public tag or release needs rollback.
