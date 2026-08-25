@@ -2223,3 +2223,17 @@
 ### Notes
 - `progress.md`: records the 5.7.7 draft upload and verification.
 - Rollback method: discard the unpublished `v5.7.7` draft; no public tag or release needs rollback.
+
+## 2026-08-25 - Task: Publish Android 5.7.7
+### What was done
+- Published GitHub Release `v5.7.7` from the corrected `codex/android-release` branch.
+- Kept the formal APK asset `XingGuang-5.7.7-arm64.apk` and marked the release as latest.
+
+### Testing
+- Passed: GitHub API reports `draft=false`, tag `v5.7.7`, and target `codex/android-release`.
+- Passed: public asset is `82656716` bytes and reports SHA-256 `2493608EE6849B583CFE089DCCFB7FFA3C6CEC5D6489C4677A55CC0D93BD697E`.
+- Passed: release URL resolves to `https://github.com/aqgyvn/XingGuang-tv/releases/tag/v5.7.7`.
+
+### Notes
+- `progress.md`: recorded the final publication and public asset verification.
+- Rollback method: delete the `v5.7.7` Release and tag only with explicit approval; do not alter the Android branch history implicitly.
