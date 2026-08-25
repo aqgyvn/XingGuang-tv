@@ -3,8 +3,6 @@ package com.fongmi.android.tv.ui.dialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -69,12 +67,8 @@ public final class PlayerEngineDialog extends BaseDialog {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        Window window = getDialog() == null ? null : getDialog().getWindow();
-        if (window == null) return;
-        int width = ResUtil.isLand(requireActivity()) ? ResUtil.dp2px(420) : WindowManager.LayoutParams.MATCH_PARENT;
-        window.setLayout(width, WindowManager.LayoutParams.WRAP_CONTENT);
+    protected int sheetWidth() {
+        return ResUtil.isLand(requireActivity()) ? ResUtil.dp2px(420) : ViewGroup.LayoutParams.MATCH_PARENT;
     }
 
     private void select(int player) {
