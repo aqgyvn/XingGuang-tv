@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.R;
@@ -70,13 +72,23 @@ public abstract class BaseDialog extends BottomSheetDialogFragment {
 
     private void setBehavior(BottomSheetDialog dialog) {
         FrameLayout bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
-        ViewGroup.LayoutParams params = bottomSheet.getLayoutParams();
-        params.width = sheetWidth();
-        bottomSheet.setLayoutParams(params);
+        applySheetWidth(bottomSheet);
         if (transparent()) bottomSheet.setBackgroundColor(ResUtil.getColor(R.color.transparent));
         BottomSheetBehavior<FrameLayout> behavior = BottomSheetBehavior.from(bottomSheet);
         behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
         behavior.setSkipCollapsed(true);
+    }
+
+    private void applySheetWidth(FrameLayout bottomSheet) {
+        ViewGroup.LayoutParams params = bottomSheet.getLayoutParams();
+        if (params instanceof CoordinatorLayout.LayoutParams) {
+            CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) params;
+            layoutParams.width = sheetWidth();
+            layoutParams.gravity = Gravity.CENTER_HORIZONTAL | Gravity.TOP;
+        } else {
+            params.width = sheetWidth();
+        }
+        bottomSheet.setLayoutParams(params);
     }
 
     private void setWindow(Dialog dialog) {
@@ -96,6 +108,9 @@ public abstract class BaseDialog extends BottomSheetDialogFragment {
         super.onStart();
         Activity activity = getActivity();
         Dialog dialog = getDialog();
-        if (dialog != null) Util.applyFullscreenWindow(activity, dialog.getWindow());
+        if (dialog == null) return;
+        FrameLayout bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+        if (bottomSheet != null) applySheetWidth(bottomSheet);
+        Util.applyFullscreenWindow(activity, dialog.getWindow());
     }
 }

@@ -2237,3 +2237,21 @@
 ### Notes
 - `progress.md`: recorded the final publication and public asset verification.
 - Rollback method: delete the `v5.7.7` Release and tag only with explicit approval; do not alter the Android branch history implicitly.
+
+## 2026-08-26 - Task: Prepare Android 5.7.9 release
+### What was done
+- Migrated only the 5.7.9 Android bottom-sheet width correction and version metadata into `codex/android-release`.
+- Applied the compact player-engine selector width in both portrait and landscape and kept the sheet centered.
+- Excluded the iOS branch history, Leanback deletions, screenshots, and debug XML files.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --gradle-user-home D:\xingkong\.gradle` completed with `BUILD SUCCESSFUL`.
+- Passed: `aapt dump badging` reports package `com.xingguang.video`, `versionCode='579'`, and `versionName='5.7.9'`.
+- Passed: `git diff --check` reports no whitespace errors.
+- Passed: the Android release branch diff contains no `ios/` paths.
+- Artifact: `app/build/outputs/apk/mobileArm64_v8a/debug/mobile-arm64_v8a.apk`, size `82656716` bytes, SHA-256 `CF33B923582F11F56A0958587EA8D35E13924B8FB15195D4DC0D400BC6187DA8`.
+
+### Notes
+- `README.md`, `app/build.gradle`, `BaseDialog.java`, `PlayerEngineDialog.java`, `docs/mobile-ui-refactor-20260804.md`, and `docs/release-version.md`: carry the 5.7.9 Android release changes.
+- `progress.md`: records the build and upload preparation.
+- Rollback method: revert the dedicated 5.7.9 commit; do not modify `codex/ios-foundation` or prior public tags.
