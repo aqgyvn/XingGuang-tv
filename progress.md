@@ -2255,3 +2255,16 @@
 - `README.md`, `app/build.gradle`, `BaseDialog.java`, `PlayerEngineDialog.java`, `docs/mobile-ui-refactor-20260804.md`, and `docs/release-version.md`: carry the 5.7.9 Android release changes.
 - `progress.md`: records the build and upload preparation.
 - Rollback method: revert the dedicated 5.7.9 commit; do not modify `codex/ios-foundation` or prior public tags.
+
+## 2026-08-26 - Task: Upload Android 5.7.9 Release draft
+### What was done
+- Created the GitHub `v5.7.9` Release draft on `codex/android-release`.
+- Uploaded `XingGuang-5.7.9-arm64.apk` to the draft; no public release action was performed.
+
+### Testing
+- Passed: GitHub API reports tag `v5.7.9`, `draft=true`, and target `codex/android-release`.
+- Passed: uploaded asset is `82656716` bytes and reports SHA-256 `CF33B923582F11F56A0958587EA8D35E13924B8FB15195D4DC0D400BC6187DA8`.
+
+### Notes
+- `progress.md`: records the 5.7.9 draft upload and verification.
+- Rollback method: discard the unpublished `v5.7.9` draft; no public tag or release needs rollback.
