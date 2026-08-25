@@ -2210,3 +2210,16 @@
 - `README.md`, `app/build.gradle`, `BaseDialog.java`, `PlayerEngineDialog.java`, `docs/mobile-ui-refactor-20260804.md`, and `docs/release-version.md`: carry the 5.7.7 Android release changes.
 - `progress.md`: records the build and upload preparation.
 - Rollback method: revert the dedicated 5.7.7 commit; do not modify `codex/ios-foundation` or prior public tags.
+
+## 2026-08-25 - Task: Upload Android 5.7.7 Release draft
+### What was done
+- Uploaded `XingGuang-5.7.7-arm64.apk` to the GitHub `v5.7.7` Release draft.
+- Kept the draft target on `codex/android-release`; no public release action was performed.
+
+### Testing
+- Passed: the draft page shows tag `v5.7.7`, target `codex/android-release`, and the formal APK filename.
+- Passed: the uploaded asset is shown as `78.8 MB`; its local SHA-256 is `2493608EE6849B583CFE089DCCFB7FFA3C6CEC5D6489C4677A55CC0D93BD697E`.
+
+### Notes
+- `progress.md`: records the 5.7.7 draft upload and verification.
+- Rollback method: discard the unpublished `v5.7.7` draft; no public tag or release needs rollback.
