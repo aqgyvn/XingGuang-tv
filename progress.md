@@ -2374,3 +2374,23 @@
 ### Notes
 - `progress.md`: recorded final publication and public download verification.
 - Rollback method: delete the `v5713` Release and tag only with explicit approval; do not alter the Android source commit implicitly.
+
+## 2026-08-26 - Task: Prepare Android 5715 release
+### What was done
+- Synchronized the confirmed Android 5715 fullscreen dialog fix and version metadata into the dedicated Android release branch.
+- Kept Leanback deletions, screenshots, temporary XML files, and detached worktree changes outside the release change.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --gradle-user-home D:\xingkong\.gradle` completed with `BUILD SUCCESSFUL`.
+- Passed: `aapt dump badging` reports package `com.xingguang.video`, `versionCode='5715'`, and `versionName='5715'`.
+- Passed: `apksigner verify --verbose` reports APK Signature Scheme v2 verification succeeded with one signer.
+- Passed: `git diff --check` reports no whitespace errors.
+- Artifact: `app/build/outputs/apk/mobileArm64_v8a/debug/mobile-arm64_v8a.apk`, size `82656768` bytes, SHA-256 `B201651A37DAF5016A88F181982938F4E3B385D20FA0E3D369564B1C26BACD29`.
+
+### Notes
+- `README.md`: updated the displayed version to 5715.
+- `app/build.gradle`: set both Android version fields to 5715.
+- `app/src/main/java/com/fongmi/android/tv/ui/dialog/BaseDialog.java`: applied fullscreen window sizing before the landscape dialog's first measurement.
+- `docs/mobile-ui-refactor-20260804.md` and `docs/release-version.md`: documented the 5715 behavior and version.
+- `progress.md`: recorded release preparation and verification evidence.
+- Rollback method: revert the dedicated Android 5715 source commit; do not modify unrelated worktrees or published releases.

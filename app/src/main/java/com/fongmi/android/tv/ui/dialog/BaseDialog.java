@@ -15,6 +15,9 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.R;
@@ -100,7 +103,7 @@ public abstract class BaseDialog extends BottomSheetDialogFragment {
         int activityFlags = activityWindow.getAttributes().flags;
         dialogWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         boolean isFullscreen = (activityFlags & WindowManager.LayoutParams.FLAG_FULLSCREEN) == WindowManager.LayoutParams.FLAG_FULLSCREEN;
-        if (isFullscreen) dialogWindow.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        if (isFullscreen) Util.applyFullscreenWindow(activity, dialogWindow);
     }
 
     @Override
@@ -112,7 +115,10 @@ public abstract class BaseDialog extends BottomSheetDialogFragment {
         FrameLayout bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
         if (bottomSheet != null) applySheetWidth(bottomSheet);
         Util.applyFullscreenWindow(activity, dialog.getWindow());
-        if (isFullscreen(activity)) applyFullscreenInsets(dialog);
+        if (isFullscreen(activity)) {
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            applyFullscreenInsets(dialog);
+        }
     }
 
     private boolean isFullscreen(Activity activity) {
@@ -135,5 +141,17 @@ public abstract class BaseDialog extends BottomSheetDialogFragment {
             coordinator.setFitsSystemWindows(false);
             coordinator.setPadding(0, 0, 0, 0);
         }
+        clearSystemBarInsets(bottomSheet);
+        clearSystemBarInsets(container);
+        clearSystemBarInsets(coordinator);
+    }
+
+    private void clearSystemBarInsets(View view) {
+        if (view == null) return;
+        ViewCompat.setOnApplyWindowInsetsListener(view, (target, insets) -> new WindowInsetsCompat.Builder(insets)
+                .setInsets(WindowInsetsCompat.Type.systemBars(), Insets.NONE)
+                .setInsets(WindowInsetsCompat.Type.displayCutout(), Insets.NONE)
+                .build());
+        ViewCompat.requestApplyInsets(view);
     }
 }
