@@ -2300,3 +2300,16 @@
 - `README.md`, `app/build.gradle`, `BaseDialog.java`, `PlayerEngineDialog.java`, `docs/mobile-ui-refactor-20260804.md`, and `docs/release-version.md`: carry the 5.7.11 Android release changes.
 - `progress.md`: records the build and upload preparation.
 - Rollback method: revert the dedicated 5.7.11 commit; do not modify `codex/ios-foundation` or prior public tags.
+
+## 2026-08-26 - Task: Upload Android 5.7.11 Release draft
+### What was done
+- Created the GitHub `v5.7.11` Release draft on `codex/android-release`.
+- Uploaded `XingGuang-5.7.11-arm64.apk` to the draft; no public release action was performed.
+
+### Testing
+- Passed: GitHub API reports tag `v5.7.11`, `draft=true`, and target `codex/android-release`.
+- Passed: uploaded asset is `82656724` bytes and reports SHA-256 `9771B8C7267E2715631BA33114A182875A546DDCB6574C4035965EABB64351AD`.
+
+### Notes
+- `progress.md`: records the 5.7.11 draft upload and verification.
+- Rollback method: discard the unpublished `v5.7.11` draft; no public tag or release needs rollback.
