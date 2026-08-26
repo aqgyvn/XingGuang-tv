@@ -2360,3 +2360,17 @@
 ### Notes
 - `progress.md`: recorded the Android 5713 draft upload and remote verification.
 - Rollback method: delete the unpublished `v5713` draft; no public tag or Release needs rollback.
+
+## 2026-08-26 - Task: Publish Android 5713
+### What was done
+- Published GitHub Release `v5713` from the exact Android source commit `890b857881eff7977b46a0259551f897ebcac877`.
+- Kept `XingGuang-5713-arm64.apk` as the public release asset and marked the Release as non-draft.
+
+### Testing
+- Passed: GitHub API reports `draft=false`, tag `v5713`, target `890b857881eff7977b46a0259551f897ebcac877`, and one uploaded APK asset.
+- Passed: public download endpoint returns HTTP `200` with `Content-Length=82656768` bytes.
+- Passed: GitHub asset digest matches the local APK SHA-256 `CF09F28E51B54888685C8151214F5E0E75DB16A33418653F51079D9365B803CF`.
+
+### Notes
+- `progress.md`: recorded final publication and public download verification.
+- Rollback method: delete the `v5713` Release and tag only with explicit approval; do not alter the Android source commit implicitly.
