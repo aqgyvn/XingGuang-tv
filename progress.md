@@ -2394,3 +2394,17 @@
 - `docs/mobile-ui-refactor-20260804.md` and `docs/release-version.md`: documented the 5715 behavior and version.
 - `progress.md`: recorded release preparation and verification evidence.
 - Rollback method: revert the dedicated Android 5715 source commit; do not modify unrelated worktrees or published releases.
+
+## 2026-08-26 - Task: Upload Android 5715 Release draft
+### What was done
+- Created the GitHub `v5715` Release draft targeting the exact Android source commit `dbb747bd909cb0914054f4a53028445f4bc949a3`.
+- Uploaded `XingGuang-5715-arm64.apk` to the draft; no public release action was performed.
+
+### Testing
+- Passed: authenticated GitHub API reports tag `v5715`, `draft=true`, and target `dbb747bd909cb0914054f4a53028445f4bc949a3`.
+- Passed: the uploaded asset state is `uploaded`, size is `82656768` bytes, and digest is `sha256:b201651a37daf5016a88f181982938f4e3b385d20fa0e3d369564b1c26bacd29`.
+- Expected: the unauthenticated asset URL returns HTTP `404` while the Release remains a draft.
+
+### Notes
+- `progress.md`: recorded the Android 5715 draft upload and authenticated remote verification.
+- Rollback method: delete the unpublished `v5715` draft; no public tag or Release needs rollback.
