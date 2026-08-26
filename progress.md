@@ -2327,3 +2327,23 @@
 ### Notes
 - `progress.md`: recorded the final publication and public asset verification.
 - Rollback method: delete the `v5.7.11` Release and tag only with explicit approval; do not alter the Android branch history implicitly.
+
+## 2026-08-26 - Task: Prepare Android 5713 release
+### What was done
+- Synchronized the confirmed Android 5713 version metadata and player-engine option layout into the dedicated Android release branch.
+- Kept Leanback deletions, screenshots, temporary XML files, and detached iOS branch history outside the release change.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --gradle-user-home D:\xingkong\.gradle` completed with `BUILD SUCCESSFUL`.
+- Passed: `aapt dump badging` reports package `com.xingguang.video`, `versionCode='5713'`, and `versionName='5713'`.
+- Passed: `apksigner verify --verbose` reports APK Signature Scheme v2 verification succeeded with one signer.
+- Passed: `git diff --check` reports no whitespace errors.
+- Artifact: `app/build/outputs/apk/mobileArm64_v8a/debug/mobile-arm64_v8a.apk`, size `82656768` bytes, SHA-256 `CF09F28E51B54888685C8151214F5E0E75DB16A33418653F51079D9365B803CF`.
+
+### Notes
+- `README.md`: updated the displayed version to 5713.
+- `app/build.gradle`: set both Android version fields to 5713.
+- `app/src/mobile/res/layout/dialog_player_engine.xml`: kept the three player-engine options equally distributed across the row.
+- `docs/mobile-ui-refactor-20260804.md` and `docs/release-version.md`: documented the 5713 behavior and version rule.
+- `progress.md`: recorded release preparation and verification evidence.
+- Rollback method: revert the dedicated Android 5713 source commit; do not modify unrelated worktrees or published releases.

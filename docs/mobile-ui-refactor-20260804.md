@@ -130,7 +130,7 @@ The refactor keeps the current Android behavior and ViewBinding contracts:
 - ADB-only runtime verification completed on August 21, 2026 for the light player-engine options in APK `5.7.3 (573)`: EXO rendered with a light blue-gray selected fill and blue outline, while IJK and MPV rendered with light gray translucent fills and dark labels. The track-row layout is bound to the same light selector and passed resource compilation; the active test stream exposed no selectable video track, so a matching runtime track-sheet capture was not available.
 - APK `5.7.4 (574)` moves the fullscreen immersive-window handling from the player-engine sheet into the shared player bottom-sheet base. Audio, subtitle, video-track, subtitle-control, and danmaku sheets now keep the same stable bottom edge and height after opening, while non-fullscreen settings sheets retain their normal system-bar behavior.
 - APK `5.7.5 (575)` makes fullscreen bottom and side sheets lay out below the system bars with a transparent navigation area. This prevents the player-engine sheet from exposing the underlying control row and prevents the episode side sheet from leaving a black gesture-bar strip; the shared handling also covers other fullscreen player sheets.
-- APK `5.7.11 (581)` keeps the landscape player-engine selector at 420dp while making the fullscreen bottom sheet and its internal containers ignore system-bar insets, so the sheet reaches the bottom of the screen without a black/empty strip.
+- APK `5713 (5713)` keeps the landscape player-engine selector at 420dp, explicitly divides its option row into three equal shares, and makes the fullscreen bottom sheet and internal containers ignore system-bar insets.
 
 ## Rollback
 

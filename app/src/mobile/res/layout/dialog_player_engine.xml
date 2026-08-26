@@ -18,13 +18,18 @@
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:gravity="center_vertical"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp">
+        android:weightSum="3"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/exo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:gravity="center"
             android:background="@drawable/shape_player_option_sheet"
             android:text="@string/play_exo"
             android:textColor="@color/player_option_sheet_text"
@@ -32,9 +37,12 @@
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/ijk"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:gravity="center"
             android:background="@drawable/shape_player_option_sheet"
             android:text="@string/play_ijk"
             android:textColor="@color/player_option_sheet_text"
@@ -42,9 +50,12 @@
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/mpv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:gravity="center"
             android:background="@drawable/shape_player_option_sheet"
             android:text="@string/play_mpv"
             android:textColor="@color/player_option_sheet_text"
