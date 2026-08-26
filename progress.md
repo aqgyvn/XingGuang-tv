@@ -2347,3 +2347,16 @@
 - `docs/mobile-ui-refactor-20260804.md` and `docs/release-version.md`: documented the 5713 behavior and version rule.
 - `progress.md`: recorded release preparation and verification evidence.
 - Rollback method: revert the dedicated Android 5713 source commit; do not modify unrelated worktrees or published releases.
+
+## 2026-08-26 - Task: Upload Android 5713 Release draft
+### What was done
+- Created the GitHub `v5713` Release draft targeting the exact Android source commit `890b857881eff7977b46a0259551f897ebcac877`.
+- Uploaded `XingGuang-5713-arm64.apk` to the draft; no public release action was performed.
+
+### Testing
+- Passed: GitHub API reports tag `v5713`, `draft=true`, and target `890b857881eff7977b46a0259551f897ebcac877`.
+- Passed: the uploaded asset state is `uploaded`, size is `82656768` bytes, and digest is `sha256:cf09f28e51b54888685c8151214f5e0e75db16a33418653f51079d9365b803cf`.
+
+### Notes
+- `progress.md`: recorded the Android 5713 draft upload and remote verification.
+- Rollback method: delete the unpublished `v5713` draft; no public tag or Release needs rollback.
