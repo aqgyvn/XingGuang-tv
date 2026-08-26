@@ -112,5 +112,28 @@ public abstract class BaseDialog extends BottomSheetDialogFragment {
         FrameLayout bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
         if (bottomSheet != null) applySheetWidth(bottomSheet);
         Util.applyFullscreenWindow(activity, dialog.getWindow());
+        if (isFullscreen(activity)) applyFullscreenInsets(dialog);
+    }
+
+    private boolean isFullscreen(Activity activity) {
+        return activity != null && activity.getWindow() != null && (activity.getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
+    }
+
+    private void applyFullscreenInsets(Dialog dialog) {
+        FrameLayout bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+        View container = dialog.findViewById(com.google.android.material.R.id.container);
+        View coordinator = dialog.findViewById(com.google.android.material.R.id.coordinator);
+        if (bottomSheet != null) {
+            bottomSheet.setFitsSystemWindows(false);
+            bottomSheet.setPadding(0, 0, 0, 0);
+        }
+        if (container != null) {
+            container.setFitsSystemWindows(false);
+            container.setPadding(0, 0, 0, 0);
+        }
+        if (coordinator != null) {
+            coordinator.setFitsSystemWindows(false);
+            coordinator.setPadding(0, 0, 0, 0);
+        }
     }
 }

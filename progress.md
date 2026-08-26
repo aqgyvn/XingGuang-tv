@@ -2282,3 +2282,21 @@
 ### Notes
 - `progress.md`: recorded the final publication and public asset verification.
 - Rollback method: delete the `v5.7.9` Release and tag only with explicit approval; do not alter the Android branch history implicitly.
+
+## 2026-08-26 - Task: Prepare Android 5.7.11 release
+### What was done
+- Migrated only the current 5.7.11 Android bottom-sheet inset correction and version metadata into `codex/android-release`.
+- Restored the player-engine selector to 420dp landscape / full-width portrait and disabled fullscreen bottom-sheet system-bar insets.
+- Excluded the iOS branch history, Leanback deletions, screenshots, and debug XML files.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --gradle-user-home D:\xingkong\.gradle` completed with `BUILD SUCCESSFUL`.
+- Passed: `aapt dump badging` reports package `com.xingguang.video`, `versionCode='581'`, and `versionName='5.7.11'`.
+- Passed: `git diff --check` reports no whitespace errors.
+- Passed: the Android release branch diff contains no `ios/` paths.
+- Artifact: `app/build/outputs/apk/mobileArm64_v8a/debug/mobile-arm64_v8a.apk`, size `82656724` bytes, SHA-256 `9771B8C7267E2715631BA33114A182875A546DDCB6574C4035965EABB64351AD`.
+
+### Notes
+- `README.md`, `app/build.gradle`, `BaseDialog.java`, `PlayerEngineDialog.java`, `docs/mobile-ui-refactor-20260804.md`, and `docs/release-version.md`: carry the 5.7.11 Android release changes.
+- `progress.md`: records the build and upload preparation.
+- Rollback method: revert the dedicated 5.7.11 commit; do not modify `codex/ios-foundation` or prior public tags.

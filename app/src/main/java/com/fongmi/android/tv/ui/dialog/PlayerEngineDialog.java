@@ -14,6 +14,7 @@ import androidx.viewbinding.ViewBinding;
 import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.Setting;
 import com.fongmi.android.tv.databinding.DialogPlayerEngineBinding;
+import com.fongmi.android.tv.utils.ResUtil;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 public final class PlayerEngineDialog extends BaseDialog {
@@ -67,7 +68,7 @@ public final class PlayerEngineDialog extends BaseDialog {
 
     @Override
     protected int sheetWidth() {
-        return ViewGroup.LayoutParams.WRAP_CONTENT;
+        return ResUtil.isLand(requireActivity()) ? ResUtil.dp2px(420) : ViewGroup.LayoutParams.MATCH_PARENT;
     }
 
     private void select(int player) {
