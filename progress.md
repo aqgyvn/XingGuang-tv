@@ -2408,3 +2408,17 @@
 ### Notes
 - `progress.md`: recorded the Android 5715 draft upload and authenticated remote verification.
 - Rollback method: delete the unpublished `v5715` draft; no public tag or Release needs rollback.
+
+## 2026-08-27 - Task: Publish Android 5715
+### What was done
+- Published GitHub Release `v5715` from the exact Android source commit `dbb747bd909cb0914054f4a53028445f4bc949a3`.
+- Kept `XingGuang-5715-arm64.apk` as the public release asset and marked the Release as latest.
+
+### Testing
+- Passed: GitHub API reports `draft=false`, tag `v5715`, and target `dbb747bd909cb0914054f4a53028445f4bc949a3`.
+- Passed: the public download endpoint returns HTTP `200` with `Content-Length=82656768` bytes.
+- Passed: GitHub asset digest matches the local APK SHA-256 `B201651A37DAF5016A88F181982938F4E3B385D20FA0E3D369564B1C26BACD29`.
+
+### Notes
+- `progress.md`: recorded final publication and public download verification.
+- Rollback method: delete the `v5715` Release and tag only with explicit approval; do not alter the Android source commit implicitly.
