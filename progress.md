@@ -2395,6 +2395,20 @@
 - `progress.md`: recorded release preparation and verification evidence.
 - Rollback method: revert the dedicated Android 5715 source commit; do not modify unrelated worktrees or published releases.
 
+## 2026-08-28 - Task: Publish Android 5716
+### What was done
+- Published GitHub Release `v5716` from the exact Android source commit `161449ca5181b9665fa0a940e3f4006ba26bf8bb`.
+- Uploaded and retained `XingGuang-5716-arm64.apk` as the public release asset, marking the Release as latest.
+
+### Testing
+- Passed: GitHub API reports `draft=false`, tag `v5716`, target `161449ca5181b9665fa0a940e3f4006ba26bf8bb`, and one uploaded APK asset.
+- Passed: public download endpoint returns HTTP `200` with `Content-Length=82673152` bytes.
+- Passed: GitHub asset digest matches the local APK SHA-256 `A088B3C414B74C0C647BA3427F7CE14A45D340DEA0F26E32AA639167055E50A4`.
+
+### Notes
+- `progress.md`: recorded final publication and public download verification.
+- Rollback method: delete the `v5716` Release and tag only with explicit approval; do not alter the Android source commit implicitly.
+
 ## 2026-08-26 - Task: Upload Android 5715 Release draft
 ### What was done
 - Created the GitHub `v5715` Release draft targeting the exact Android source commit `dbb747bd909cb0914054f4a53028445f4bc949a3`.
