@@ -2,16 +2,16 @@
 
 ## Current APK Version
 
-- `versionCode`: `5715`
-- `versionName`: `5715`
+- `versionCode`: `5716`
+- `versionName`: `5.7.16`
 
 ## Version Bump Rule
 
-Every task that modifies APK code, resources, configuration, or behavior must bump both Android version fields in `app/build.gradle` before building. All implementation, documentation, and progress-log changes completed in the same task share that single new version:
+Each release task may update the Android version fields once. Intermediate fixes, builds, and tests keep the current version. All implementation, documentation, and progress-log changes completed in the same release task share that single version:
 
 - Increase `versionCode` by 1.
-- Keep `versionName` identical to `versionCode`; for example, `versionCode 5715` uses `versionName "5715"`.
-- Do not reuse the previous version after any APK-affecting modification.
+- Use a semantic display name derived from the build number; for example, `versionCode 5716` uses `versionName "5.7.16"`.
+- Do not reuse the previous version for a new release.
 
 Verification command:
 

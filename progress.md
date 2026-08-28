@@ -2422,3 +2422,23 @@
 ### Notes
 - `progress.md`: recorded final publication and public download verification.
 - Rollback method: delete the `v5715` Release and tag only with explicit approval; do not alter the Android source commit implicitly.
+
+## 2026-08-28 - Task: Prepare Android 5716 release
+### What was done
+- Synchronized the confirmed Android 5716 episode side-sheet fullscreen layout fix and version metadata into the dedicated Android release branch.
+- Kept Leanback deletions, screenshots, temporary XML files, and detached worktree changes outside the release change.
+
+### Testing
+- Passed: `.\gradlew.bat :app:assembleMobileArm64_v8aDebug --no-daemon --no-parallel --max-workers=1 --gradle-user-home D:\xingkong\.gradle` completed with `BUILD SUCCESSFUL`.
+- Passed: `aapt dump badging` reports package `com.xingguang.video`, `versionCode='5716'`, and `versionName='5.7.16'`.
+- Passed: `apksigner verify --verbose` reports APK Signature Scheme v2 verification succeeded with one signer.
+- Passed: `git diff --check` reports no whitespace errors.
+- Artifact: `app/build/outputs/apk/mobileArm64_v8a/debug/mobile-arm64_v8a.apk`, size `82673152` bytes, SHA-256 `A088B3C414B74C0C647BA3427F7CE14A45D340DEA0F26E32AA639167055E50A4`.
+
+### Notes
+- `README.md`: updated the displayed version to 5.7.16.
+- `app/build.gradle`: set `versionCode 5716` and `versionName "5.7.16"`.
+- `app/src/mobile/java/com/fongmi/android/tv/ui/dialog/EpisodeListDialog.java`: applied fullscreen sizing and inset handling before and after side-sheet measurement.
+- `docs/release-version.md`: documented the 5716 version and release rule.
+- `progress.md`: recorded release preparation and verification evidence.
+- Rollback method: revert the dedicated Android 5716 source commit; do not modify unrelated worktrees or published releases.
