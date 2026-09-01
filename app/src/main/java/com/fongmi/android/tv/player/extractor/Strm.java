@@ -4,13 +4,12 @@ import android.net.Uri;
 
 import com.fongmi.android.tv.player.Source;
 import com.fongmi.android.tv.utils.UrlUtil;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
+import com.github.catvod.net.XgResponse;
 import com.github.catvod.utils.Path;
 import com.google.common.net.HttpHeaders;
 
 import java.io.File;
-
-import okhttp3.Response;
 
 public class Strm implements Source.Extractor {
 
@@ -27,7 +26,7 @@ public class Strm implements Source.Extractor {
     }
 
     private String http(String url) throws Exception {
-        try (Response res = OkHttp.newCall(OkHttp.noRedirect(), url).execute()) {
+        try (XgResponse res = XgHttp.call(XgHttp.xgNoRedirect(), url).execute()) {
             String content = res.header(HttpHeaders.CONTENT_DISPOSITION, "");
             boolean text = content.contains(".strm") || content.contains(".txt");
             return text ? res.body().string().split("\\R", 2)[0] : url;

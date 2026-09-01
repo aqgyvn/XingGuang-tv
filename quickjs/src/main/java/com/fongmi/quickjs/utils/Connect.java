@@ -1,7 +1,15 @@
 package com.fongmi.quickjs.utils;
 
 import com.fongmi.quickjs.bean.Req;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgCall;
+import com.github.catvod.net.XgClient;
+import com.github.catvod.net.XgFormBody;
+import com.github.catvod.net.XgHeaders;
+import com.github.catvod.net.XgHttp;
+import com.github.catvod.net.XgMultipartBody;
+import com.github.catvod.net.XgRequest;
+import com.github.catvod.net.XgRequestBody;
+import com.github.catvod.net.XgResponse;
 import com.github.catvod.utils.Json;
 import com.github.catvod.utils.Util;
 import com.google.common.net.HttpHeaders;
@@ -12,24 +20,14 @@ import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 
-import okhttp3.Call;
-import okhttp3.FormBody;
-import okhttp3.Headers;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-
 public class Connect {
 
-    public static Call to(String url, Req req) {
-        OkHttpClient client = OkHttp.client(req.isRedirect(), req.getTimeout());
-        return client.newCall(getRequest(url, req, Headers.of(req.getHeader())));
+    public static XgCall to(String url, Req req) {
+        XgClient client = XgHttp.xgClient(req.isRedirect(), req.getTimeout());
+        return client.newCall(getRequest(url, req, XgHeaders.of(req.getHeader())));
     }
 
-    public static JSObject success(QuickJSContext ctx, Req req, Response res) {
+    public static JSObject success(QuickJSContext ctx, Req req, XgResponse res) {
         try (res) {
             JSObject jsObject = ctx.createNewJSObject();
             JSObject jsHeader = ctx.createNewJSObject();
@@ -55,44 +53,44 @@ public class Connect {
         return jsObject;
     }
 
-    private static Request getRequest(String url, Req req, Headers headers) {
+    private static XgRequest getRequest(String url, Req req, XgHeaders headers) {
         if (req.getMethod().equalsIgnoreCase("post")) {
-            return new Request.Builder().url(url).headers(headers).post(getPostBody(req, headers.get(HttpHeaders.CONTENT_TYPE))).build();
+            return new XgRequest.Builder().url(url).headers(headers).post(getPostBody(req, headers.get(HttpHeaders.CONTENT_TYPE))).build();
         } else if (req.getMethod().equalsIgnoreCase("header")) {
-            return new Request.Builder().url(url).headers(headers).head().build();
+            return new XgRequest.Builder().url(url).headers(headers).head().build();
         } else {
-            return new Request.Builder().url(url).headers(headers).get().build();
+            return new XgRequest.Builder().url(url).headers(headers).get().build();
         }
     }
 
-    private static RequestBody getPostBody(Req req, String contentType) {
+    private static XgRequestBody getPostBody(Req req, String contentType) {
         if (req.getData() != null && "json".equals(req.getPostType())) return getJsonBody(req);
         if (req.getData() != null && "form".equals(req.getPostType())) return getFormBody(req);
         if (req.getData() != null && "form-data".equals(req.getPostType())) return getFormDataBody(req);
-        if (req.getBody() != null && contentType != null) return RequestBody.create(req.getBody(), MediaType.get(contentType));
-        return RequestBody.create(new byte[0]);
+        if (req.getBody() != null && contentType != null) return XgRequestBody.create(req.getBody(), contentType);
+        return XgRequestBody.create(new byte[0]);
     }
 
-    private static RequestBody getJsonBody(Req req) {
-        return RequestBody.create(req.getData().toString(), MediaType.get("application/json; charset=utf-8"));
+    private static XgRequestBody getJsonBody(Req req) {
+        return XgRequestBody.create(req.getData().toString(), "application/json; charset=utf-8");
     }
 
-    private static RequestBody getFormBody(Req req) {
-        FormBody.Builder builder = new FormBody.Builder();
+    private static XgRequestBody getFormBody(Req req) {
+        XgFormBody.Builder builder = new XgFormBody.Builder();
         Map<String, String> params = Json.toMap(req.getData());
         for (String key : params.keySet()) builder.add(key, params.get(key));
         return builder.build();
     }
 
-    private static RequestBody getFormDataBody(Req req) {
+    private static XgRequestBody getFormDataBody(Req req) {
         String boundary = "--dio-boundary-" + new SecureRandom().nextInt(42949) + new SecureRandom().nextInt(67296);
-        MultipartBody.Builder builder = new MultipartBody.Builder(boundary).setType(MultipartBody.FORM);
+        XgMultipartBody.Builder builder = new XgMultipartBody.Builder(boundary);
         Map<String, String> params = Json.toMap(req.getData());
         for (String key : params.keySet()) builder.addFormDataPart(key, params.get(key));
         return builder.build();
     }
 
-    private static void setHeader(QuickJSContext ctx, Response res, JSObject object) {
+    private static void setHeader(QuickJSContext ctx, XgResponse res, JSObject object) {
         for (Map.Entry<String, List<String>> entry : res.headers().toMultimap().entrySet()) {
             if (entry.getValue().size() == 1) object.setProperty(entry.getKey(), entry.getValue().get(0));
             if (entry.getValue().size() >= 2) object.setProperty(entry.getKey(), JSUtil.toArray(ctx, entry.getValue()));

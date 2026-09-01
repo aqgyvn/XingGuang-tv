@@ -17,7 +17,7 @@ import com.fongmi.android.tv.bean.Live;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.exception.ExtractException;
 import com.fongmi.android.tv.player.Source;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -103,7 +103,7 @@ public class LiveViewModel extends ViewModel {
         String date = formatDate.format(new Date());
         String url = item.getEpg().replace("{date}", date);
         execute(TaskType.EPG, () -> {
-            if (url.startsWith("http") && !item.getData().equal(date)) item.setData(Epg.objectFrom(OkHttp.string(url), item.getTvgId(), formatTime));
+            if (url.startsWith("http") && !item.getData().equal(date)) item.setData(Epg.objectFrom(XgHttp.string(url), item.getTvgId(), formatTime));
             return item.getData().selected();
         });
     }

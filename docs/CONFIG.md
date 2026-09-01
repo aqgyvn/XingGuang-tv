@@ -443,7 +443,7 @@ scheme://username:password@host:port
   "host": "stream.example.com",
   "header": {
     "Access-Control-Allow-Origin": "*",
-    "User-Agent": "okhttp/3.12.13"
+    "User-Agent": "xghttp/5.3.2"
   }
 }
 ```
@@ -706,7 +706,7 @@ POST body：`name=剧集名称&episode=集数名称`
     {
       "host": "stream.example.com",
       "header": {
-        "User-Agent": "okhttp/3.12.13"
+        "User-Agent": "xghttp/5.3.2"
       }
     }
   ],

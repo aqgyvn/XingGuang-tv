@@ -1,7 +1,7 @@
 package com.fongmi.android.tv.player.danmaku;
 
 import com.fongmi.android.tv.bean.Danmaku;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
 
 import java.io.InputStream;
 
@@ -20,7 +20,7 @@ public class Loader implements ILoader {
     @Override
     public void load(String url) {
         try {
-            load(OkHttp.newCall(url, "danmaku").execute().body().byteStream());
+            load(XgHttp.call(url, "danmaku").execute().body().byteStream());
         } catch (Throwable ignored) {
         }
     }

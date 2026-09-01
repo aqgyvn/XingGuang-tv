@@ -30,7 +30,12 @@ import com.fongmi.android.tv.ui.adapter.DeviceAdapter;
 import com.fongmi.android.tv.utils.DLNADevice;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.ScanTask;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
+import com.github.catvod.net.XgCall;
+import com.github.catvod.net.XgCallback;
+import com.github.catvod.net.XgClient;
+import com.github.catvod.net.XgFormBody;
+import com.github.catvod.net.XgResponse;
 import com.github.catvod.utils.Path;
 import com.github.catvod.utils.Util;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
@@ -44,15 +49,10 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.IOException;
 
 import kotlin.Unit;
-import okhttp3.Call;
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Response;
+public class CastDialog extends BaseDialog implements DeviceAdapter.OnClickListener, ScanTask.Listener, OnDeviceRegistryListener, OnDeviceControlListener, ServiceActionCallback<Unit>, XgCallback {
 
-public class CastDialog extends BaseDialog implements DeviceAdapter.OnClickListener, ScanTask.Listener, OnDeviceRegistryListener, OnDeviceControlListener, ServiceActionCallback<Unit>, okhttp3.Callback {
-
-    private final FormBody.Builder body;
-    private final OkHttpClient client;
+    private final XgFormBody.Builder body;
+    private final XgClient client;
     private final ScanTask scanTask;
 
     private DialogDeviceBinding binding;
@@ -68,10 +68,10 @@ public class CastDialog extends BaseDialog implements DeviceAdapter.OnClickListe
 
     public CastDialog() {
         scanTask = new ScanTask(this);
-        body = new FormBody.Builder();
+        body = new XgFormBody.Builder();
         body.add("device", Device.get().toString());
         body.add("config", Config.vod().toString());
-        client = OkHttp.client(Constant.TIMEOUT_SYNC);
+        client = XgHttp.xgClient(Constant.TIMEOUT_SYNC);
     }
 
     public CastDialog history(History history) {
@@ -197,12 +197,12 @@ public class CastDialog extends BaseDialog implements DeviceAdapter.OnClickListe
     }
 
     @Override
-    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-        App.post(() -> Notify.show(e.getMessage()));
+    public void onFailure(XgCall call, IOException error) {
+        App.post(() -> Notify.show(error.getMessage()));
     }
 
     @Override
-    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+    public void onResponse(XgCall call, XgResponse response) throws IOException {
         if (response.body().string().equals("OK")) App.post(this::onCasted);
         else App.post(() -> Notify.show(R.string.device_offline));
     }
@@ -210,7 +210,7 @@ public class CastDialog extends BaseDialog implements DeviceAdapter.OnClickListe
     @Override
     public void onItemClick(Device item) {
         if (item.isDLNA()) control = DLNACastManager.INSTANCE.connectDevice(DLNADevice.get().find(item), this);
-        else OkHttp.newCall(client, item.getIp().concat("/action?do=cast"), body.build()).enqueue(this);
+        else XgHttp.call(client, item.getIp().concat("/action?do=cast"), body.build()).enqueue(this);
     }
 
     @Override

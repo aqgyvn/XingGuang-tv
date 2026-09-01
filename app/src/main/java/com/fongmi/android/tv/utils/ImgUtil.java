@@ -28,15 +28,20 @@ import com.fongmi.android.tv.impl.CustomTarget;
 import com.github.catvod.utils.Json;
 import com.google.common.net.HttpHeaders;
 
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 import jahirfiquitiva.libs.textdrawable.TextDrawable;
 
 public class ImgUtil {
 
-    private static final Set<String> failed = new HashSet<>();
+    private static final int MAX_FAILED = 256;
+    private static final Map<String, Boolean> failed = new LinkedHashMap<>(MAX_FAILED, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Boolean> eldest) {
+            return size() > MAX_FAILED;
+        }
+    };
 
     public static void logo(ImageView view) {
         try {
@@ -56,7 +61,10 @@ public class ImgUtil {
 
     public static void load(Context context, String url, CustomTarget<Drawable> target) {
         try {
-            Glide.with(context).load(getUrl(url)).override(ResUtil.getScreenWidth(), ResUtil.getScreenHeight()).error(R.drawable.artwork).into(target);
+            int width = ResUtil.getScreenWidth();
+            int height = ResUtil.getScreenHeight();
+            float scale = Math.min(1f, 1280f / Math.max(width, height));
+            Glide.with(context).load(getUrl(url)).override(Math.round(width * scale), Math.round(height * scale)).error(R.drawable.artwork).into(target);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -69,13 +77,27 @@ public class ImgUtil {
     public static void load(String text, String url, ImageView view, boolean vod) {
         view.setScaleType(vod ? CENTER_CROP : FIT_CENTER);
         if (!vod) view.setVisibility(TextUtils.isEmpty(url) ? View.GONE : View.VISIBLE);
-        if (TextUtils.isEmpty(url) || failed.contains(url)) view.setImageDrawable(getTextDrawable(text, vod));
+        if (TextUtils.isEmpty(url) || isFailed(url)) view.setImageDrawable(getTextDrawable(text, vod));
         else try {
+            Glide.with(view).clear(view);
+            view.setImageDrawable(getTextDrawable(text, vod));
             RequestBuilder<Drawable> builder = Glide.with(view).load(getUrl(url)).listener(getListener(text, url, view, vod));
             if (vod) builder.centerCrop().into(view);
             else builder.fitCenter().into(view);
         } catch (Throwable e) {
             e.printStackTrace();
+        }
+    }
+
+    private static boolean isFailed(String url) {
+        synchronized (failed) {
+            return failed.containsKey(url);
+        }
+    }
+
+    private static void markFailed(String url) {
+        synchronized (failed) {
+            failed.put(url, Boolean.TRUE);
         }
     }
 
@@ -109,7 +131,7 @@ public class ImgUtil {
             @Override
             public boolean onLoadFailed(@Nullable GlideException e, Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
                 view.setImageDrawable(getTextDrawable(text, vod));
-                failed.add(url);
+                markFailed(url);
                 return true;
             }
 

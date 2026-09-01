@@ -19,7 +19,9 @@ import com.fongmi.android.tv.server.Nano;
 import com.fongmi.android.tv.server.impl.Process;
 import com.fongmi.android.tv.utils.FileUtil;
 import com.fongmi.android.tv.utils.Notify;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
+import com.github.catvod.net.XgClient;
+import com.github.catvod.net.XgFormBody;
 import com.github.catvod.utils.Path;
 
 import java.util.List;
@@ -28,8 +30,6 @@ import java.util.Objects;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
-import okhttp3.FormBody;
-
 public class Action implements Process {
 
     @Override
@@ -124,9 +124,9 @@ public class Action implements Process {
         }
     }
 
-    private void post(Device device, String type, FormBody.Builder body) {
+    private void post(Device device, String type, XgFormBody.Builder body) {
         try {
-            OkHttp.newCall(OkHttp.client(Constant.TIMEOUT_SYNC), device.getIp().concat("/action?do=sync&mode=0&type=" + type), body.build()).execute();
+            XgHttp.call(XgHttp.xgClient(Constant.TIMEOUT_SYNC), device.getIp().concat("/action?do=sync&mode=0&type=" + type), body.build()).execute();
         } catch (Exception e) {
             App.post(() -> Notify.show(e.getMessage()));
         }
@@ -136,7 +136,7 @@ public class Action implements Process {
         try {
             Config config = Config.find(Config.objectFrom(params.get("config")));
             if (config.getUrl() == null) config = Config.vod();
-            FormBody.Builder body = new FormBody.Builder();
+            XgFormBody.Builder body = new XgFormBody.Builder();
             body.add("config", config.toString());
             body.add("targets", App.gson().toJson(History.get(config.getId())));
             post(device, "history", body);
@@ -147,7 +147,7 @@ public class Action implements Process {
 
     private void sendKeep(Device device) {
         try {
-            FormBody.Builder body = new FormBody.Builder();
+            XgFormBody.Builder body = new XgFormBody.Builder();
             body.add("targets", App.gson().toJson(Keep.getVod()));
             body.add("configs", App.gson().toJson(Config.findUrls()));
             post(device, "keep", body);

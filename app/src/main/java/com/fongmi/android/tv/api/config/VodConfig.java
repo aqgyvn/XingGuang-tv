@@ -18,7 +18,7 @@ import com.fongmi.android.tv.utils.UrlUtil;
 import com.github.catvod.bean.Doh;
 import com.github.catvod.bean.Header;
 import com.github.catvod.bean.Proxy;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
 import com.github.catvod.utils.Json;
 import com.google.gson.JsonObject;
 
@@ -112,7 +112,7 @@ public class VodConfig {
 
     private void loadConfig(int id, Config config, Callback callback) {
         try {
-            OkHttp.cancel(TAG);
+            XgHttp.cancel(TAG);
             Server.get().start();
             String json = Decoder.getJson(UrlUtil.convert(config.getUrl()), TAG);
             checkJson(id, config, callback, Json.parse(json).getAsJsonObject());
@@ -250,12 +250,12 @@ public class VodConfig {
     }
 
     private void setHeaders(List<Header> headers) {
-        OkHttp.responseInterceptor().addAll(headers);
+        XgHttp.responseInterceptor().addAll(headers);
     }
 
     private void setProxy(List<Proxy> proxy) {
-        OkHttp.authenticator().addAll(proxy);
-        OkHttp.selector().addAll(proxy);
+        XgHttp.authenticator().addAll(proxy);
+        XgHttp.selector().addAll(proxy);
     }
 
     public List<String> getFlags() {
@@ -267,7 +267,7 @@ public class VodConfig {
     }
 
     private void setHosts(List<String> hosts) {
-        OkHttp.dns().addAll(hosts);
+        XgHttp.dns().addAll(hosts);
     }
 
     public List<String> getAds() {

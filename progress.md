@@ -2456,3 +2456,20 @@
 - `docs/release-version.md`: documented the 5716 version and release rule.
 - `progress.md`: recorded release preparation and verification evidence.
 - Rollback method: revert the dedicated Android 5716 source commit; do not modify unrelated worktrees or published releases.
+
+## 2026-09-01 - Task: Prepare Android 5717 release
+### What was done
+- Synchronized the Android 5717 network transport migration and related Android source changes into the dedicated `codex/android-release` worktree.
+- Kept Leanback deletions, screenshots, temporary XML files, and unrelated UI artifacts outside the release commit.
+
+### Testing
+- Passed: `:app:assembleMobileArm64_v8aRelease` completed with `BUILD SUCCESSFUL`.
+- Passed: `aapt dump badging` reports package `com.xingguang.video`, `versionCode='5717'`, and `versionName='5.7.17'`.
+- Passed: `apksigner verify --verbose --print-certs` reports APK Signature Scheme v2 verification succeeded with one signer.
+- Passed: APK size is `69089751` bytes and SHA-256 is `CFD8E6D3A762972B05ABF7CB98E1413F37EE693A51888E37CAF340FEF0CA89F5`.
+- Passed: `git diff --check` reports no whitespace errors after synchronization.
+- Artifact: `app/build/outputs/apk/mobileArm64_v8a/release/mobile-arm64_v8a.apk`.
+
+### Notes
+- Draft release target: tag `v5717`, asset `XingGuang-5717-arm64.apk`.
+- Publication remains a draft until explicit confirmation.

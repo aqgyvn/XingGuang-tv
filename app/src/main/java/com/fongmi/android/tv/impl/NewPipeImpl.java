@@ -2,7 +2,10 @@ package com.fongmi.android.tv.impl;
 
 import androidx.annotation.NonNull;
 
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
+import com.github.catvod.net.XgRequest;
+import com.github.catvod.net.XgRequestBody;
+import com.github.catvod.net.XgResponse;
 
 import org.schabi.newpipe.extractor.downloader.Downloader;
 import org.schabi.newpipe.extractor.downloader.Request;
@@ -12,9 +15,6 @@ import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
 
 public final class NewPipeImpl extends Downloader {
 
@@ -35,18 +35,17 @@ public final class NewPipeImpl extends Downloader {
         Map<String, List<String>> headers = request.headers();
         byte[] dataToSend = request.dataToSend();
 
-        RequestBody requestBody = null;
+        XgRequestBody requestBody = null;
         if (dataToSend != null) {
-            requestBody = RequestBody.create(null, dataToSend);
+            requestBody = XgRequestBody.create(dataToSend);
         }
 
-        okhttp3.Request.Builder requestBuilder = new okhttp3.Request.Builder().method(httpMethod, requestBody).url(url).addHeader("User-Agent", USER_AGENT);
+        XgRequest.Builder requestBuilder = new XgRequest.Builder().method(httpMethod, requestBody).url(url).addHeader("User-Agent", USER_AGENT);
 
         for (Map.Entry<String, List<String>> pair : headers.entrySet()) {
             String headerName = pair.getKey();
             List<String> headerValueList = pair.getValue();
             if (headerValueList.size() > 1) {
-                requestBuilder.removeHeader(headerName);
                 for (String headerValue : headerValueList) {
                     requestBuilder.addHeader(headerName, headerValue);
                 }
@@ -55,16 +54,11 @@ public final class NewPipeImpl extends Downloader {
             }
         }
 
-        okhttp3.Response response = OkHttp.client().newCall(requestBuilder.build()).execute();
-
-        if (response.code() == 429) {
-            response.close();
-            throw new ReCaptchaException("reCaptcha Challenge requested", url);
+        try (XgResponse response = XgHttp.xgClient().newCall(requestBuilder.build()).execute()) {
+            if (response.code() == 429) throw new ReCaptchaException("reCaptcha Challenge requested", url);
+            String responseBodyToReturn = response.body().string();
+            String latestUrl = response.url().toString();
+            return new Response(response.code(), response.message(), response.headers().toMultimap(), responseBodyToReturn, latestUrl);
         }
-
-        ResponseBody body = response.body();
-        String responseBodyToReturn = body.string();
-        String latestUrl = response.request().url().toString();
-        return new Response(response.code(), response.message(), response.headers().toMultimap(), responseBodyToReturn, latestUrl);
     }
 }

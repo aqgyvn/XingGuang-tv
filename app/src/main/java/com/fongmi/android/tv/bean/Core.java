@@ -7,7 +7,7 @@ import androidx.annotation.Nullable;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.fongmi.hook.Hook;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
@@ -88,7 +88,7 @@ public class Core {
     }
 
     public static String getString(String value) {
-        return (value = UrlUtil.convert(value)).startsWith("http") ? OkHttp.string(value) : value;
+        return (value = UrlUtil.convert(value)).startsWith("http") ? XgHttp.string(value) : value;
     }
 
     public static class Option {

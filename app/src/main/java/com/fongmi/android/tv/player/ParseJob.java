@@ -13,7 +13,8 @@ import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.ui.custom.CustomWebView;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.fongmi.android.tv.utils.WebViewUtil;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
+import com.github.catvod.net.XgResponse;
 import com.github.catvod.utils.Json;
 import com.github.catvod.utils.Util;
 import com.google.common.net.HttpHeaders;
@@ -29,8 +30,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import okhttp3.Response;
 
 public class ParseJob implements ParseCallback {
 
@@ -121,7 +120,7 @@ public class ParseJob implements ParseCallback {
     }
 
     private void jsonParse(Parse item, String webUrl, boolean error) throws Exception {
-        try (Response res = OkHttp.newCall(item.getUrl() + webUrl, item.getHeader()).execute()) {
+        try (XgResponse res = XgHttp.call(item.getUrl() + webUrl, item.getHeader()).execute()) {
             JsonObject object = Json.parse(res.body().string()).getAsJsonObject();
             String url = Json.safeString(object, "url");
             JsonObject data = object.getAsJsonObject("data");

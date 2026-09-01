@@ -1,8 +1,9 @@
 package com.fongmi.android.tv.ui.holder;
 
+import android.widget.ImageView;
+
 import androidx.annotation.NonNull;
 
-import com.bumptech.glide.Glide;
 import com.fongmi.android.tv.bean.Vod;
 import com.fongmi.android.tv.databinding.AdapterVodListBinding;
 import com.fongmi.android.tv.ui.adapter.VodAdapter;
@@ -33,7 +34,7 @@ public class VodListHolder extends BaseVodHolder {
     }
 
     @Override
-    public void unbind() {
-        Glide.with(binding.image).clear(binding.image);
+    protected ImageView getImageView() {
+        return binding.image;
     }
 }

@@ -49,7 +49,7 @@ CCTV1,http://cdn1.example.com/cctv1.m3u8#http://cdn2.example.com/cctv1.m3u8
 **行内请求头**：URL 后接 `|key=value`，多个以 `&` 连接，多线路时每段各自带请求头：
 
 ```
-CCTV1,http://cdn1.example.com/cctv1.m3u8|User-Agent=okhttp#http://cdn2.example.com/cctv1.m3u8|Referer=https://example.com/
+CCTV1,http://cdn1.example.com/cctv1.m3u8|User-Agent=xghttp#http://cdn2.example.com/cctv1.m3u8|Referer=https://example.com/
 ```
 
 **示例：**

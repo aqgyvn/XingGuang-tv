@@ -7,7 +7,7 @@ import com.fongmi.android.tv.utils.Download;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderNull;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
 import com.github.catvod.utils.Path;
 import com.github.catvod.utils.Util;
 
@@ -88,7 +88,7 @@ public class JarLoader {
             if (loaders.containsKey(key)) return;
             String[] texts = jar.split(";md5;");
             String md5 = texts.length > 1 ? texts[1].trim() : "";
-            if (md5.startsWith("http")) md5 = OkHttp.string(md5).trim();
+            if (md5.startsWith("http")) md5 = XgHttp.string(md5).trim();
             jar = texts[0];
             if (!md5.isEmpty() && Util.equals(jar, md5)) {
                 load(key, Path.jar(jar));

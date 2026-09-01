@@ -1,7 +1,8 @@
 package com.fongmi.android.tv.utils;
 
 import com.fongmi.android.tv.App;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
+import com.github.catvod.net.XgResponse;
 import com.github.catvod.utils.Path;
 import com.google.common.net.HttpHeaders;
 
@@ -11,8 +12,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.Future;
-
-import okhttp3.Response;
 
 public class Download {
 
@@ -49,13 +48,13 @@ public class Download {
 
     public Download cancel() {
         if (future != null) future.cancel(true);
-        OkHttp.cancel(tag);
+        XgHttp.cancel(tag);
         future = null;
         return this;
     }
 
     private void doInBackground() {
-        try (Response res = OkHttp.newCall(url, tag).execute()) {
+        try (XgResponse res = XgHttp.call(url, tag).execute()) {
             download(res.body().byteStream(), getLength(res));
             if (callback != null) App.post(() -> callback.success(file));
         } catch (Exception e) {
@@ -81,7 +80,7 @@ public class Download {
         }
     }
 
-    private double getLength(Response res) {
+    private double getLength(XgResponse res) {
         try {
             String header = res.header(HttpHeaders.CONTENT_LENGTH);
             return header != null ? Double.parseDouble(header) : -1;

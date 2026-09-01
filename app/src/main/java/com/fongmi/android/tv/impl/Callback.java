@@ -2,12 +2,13 @@ package com.fongmi.android.tv.impl;
 
 import androidx.annotation.NonNull;
 
+import com.github.catvod.net.XgCall;
+import com.github.catvod.net.XgCallback;
+import com.github.catvod.net.XgResponse;
+
 import java.io.IOException;
 
-import okhttp3.Call;
-import okhttp3.Response;
-
-public class Callback implements okhttp3.Callback {
+public class Callback implements XgCallback {
 
     public void success() {
     }
@@ -25,10 +26,10 @@ public class Callback implements okhttp3.Callback {
     }
 
     @Override
-    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+    public void onFailure(XgCall call, IOException e) {
     }
 
     @Override
-    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+    public void onResponse(XgCall call, XgResponse response) throws IOException {
     }
 }

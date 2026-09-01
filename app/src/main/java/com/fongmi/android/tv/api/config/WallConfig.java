@@ -18,7 +18,7 @@ import com.fongmi.android.tv.utils.FileUtil;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.UrlUtil;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
 import com.github.catvod.utils.Path;
 
 import java.io.File;
@@ -85,7 +85,7 @@ public class WallConfig {
 
     private void loadConfig(int id, Config config, Callback callback) {
         try {
-            OkHttp.cancel(TAG);
+            XgHttp.cancel(TAG);
             download(id, config.getUrl(), callback);
             if (taskId.get() == id && config.equals(this.config)) config.update();
         } catch (Throwable e) {

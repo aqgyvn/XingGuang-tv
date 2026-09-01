@@ -22,13 +22,17 @@ import com.fongmi.android.tv.bean.History;
 import com.fongmi.android.tv.bean.Keep;
 import com.fongmi.android.tv.databinding.DialogDeviceBinding;
 import com.fongmi.android.tv.event.ScanEvent;
-import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.ui.activity.ScanActivity;
 import com.fongmi.android.tv.ui.adapter.DeviceAdapter;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.ScanTask;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
+import com.github.catvod.net.XgCall;
+import com.github.catvod.net.XgCallback;
+import com.github.catvod.net.XgClient;
+import com.github.catvod.net.XgFormBody;
+import com.github.catvod.net.XgResponse;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import org.greenrobot.eventbus.EventBus;
@@ -38,15 +42,10 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.IOException;
 import java.util.Locale;
 
-import okhttp3.Call;
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Response;
-
 public class SyncDialog extends BaseDialog implements DeviceAdapter.OnClickListener, ScanTask.Listener {
 
-    private final FormBody.Builder body;
-    private final OkHttpClient client;
+    private final XgFormBody.Builder body;
+    private final XgClient client;
     private final ScanTask scanTask;
     private final TypedArray mode;
 
@@ -59,9 +58,9 @@ public class SyncDialog extends BaseDialog implements DeviceAdapter.OnClickListe
     }
 
     public SyncDialog() {
-        body = new FormBody.Builder();
+        body = new XgFormBody.Builder();
         scanTask = new ScanTask(this);
-        client = OkHttp.client(Constant.TIMEOUT_SYNC);
+        client = XgHttp.xgClient(Constant.TIMEOUT_SYNC);
         mode = ResUtil.getTypedArray(R.array.cast_mode);
     }
 
@@ -161,7 +160,7 @@ public class SyncDialog extends BaseDialog implements DeviceAdapter.OnClickListe
 
     @Override
     public void onItemClick(Device item) {
-        OkHttp.newCall(client, String.format(Locale.getDefault(), "%s/action?do=sync&mode=%s&type=%s", item.getIp(), binding.mode.getTag().toString(), type), body.build()).enqueue(getCallback());
+        XgHttp.call(client, String.format(Locale.getDefault(), "%s/action?do=sync&mode=%s&type=%s", item.getIp(), binding.mode.getTag().toString(), type), body.build()).enqueue(getCallback());
     }
 
     @Override
@@ -170,7 +169,7 @@ public class SyncDialog extends BaseDialog implements DeviceAdapter.OnClickListe
         if (mode.equals("0")) return false;
         if (mode.equals("2")) deleteLocal();
         String force = mode.equals("1") ? "&force=true" : "";
-        OkHttp.newCall(client, String.format(Locale.getDefault(), "%s/action?do=sync&mode=%s&type=%s%s", item.getIp(), mode, type, force), body.build()).enqueue(getCallback());
+        XgHttp.call(client, String.format(Locale.getDefault(), "%s/action?do=sync&mode=%s&type=%s%s", item.getIp(), mode, type, force), body.build()).enqueue(getCallback());
         return true;
     }
 
@@ -179,16 +178,16 @@ public class SyncDialog extends BaseDialog implements DeviceAdapter.OnClickListe
         if (type.equals("history")) History.delete(VodConfig.getCid());
     }
 
-    private Callback getCallback() {
-        return new Callback() {
+    private XgCallback getCallback() {
+        return new XgCallback() {
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
+            public void onResponse(XgCall call, XgResponse response) {
                 App.post(() -> onSuccess());
             }
 
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                App.post(() -> Notify.show(e.getMessage()));
+            public void onFailure(XgCall call, IOException error) {
+                App.post(() -> Notify.show(error.getMessage()));
             }
         };
     }

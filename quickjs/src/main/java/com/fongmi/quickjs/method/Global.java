@@ -5,6 +5,9 @@ import androidx.annotation.NonNull;
 
 import com.fongmi.quickjs.bean.Req;
 import com.fongmi.quickjs.utils.Connect;
+import com.github.catvod.net.XgCall;
+import com.github.catvod.net.XgCallback;
+import com.github.catvod.net.XgResponse;
 import com.fongmi.quickjs.utils.Crypto;
 import com.github.catvod.Proxy;
 import com.github.catvod.utils.Trans;
@@ -22,9 +25,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Response;
 
 public class Global {
 
@@ -113,7 +113,7 @@ public class Global {
     public JSObject req(String url, JSObject options) {
         try {
             Req req = Req.objectFrom(options.stringify());
-            Response res = Connect.to(url, req).execute();
+            XgResponse res = Connect.to(url, req).execute();
             return Connect.success(ctx, req, res);
         } catch (Exception e) {
             return Connect.error(ctx);
@@ -150,15 +150,15 @@ public class Global {
         return result;
     }
 
-    private Callback getCallback(JSFunction complete, Req req) {
-        return new Callback() {
+    private XgCallback getCallback(JSFunction complete, Req req) {
+        return new XgCallback() {
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response res) {
+            public void onResponse(XgCall call, XgResponse res) {
                 submit(() -> complete.call(Connect.success(ctx, req, res)));
             }
 
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+            public void onFailure(XgCall call, IOException e) {
                 submit(() -> complete.call(Connect.error(ctx)));
             }
         };

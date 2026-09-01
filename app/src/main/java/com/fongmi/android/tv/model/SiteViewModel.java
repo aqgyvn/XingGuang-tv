@@ -20,7 +20,9 @@ import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.Sniffer;
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderDebug;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
+import com.github.catvod.net.XgCall;
+import com.github.catvod.net.XgResponse;
 import com.github.catvod.utils.Prefers;
 import com.github.catvod.utils.Util;
 
@@ -36,9 +38,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import okhttp3.Call;
-import okhttp3.Response;
 
 public class SiteViewModel extends ViewModel {
 
@@ -95,7 +94,7 @@ public class SiteViewModel extends ViewModel {
                 setTypes(site, result);
                 return result;
             } else {
-                try (Response response = OkHttp.newCall(site.getApi(), site.getHeader()).execute()) {
+                try (XgResponse response = XgHttp.call(site.getApi(), site.getHeader()).execute()) {
                     String homeContent = response.body().string();
                     SpiderDebug.log("home", homeContent);
                     Result result = Result.fromType(site.getType(), homeContent);
@@ -225,16 +224,16 @@ public class SiteViewModel extends ViewModel {
             Site site = VodConfig.get().getSite(key);
             SpiderDebug.log("action", "key=%s,action=%s", key, action);
             if (site.getType() == 3) return Result.fromJson(site.recent().spider().action(action));
-            if (site.getType() == 4) return Result.fromJson(OkHttp.string(action));
+            if (site.getType() == 4) return Result.fromJson(XgHttp.string(action));
             return Result.empty();
         });
     }
 
     public String call(Site site, ArrayMap<String, String> params) throws IOException {
         if (!site.getExt().isEmpty()) params.put("extend", site.getExt());
-        Call get = OkHttp.newCall(site.getApi(), site.getHeader(), params);
-        Call post = OkHttp.newCall(site.getApi(), site.getHeader(), OkHttp.toBody(params));
-        try (Response response = (site.getExt().length() <= 1000 ? get : post).execute()) {
+        XgCall get = XgHttp.call(site.getApi(), site.getHeader(), params);
+        XgCall post = XgHttp.call(site.getApi(), site.getHeader(), XgHttp.xgBody(params));
+        try (XgResponse response = (site.getExt().length() <= 1000 ? get : post).execute()) {
             return response.body().string();
         }
     }
@@ -248,7 +247,7 @@ public class SiteViewModel extends ViewModel {
         ArrayMap<String, String> params = new ArrayMap<>();
         params.put("ac", site.getType() == 0 ? "videolist" : "detail");
         params.put("ids", TextUtils.join(",", ids));
-        try (Response response = OkHttp.newCall(site.getApi(), site.getHeader(), params).execute()) {
+        try (XgResponse response = XgHttp.call(site.getApi(), site.getHeader(), params).execute()) {
             result.setList(Result.fromType(site.getType(), response.body().string()).getList());
             return result;
         }

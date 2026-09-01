@@ -47,7 +47,7 @@ import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.PermissionUtil;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.fongmi.android.tv.utils.Util;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
 import com.google.android.material.navigation.NavigationBarView;
 
 import org.greenrobot.eventbus.Subscribe;
@@ -275,7 +275,7 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
         LiveConfig.get().clear();
         VodConfig.get().clear();
         AppDatabase.backup();
-        OkHttp.get().clear();
+        XgHttp.get().clear();
         Source.get().exit();
         Server.get().stop();
         super.onDestroy();

@@ -18,7 +18,7 @@ import com.fongmi.android.tv.gson.ExtAdapter;
 import com.fongmi.android.tv.gson.HeaderAdapter;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.github.catvod.crawler.Spider;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
 import com.github.catvod.utils.Trans;
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.JsonAdapter;
@@ -280,7 +280,7 @@ public class Site implements Parcelable {
 
     public Site fetchExt() {
         if (!getExt().startsWith("http")) return this;
-        String extend = OkHttp.string(getExt());
+        String extend = XgHttp.string(getExt());
         if (!extend.isEmpty()) setExt(extend);
         return this;
     }

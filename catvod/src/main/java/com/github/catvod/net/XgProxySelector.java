@@ -15,12 +15,12 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class OkProxySelector extends ProxySelector {
+public class XgProxySelector extends ProxySelector {
 
     private final List<Proxy> proxy;
     private final ProxySelector system;
 
-    public OkProxySelector() {
+    public XgProxySelector() {
         proxy = new CopyOnWriteArrayList<>();
         system = ProxySelector.getDefault();
     }
@@ -52,3 +52,5 @@ public class OkProxySelector extends ProxySelector {
         if (system != null) system.connectFailed(uri, socketAddress, e);
     }
 }
+
+

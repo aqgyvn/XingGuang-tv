@@ -4,7 +4,8 @@ import com.fongmi.android.tv.Setting;
 import com.fongmi.android.tv.server.Nano;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.server.impl.Process;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
+import com.github.catvod.net.XgResponse;
 import com.orhanobut.logger.Logger;
 
 import java.io.ByteArrayInputStream;
@@ -26,8 +27,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import fi.iki.elonen.NanoHTTPD;
-import okhttp3.Response;
-
 public class Hls implements Process {
 
     private static final String TAG = Hls.class.getSimpleName();
@@ -79,9 +78,9 @@ public class Hls implements Process {
     public NanoHTTPD.Response doResponse(NanoHTTPD.IHTTPSession session, String url, Map<String, String> files) {
         Source source = getSource(url);
         if (source == null) return Nano.error(NanoHTTPD.Response.Status.NOT_FOUND, "Playlist expired");
-        try (Response response = OkHttp.newCall(source.url, source.headers).execute()) {
+        try (XgResponse response = XgHttp.call(source.url, source.headers).execute()) {
             if (!response.isSuccessful() || response.body() == null) return redirect(source.url);
-            String baseUrl = response.request().url().toString();
+            String baseUrl = response.url().toString();
             String content = read(response.body().byteStream());
             if (!content.startsWith("#EXTM3U")) return redirect(source.url);
             String result = rewrite(content, baseUrl, child -> register(child, source.headers));

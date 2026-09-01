@@ -24,12 +24,11 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import okhttp3.OkHttp;
-import okhttp3.Request;
+import com.github.catvod.net.XgRequest;
 
 public class Util {
 
-    public static final String OKHTTP = "okhttp/" + OkHttp.VERSION;
+    public static final String XGHTTP = "xghttp/5.3.2";
     public static final String CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36";
     public static final int URL_SAFE = Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP;
     public static final Pattern DIGEST = Pattern.compile("(\\w+)=\\s*([^,]+)\\s*");
@@ -154,7 +153,7 @@ public class Util {
         return "";
     }
 
-    public static String digest(String userInfo, String header, Request request) {
+    public static String digest(String userInfo, String header, XgRequest request) {
         Map<String, String> params = parse(header.substring(7));
         String[] parts = userInfo.split(":", 2);
         String nc = "00000001";

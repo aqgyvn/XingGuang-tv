@@ -70,7 +70,7 @@ public class UaDialog {
             binding.text.setText(Util.CHROME);
         } else if (append && "o".equalsIgnoreCase(s)) {
             append = false;
-            binding.text.setText(Util.OKHTTP);
+            binding.text.setText(Util.XGHTTP);
         } else if (s.length() > 1) {
             append = false;
         } else if (s.isEmpty()) {

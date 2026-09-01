@@ -9,7 +9,7 @@ import com.fongmi.android.tv.bean.Drm;
 import com.fongmi.android.tv.bean.Group;
 import com.fongmi.android.tv.bean.Live;
 import com.fongmi.android.tv.utils.UrlUtil;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
 import com.github.catvod.utils.Json;
 
 import java.util.HashMap;
@@ -54,7 +54,7 @@ public class LiveParser {
 
     private static String getText(Live live) throws Exception {
         if (!live.getApi().isEmpty()) return live.spider().liveContent(live.getUrl());
-        return OkHttp.string(UrlUtil.convert(live.getUrl()), live.getHeaders());
+        return XgHttp.string(UrlUtil.convert(live.getUrl()), live.getHeaders());
     }
 
     public static void text(Live live, String text) {

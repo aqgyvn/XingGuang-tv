@@ -11,7 +11,7 @@ import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.player.Source;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.forcetech.Util;
-import com.github.catvod.net.OkHttp;
+import com.github.catvod.net.XgHttp;
 import com.google.common.net.HttpHeaders;
 
 import java.util.HashSet;
@@ -41,7 +41,7 @@ public class Force implements Source.Extractor, ServiceConnection {
         int port = Util.port(scheme);
         String id = uri.getLastPathSegment();
         String cmd = "http://127.0.0.1:" + port + "/cmd.xml?cmd=switch_chan&server=" + uri.getHost() + ":" + uri.getPort() + "&id=" + id;
-        OkHttp.string(cmd, Map.of(HttpHeaders.USER_AGENT, "MTV"));
+        XgHttp.string(cmd, Map.of(HttpHeaders.USER_AGENT, "MTV"));
         return "http://127.0.0.1:" + port + "/" + id;
     }
 
