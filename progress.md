@@ -2478,3 +2478,17 @@
 - Passed: GitHub Release `v5717` is a draft targeting `6ea15988808776fb54bb814f2aa7ccb838b51020`.
 - Passed: asset `XingGuang-5717-arm64.apk` is `uploaded`, size `69089751` bytes, digest `sha256:cfd8e6d3a762972b05abf7cb98e1413f37ee693a51888e37caf340fef0ca89f5`.
 - Expected: public download remains unavailable while the Release is a draft.
+
+## 2026-09-02 - Task: Publish Android 5717
+### What was done
+- Published GitHub Release `v5717` from source commit `6ea15988808776fb54bb814f2aa7ccb838b51020`.
+- Marked the Release as the latest stable release with asset label `XingGuang-5717-arm64.apk`.
+
+### Testing
+- Passed: GitHub reports `draft=false`, `prerelease=false`, tag `v5717`, and the expected target commit.
+- Passed: public asset download returns HTTP `200` with `Content-Length=69089751` bytes.
+- Passed: GitHub asset digest matches local APK SHA-256 `CFD8E6D3A762972B05ABF7CB98E1413F37EE693A51888E37CAF340FEF0CA89F5`.
+
+### Notes
+- Public release URL: https://github.com/aqgyvn/XingGuang-tv/releases/tag/v5717
+- Rollback method: delete the `v5717` Release and tag only with explicit approval; do not alter the Android source commit implicitly.
