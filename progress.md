@@ -2473,3 +2473,8 @@
 ### Notes
 - Draft release target: tag `v5717`, asset `XingGuang-5717-arm64.apk`.
 - Publication remains a draft until explicit confirmation.
+
+### Upload verification
+- Passed: GitHub Release `v5717` is a draft targeting `6ea15988808776fb54bb814f2aa7ccb838b51020`.
+- Passed: asset `XingGuang-5717-arm64.apk` is `uploaded`, size `69089751` bytes, digest `sha256:cfd8e6d3a762972b05abf7cb98e1413f37ee693a51888e37caf340fef0ca89f5`.
+- Expected: public download remains unavailable while the Release is a draft.
