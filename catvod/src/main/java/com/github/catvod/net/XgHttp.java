@@ -13,6 +13,7 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.HostnameVerifier;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -123,8 +124,12 @@ public class XgHttp {
         return redirect ? client(timeout) : noRedirect(timeout);
     }
 
+    public static XgClient client(boolean redirect, long timeout, XgDns dns, XgCookieJar cookieJar, SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier) {
+        return new XgClient(redirect, timeout, dns, cookieJar, sslSocketFactory, hostnameVerifier);
+    }
+
     public static String string(String url) {
-        if (!url.startsWith("http")) return "";
+        if (url == null || !url.startsWith("http")) return "";
         try (XgResponse res = call(url).execute()) {
             return res.body().string();
         } catch (Exception e) {
@@ -134,7 +139,7 @@ public class XgHttp {
     }
 
     public static String string(String url, Map<String, String> headers) {
-        if (!url.startsWith("http")) return "";
+        if (url == null || !url.startsWith("http")) return "";
         try (XgResponse res = call(url, headers).execute()) {
             return res.body().string();
         } catch (Exception e) {

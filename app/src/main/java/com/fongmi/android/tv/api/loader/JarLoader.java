@@ -8,12 +8,14 @@ import com.fongmi.android.tv.utils.UrlUtil;
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderNull;
 import com.github.catvod.net.XgHttp;
+import com.github.catvod.net.migration.SpiderJarMigrator;
 import com.github.catvod.utils.Path;
 import com.github.catvod.utils.Util;
 
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -52,7 +54,12 @@ public class JarLoader {
 
     private void load(String key, File file) {
         if (Thread.interrupted()) return;
-        if (!Path.exists(file) || !file.setReadOnly()) return;
+        if (!Path.exists(file)) return;
+        try {
+            file = SpiderJarMigrator.prepare(file, new File(App.get().getCodeCacheDir(), "xg-spiders"));
+        } catch (IOException e) {
+            throw new IllegalStateException("Preparing Spider network API failed", e);
+        }
         String cachePath = Path.jar().getAbsolutePath();
         DexClassLoader loader = new DexClassLoader(file.getAbsolutePath(), cachePath, cachePath, App.get().getClassLoader());
         invokeInit(loader);
@@ -159,4 +166,5 @@ public class JarLoader {
             return null;
         }
     }
+
 }

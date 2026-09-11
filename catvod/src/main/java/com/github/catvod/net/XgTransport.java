@@ -28,6 +28,8 @@ final class XgTransport {
     }
 
     static XgResponse execute(XgCall call) throws IOException {
+        // WebDAV owns its authentication and redirects, independently of source-feed headers.
+        if ("PROPFIND".equals(call.request().method())) return XgWebDavTransport.execute(call);
         XgRequest request = XgHttp.requestInterceptor().intercept(call.request());
         request = XgHttp.responseInterceptor().intercept(request);
         request = XgHttp.authInterceptor().intercept(request);
@@ -89,41 +91,57 @@ final class XgTransport {
     private static HttpURLConnection open(XgCall call, XgRequest request) throws IOException {
         URI uri = request.url().uri();
         Proxy proxy = proxy(uri);
-        URL url = connectionUrl(uri, proxy);
+        URL url = connectionUrl(call, uri, proxy);
         HttpURLConnection connection = (HttpURLConnection) (proxy == Proxy.NO_PROXY ? url.openConnection() : url.openConnection(proxy));
         call.connection(connection);
         connection.setInstanceFollowRedirects(false);
         connection.setConnectTimeout(timeout(call.client().options().timeout));
         connection.setReadTimeout(timeout(call.client().options().timeout));
         connection.setRequestMethod(request.method());
-        connection.setRequestProperty("User-Agent", XgHttp.userAgent());
+        if (request.headers().get(HttpHeaders.USER_AGENT) == null) {
+            connection.setRequestProperty(HttpHeaders.USER_AGENT, XgHttp.userAgent());
+        }
         for (Map.Entry<String, List<String>> entry : request.headers().toMultimap().entrySet()) {
             for (String value : entry.getValue()) connection.addRequestProperty(entry.getKey(), value);
         }
+        XgCookieJar cookieJar = call.client().options().cookieJar;
+        List<XgCookie> cookies = cookieJar.loadForRequest(XgUrl.require(uri.toString()));
+        if (!cookies.isEmpty() && connection.getRequestProperty(HttpHeaders.COOKIE) == null) {
+            StringBuilder value = new StringBuilder();
+            for (XgCookie cookie : cookies) {
+                if (value.length() > 0) value.append("; ");
+                value.append(cookie.name()).append('=').append(cookie.value());
+            }
+            connection.setRequestProperty(HttpHeaders.COOKIE, value.toString());
+        }
         if (!url.getHost().equalsIgnoreCase(uri.getHost())) connection.setRequestProperty(HttpHeaders.HOST, hostHeader(uri));
         if (connection instanceof HttpsURLConnection https) {
-            https.setSSLSocketFactory(XgHttp.sslSocketFactory());
-            https.setHostnameVerifier((hostname, session) -> true);
+            if (call.client().options().sslSocketFactory != null) https.setSSLSocketFactory(call.client().options().sslSocketFactory);
+            else https.setSSLSocketFactory(XgHttp.sslSocketFactory());
+            if (call.client().options().hostnameVerifier != null) https.setHostnameVerifier(call.client().options().hostnameVerifier);
+            else https.setHostnameVerifier((hostname, session) -> true);
         }
         return connection;
     }
 
-    private static URL connectionUrl(URI uri, Proxy proxy) throws IOException {
+    private static URL connectionUrl(XgCall call, URI uri, Proxy proxy) throws IOException {
         if (proxy != Proxy.NO_PROXY) return uri.toURL();
         if ("https".equalsIgnoreCase(uri.getScheme())) return uri.toURL();
+        if (call.client().options().dns != null) {
+            List<java.net.InetAddress> addresses = call.client().options().dns.lookup(uri.getHost());
+            if (addresses != null && !addresses.isEmpty()) {
+                String host = addresses.get(0).getHostAddress();
+                return new URL(uri.getScheme(), host, uri.getPort(), uri.getRawPath() + (uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery()));
+            }
+        }
         String mapped = XgHttp.dns().mappedHost(uri.getHost());
         if (!mapped.equals(uri.getHost())) {
             return new URL(uri.getScheme(), mapped, uri.getPort(), uri.getRawPath() + (uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery()));
         }
-        if (XgHttp.dns().hasDoh()) {
-            try {
-                List<InetAddress> addresses = XgHttp.dns().lookup(uri.getHost());
-                if (!addresses.isEmpty() && !addresses.get(0).getHostAddress().contains(":")) {
-                    return new URL(uri.getScheme(), addresses.get(0).getHostAddress(), uri.getPort(), uri.getRawPath() + (uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery()));
-                }
-            } catch (Exception ignored) {
-            }
-        }
+        // Keep the original hostname for HTTP requests. Pinning the URL to the
+        // first DoH address can select a dead endpoint and prevents
+        // HttpURLConnection from trying the remaining addresses, unlike the
+        // previous OkHttp transport.
         return uri.toURL();
     }
 
@@ -149,15 +167,31 @@ final class XgTransport {
         for (Map.Entry<String, List<String>> entry : fields.entrySet()) if (entry.getKey() != null) for (String value : entry.getValue()) headers.add(entry.getKey(), value);
         InputStream stream = code >= 400 ? connection.getErrorStream() : connection.getInputStream();
         if (stream == null) stream = new ByteArrayInputStream(new byte[0]);
-        String encoding = headers.build().get(HttpHeaders.CONTENT_ENCODING);
+        XgHeaders builtHeaders = headers.build();
+        saveCookies(call, request, builtHeaders);
+        String encoding = builtHeaders.get(HttpHeaders.CONTENT_ENCODING);
         if ("gzip".equalsIgnoreCase(encoding)) stream = new GZIPInputStream(stream);
         if ("deflate".equalsIgnoreCase(encoding)) stream = new InflaterInputStream(stream, new Inflater(true));
         Runnable close = () -> {
             connection.disconnect();
             call.client().unregister(call);
         };
-        XgResponseBody body = new XgResponseBody(stream, connection.getContentLengthLong(), headers.build().get(HttpHeaders.CONTENT_TYPE), close);
-        return new XgResponse(code, connection.getResponseMessage(), headers.build(), body, request, close);
+        XgResponseBody body = new XgResponseBody(stream, connection.getContentLengthLong(), builtHeaders.get(HttpHeaders.CONTENT_TYPE), close);
+        return new XgResponse(code, connection.getResponseMessage(), builtHeaders, body, request, close);
+    }
+
+    private static void saveCookies(XgCall call, XgRequest request, XgHeaders headers) {
+        XgCookieJar jar = call.client().options().cookieJar;
+        if (jar == XgCookieJar.NO_COOKIES) return;
+        List<XgCookie> cookies = new ArrayList<>();
+        for (Map.Entry<String, List<String>> entry : headers.toMultimap().entrySet()) {
+            if (!HttpHeaders.SET_COOKIE.equalsIgnoreCase(entry.getKey())) continue;
+            for (String value : entry.getValue()) {
+                XgCookie cookie = XgCookie.parse(request.url(), value);
+                if (cookie != null) cookies.add(cookie);
+            }
+        }
+        if (!cookies.isEmpty()) jar.saveFromResponse(request.url(), cookies);
     }
 
     private static boolean redirect(int code) {

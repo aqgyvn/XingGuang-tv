@@ -19,15 +19,12 @@
 -keepclassmembers,allowobfuscation class * { @org.simpleframework.xml.Attribute <fields>; }
 -keepclassmembers,allowobfuscation class * { @org.simpleframework.xml.ElementList <fields>; }
 
-# OkHttp
--dontwarn okhttp3.**
--keep class okio.** { *; }
--keep class okhttp3.** { *; }
-
 # CatVod
 -keep class com.github.catvod.Proxy { *; }
 -keep class com.github.catvod.crawler.** { *; }
 -keep class * extends com.github.catvod.crawler.Spider
+-keep class com.github.catvod.net.spider.** { *; }
+-keep class com.github.catvod.net.webdav.** { *; }
 
 # Cling
 -dontwarn javax.**
@@ -66,9 +63,6 @@
 -dontwarn com.google.re2j.**
 -dontwarn javax.script.**
 -dontwarn jdk.dynalink.**
-
-# Sardine
--keep class com.thegrizzlylabs.sardineandroid.** { *; }
 
 # Smbj
 -keep class com.hierynomus.** { *; }

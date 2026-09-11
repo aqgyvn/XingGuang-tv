@@ -16,6 +16,7 @@ public final class XgCall {
     private final XgClient client;
     private final XgRequest request;
     private volatile HttpURLConnection connection;
+    private volatile Runnable cancellation;
     private volatile boolean canceled;
 
     XgCall(XgClient client, XgRequest request) {
@@ -51,6 +52,8 @@ public final class XgCall {
         canceled = true;
         HttpURLConnection current = connection;
         if (current != null) current.disconnect();
+        Runnable action = cancellation;
+        if (action != null) action.run();
     }
 
     boolean isCanceled() {
@@ -67,5 +70,10 @@ public final class XgCall {
 
     void connection(HttpURLConnection connection) {
         this.connection = connection;
+    }
+
+    void cancellation(Runnable action) {
+        cancellation = action;
+        if (canceled && action != null) action.run();
     }
 }

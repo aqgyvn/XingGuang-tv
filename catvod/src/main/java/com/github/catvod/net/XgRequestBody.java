@@ -17,15 +17,19 @@ public class XgRequestBody {
         return new XgRequestBody(content, null);
     }
 
+    public static XgRequestBody create(byte[] content, String contentType) {
+        return new XgRequestBody(content, contentType);
+    }
+
     public static XgRequestBody create(String content, String contentType) {
         return new XgRequestBody(content == null ? new byte[0] : content.getBytes(StandardCharsets.UTF_8), contentType);
     }
 
-    byte[] content() {
+    public byte[] content() {
         return content;
     }
 
-    String contentType() {
+    public String contentType() {
         return contentType;
     }
 }

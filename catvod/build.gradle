@@ -21,9 +21,18 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    testOptions {
+        unitTests.all {
+            systemProperty 'xg.spiderJars', project.findProperty('xgSpiderJars') ?: ''
+            systemProperty 'xg.fixtureOutput', layout.buildDirectory.dir('spider-fixtures').get().asFile.absolutePath
+        }
+    }
 }
 
 dependencies {
+    implementation 'com.android.tools.smali:smali-dexlib2:3.0.9'
+    implementation 'org.eclipse.jetty:jetty-client:8.1.21.v20160908'
     testImplementation 'junit:junit:4.13.2'
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs_nio:2.1.5'
     api 'androidx.annotation:annotation:1.9.1'

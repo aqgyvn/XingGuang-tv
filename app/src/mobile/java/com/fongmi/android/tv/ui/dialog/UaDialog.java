@@ -68,7 +68,7 @@ public class UaDialog {
         if (append && "c".equalsIgnoreCase(s)) {
             append = false;
             binding.text.setText(Util.CHROME);
-        } else if (append && "o".equalsIgnoreCase(s)) {
+        } else if (append && ("x".equalsIgnoreCase(s) || "o".equalsIgnoreCase(s))) {
             append = false;
             binding.text.setText(Util.XGHTTP);
         } else if (s.length() > 1) {

@@ -13,6 +13,7 @@ public final class XgUrl {
     }
 
     public static XgUrl parse(String url) {
+        if (url == null || url.isEmpty()) return null;
         try {
             URI value = new URI(url);
             if (value.getScheme() == null) return null;

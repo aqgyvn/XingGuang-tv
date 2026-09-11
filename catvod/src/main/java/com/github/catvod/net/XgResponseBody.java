@@ -58,6 +58,10 @@ public final class XgResponseBody implements AutoCloseable {
         return contentLength;
     }
 
+    public String contentType() {
+        return contentType;
+    }
+
     @Override
     public void close() throws IOException {
         if (closed.compareAndSet(false, true)) {

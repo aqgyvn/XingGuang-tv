@@ -4,11 +4,15 @@ import android.util.Base64;
 
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.github.catvod.net.XgHttp;
+import com.github.catvod.net.XgRequest;
 import com.github.catvod.net.XgResponse;
 import com.github.catvod.net.XgUrl;
 import com.github.catvod.utils.Json;
 import com.github.catvod.utils.Util;
 
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,14 +24,43 @@ import javax.crypto.spec.SecretKeySpec;
 public class Decoder {
 
     private static final Pattern JS_URI = Pattern.compile("\"(\\.|\\.\\.)/(.?|.+?)\\.js\\?(.?|.+?)\"");
+    private static final Pattern HTML_START = Pattern.compile("(?is)\\A[\\s\\uFEFF]*+(?:<!--.*?-->\\s*+)*+(?:<!doctype\\s+html\\b|<html\\b|<head\\b|<body\\b)");
+    private static final String FISH_ENTRY_HOST = "xn--v4q818bf34b.cc";
+    private static final String FISH_CONFIG_URL = "https://6800.kstore.vip/fish.json";
 
     public static String getJson(String url, String tag) throws Exception {
-        try (XgResponse res = XgHttp.call(url, tag).execute()) {
+        if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Canceled");
+        url = resolveConfigUrl(url);
+        XgRequest.Builder request = new XgRequest.Builder().url(url).tag(tag);
+        String responseUrl = url;
+        String data;
+        try (XgResponse res = XgHttp.client().newCall(request.build()).execute()) {
             XgUrl httpUrl = res.url();
             int size = XgUrl.parse(url).querySize();
-            if (httpUrl.querySize() == size) url = httpUrl.toString();
-            return verify(url, res.body().string());
+            if (httpUrl.querySize() == size) responseUrl = httpUrl.toString();
+            data = res.body().string();
         }
+        if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Canceled");
+        if (isHtml(data)) throw new IOException("Configuration endpoint returned HTML instead of a feed");
+        return verify(responseUrl, data);
+    }
+
+    static String resolveConfigUrl(String url) {
+        XgUrl parsed = XgUrl.parse(url);
+        if (parsed == null || !FISH_ENTRY_HOST.equalsIgnoreCase(parsed.host())) return url;
+        URI uri = parsed.uri();
+        boolean http = "http".equalsIgnoreCase(uri.getScheme());
+        boolean https = "https".equalsIgnoreCase(uri.getScheme());
+        if (!http && !https) return url;
+        if (uri.getPort() != -1 && uri.getPort() != (https ? 443 : 80)) return url;
+        // The public root publishes this direct feed. Leave private and custom URLs intact.
+        if (!"/".equals(parsed.encodedPath()) || uri.getRawQuery() != null
+                || uri.getRawUserInfo() != null || uri.getRawFragment() != null) return url;
+        return FISH_CONFIG_URL;
+    }
+
+    static boolean isHtml(String data) {
+        return HTML_START.matcher(data).find();
     }
 
     private static String verify(String url, String data) throws Exception {
