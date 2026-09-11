@@ -127,7 +127,7 @@ public class LiveConfig {
 
     private void loadConfig(int id, Config config, Callback callback) {
         try {
-            XgHttp.cancel(TAG);
+            Decoder.cancel(TAG);
             Server.get().start();
             String json = Decoder.getJson(UrlUtil.convert(config.getUrl()), TAG);
             if (Json.isObj(json)) checkJson(id, config, callback, Json.parse(json).getAsJsonObject());

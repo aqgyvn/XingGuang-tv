@@ -3,9 +3,6 @@ package com.fongmi.android.tv.api;
 import android.util.Base64;
 
 import com.fongmi.android.tv.utils.UrlUtil;
-import com.github.catvod.net.XgHttp;
-import com.github.catvod.net.XgRequest;
-import com.github.catvod.net.XgResponse;
 import com.github.catvod.net.XgUrl;
 import com.github.catvod.utils.Json;
 import com.github.catvod.utils.Util;
@@ -21,21 +18,27 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 public class Decoder {
 
     private static final Pattern JS_URI = Pattern.compile("\"(\\.|\\.\\.)/(.?|.+?)\\.js\\?(.?|.+?)\"");
     private static final Pattern HTML_START = Pattern.compile("(?is)\\A[\\s\\uFEFF]*+(?:<!--.*?-->\\s*+)*+(?:<!doctype\\s+html\\b|<html\\b|<head\\b|<body\\b)");
     private static final String FISH_ENTRY_HOST = "xn--v4q818bf34b.cc";
     private static final String FISH_CONFIG_URL = "https://6800.kstore.vip/fish.json";
+    private static final OkHttpClient CLIENT = new OkHttpClient();
 
     public static String getJson(String url, String tag) throws Exception {
         if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Canceled");
         url = resolveConfigUrl(url);
-        XgRequest.Builder request = new XgRequest.Builder().url(url).tag(tag);
+        Request request = new Request.Builder().url(url).tag(String.class, tag).build();
         String responseUrl = url;
         String data;
-        try (XgResponse res = XgHttp.client().newCall(request.build()).execute()) {
-            XgUrl httpUrl = res.url();
+        try (Response res = CLIENT.newCall(request).execute()) {
+            okhttp3.HttpUrl httpUrl = res.request().url();
             int size = XgUrl.parse(url).querySize();
             if (httpUrl.querySize() == size) responseUrl = httpUrl.toString();
             data = res.body().string();
@@ -43,6 +46,15 @@ public class Decoder {
         if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Canceled");
         if (isHtml(data)) throw new IOException("Configuration endpoint returned HTML instead of a feed");
         return verify(responseUrl, data);
+    }
+
+    public static void cancel(String tag) {
+        cancel(CLIENT.dispatcher().queuedCalls(), tag);
+        cancel(CLIENT.dispatcher().runningCalls(), tag);
+    }
+
+    private static void cancel(Iterable<Call> calls, String tag) {
+        for (Call call : calls) if (tag.equals(call.request().tag(String.class))) call.cancel();
     }
 
     static String resolveConfigUrl(String url) {
