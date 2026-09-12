@@ -29,7 +29,8 @@ import com.github.catvod.net.XgRequest;
 public class Util {
 
     // Transport identity, independent of the application version.
-    public static final String XGHTTP = "XgHttp/1.0";
+    public static final String OKHTTP = "okhttp/" + okhttp3.OkHttp.VERSION;
+    public static final String XGHTTP = OKHTTP;
     public static final String CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36";
     public static final int URL_SAFE = Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP;
     public static final Pattern DIGEST = Pattern.compile("(\\w+)=\\s*([^,]+)\\s*");
@@ -152,6 +153,11 @@ public class Util {
             }
         }
         return "";
+    }
+
+    public static String digest(String userInfo, String header, okhttp3.Request request) {
+        return digest(userInfo, header, new XgRequest.Builder().url(request.url().toString())
+                .method(request.method(), null).build());
     }
 
     public static String digest(String userInfo, String header, XgRequest request) {

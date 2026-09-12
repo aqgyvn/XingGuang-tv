@@ -54,7 +54,7 @@ public class XgHttp {
 
     public static XgDns dns() {
         if (get().dns != null) return get().dns;
-        return get().dns = new XgDns();
+        return get().dns = new OkDns();
     }
 
     public static ResponseInterceptor responseInterceptor() {
@@ -74,12 +74,12 @@ public class XgHttp {
 
     public static XgAuthenticator authenticator() {
         if (get().authenticator != null) return get().authenticator;
-        return get().authenticator = new XgAuthenticator();
+        return get().authenticator = new OkAuthenticator();
     }
 
     public static XgProxySelector selector() {
         if (get().selector != null) return get().selector;
-        return get().selector = new XgProxySelector();
+        return get().selector = new OkProxySelector();
     }
 
     public static XgClient client() {
@@ -126,6 +126,11 @@ public class XgHttp {
 
     public static XgClient client(boolean redirect, long timeout, XgDns dns, XgCookieJar cookieJar, SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier) {
         return new XgClient(redirect, timeout, dns, cookieJar, sslSocketFactory, hostnameVerifier);
+    }
+
+    public static XgClient client(boolean redirect, long timeout, XgDns dns, XgCookieJar cookieJar,
+                                  SSLSocketFactory sslSocketFactory, X509TrustManager trustManager, HostnameVerifier hostnameVerifier) {
+        return new XgClient(redirect, timeout, dns, cookieJar, sslSocketFactory, trustManager, hostnameVerifier);
     }
 
     public static String string(String url) {

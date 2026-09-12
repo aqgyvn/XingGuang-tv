@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.util.concurrent.Future;
 
 public class Download {
@@ -55,6 +56,7 @@ public class Download {
 
     private void doInBackground() {
         try (XgResponse res = XgHttp.call(url, tag).execute()) {
+            if (!res.isSuccessful()) throw new IOException("Resource request failed: HTTP " + res.code() + " (" + res.url().host() + ")");
             download(res.body().byteStream(), getLength(res));
             if (callback != null) App.post(() -> callback.success(file));
         } catch (Exception e) {
@@ -70,7 +72,7 @@ public class Download {
             int readBytes;
             long totalBytes = 0;
             while ((readBytes = input.read(buffer)) != -1) {
-                if (Thread.interrupted()) return;
+                if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Canceled");
                 totalBytes += readBytes;
                 os.write(buffer, 0, readBytes);
                 if (length <= 0) continue;

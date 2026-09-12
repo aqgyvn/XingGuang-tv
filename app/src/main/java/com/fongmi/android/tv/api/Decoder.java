@@ -3,13 +3,12 @@ package com.fongmi.android.tv.api;
 import android.util.Base64;
 
 import com.fongmi.android.tv.utils.UrlUtil;
-import com.github.catvod.net.XgUrl;
+import com.github.catvod.net.OkHttp;
 import com.github.catvod.utils.Json;
 import com.github.catvod.utils.Util;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,9 +26,7 @@ public class Decoder {
 
     private static final Pattern JS_URI = Pattern.compile("\"(\\.|\\.\\.)/(.?|.+?)\\.js\\?(.?|.+?)\"");
     private static final Pattern HTML_START = Pattern.compile("(?is)\\A[\\s\\uFEFF]*+(?:<!--.*?-->\\s*+)*+(?:<!doctype\\s+html\\b|<html\\b|<head\\b|<body\\b)");
-    private static final String FISH_ENTRY_HOST = "xn--v4q818bf34b.cc";
-    private static final String FISH_CONFIG_URL = "https://6800.kstore.vip/fish.json";
-    private static final OkHttpClient CLIENT = new OkHttpClient();
+    private static final OkHttpClient CLIENT = OkHttp.client();
 
     public static String getJson(String url, String tag) throws Exception {
         if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Canceled");
@@ -39,12 +36,14 @@ public class Decoder {
         String data;
         try (Response res = CLIENT.newCall(request).execute()) {
             okhttp3.HttpUrl httpUrl = res.request().url();
-            int size = XgUrl.parse(url).querySize();
+            if (!res.isSuccessful()) throw new IOException("Configuration request failed: HTTP " + res.code() + " (" + httpUrl.host() + ")");
+            int size = request.url().querySize();
             if (httpUrl.querySize() == size) responseUrl = httpUrl.toString();
             data = res.body().string();
         }
         if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Canceled");
-        if (isHtml(data)) throw new IOException("Configuration endpoint returned HTML instead of a feed");
+        if (data.trim().isEmpty()) throw new IOException("Configuration endpoint returned an empty body (" + request.url().host() + ")");
+        if (isHtml(data)) throw new IOException("Configuration endpoint returned HTML instead of a feed (" + request.url().host() + ")");
         return verify(responseUrl, data);
     }
 
@@ -58,17 +57,8 @@ public class Decoder {
     }
 
     static String resolveConfigUrl(String url) {
-        XgUrl parsed = XgUrl.parse(url);
-        if (parsed == null || !FISH_ENTRY_HOST.equalsIgnoreCase(parsed.host())) return url;
-        URI uri = parsed.uri();
-        boolean http = "http".equalsIgnoreCase(uri.getScheme());
-        boolean https = "https".equalsIgnoreCase(uri.getScheme());
-        if (!http && !https) return url;
-        if (uri.getPort() != -1 && uri.getPort() != (https ? 443 : 80)) return url;
-        // The public root publishes this direct feed. Leave private and custom URLs intact.
-        if (!"/".equals(parsed.encodedPath()) || uri.getRawQuery() != null
-                || uri.getRawUserInfo() != null || uri.getRawFragment() != null) return url;
-        return FISH_CONFIG_URL;
+        // Request the saved entry directly. A past public mirror can expire independently.
+        return url;
     }
 
     static boolean isHtml(String data) {

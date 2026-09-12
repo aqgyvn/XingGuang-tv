@@ -9,7 +9,13 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class ResponseInterceptor {
+public class ResponseInterceptor implements okhttp3.Interceptor {
+
+    @Override
+    public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws java.io.IOException {
+        com.github.catvod.net.XgRequest request = intercept(com.github.catvod.net.OkHttpBridge.metadata(chain.request()));
+        return chain.proceed(com.github.catvod.net.OkHttpBridge.apply(chain.request(), request));
+    }
 
     private final List<Header> headers = new CopyOnWriteArrayList<>();
     private final ConcurrentHashMap<String, String> redirectMap = new ConcurrentHashMap<>();

@@ -8,7 +8,7 @@ import com.fongmi.android.tv.utils.UrlUtil;
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderNull;
 import com.github.catvod.net.XgHttp;
-import com.github.catvod.net.migration.SpiderJarMigrator;
+import com.github.catvod.net.migration.SpiderJarCache;
 import com.github.catvod.utils.Path;
 import com.github.catvod.utils.Util;
 
@@ -56,9 +56,9 @@ public class JarLoader {
         if (Thread.interrupted()) return;
         if (!Path.exists(file)) return;
         try {
-            file = SpiderJarMigrator.prepare(file, new File(App.get().getCodeCacheDir(), "xg-spiders"));
+            file = SpiderJarCache.prepare(file, new File(App.get().getCodeCacheDir(), "official-spiders"));
         } catch (IOException e) {
-            throw new IllegalStateException("Preparing Spider network API failed", e);
+            throw new IllegalStateException("Preparing original Spider archive failed", e);
         }
         String cachePath = Path.jar().getAbsolutePath();
         DexClassLoader loader = new DexClassLoader(file.getAbsolutePath(), cachePath, cachePath, App.get().getClassLoader());

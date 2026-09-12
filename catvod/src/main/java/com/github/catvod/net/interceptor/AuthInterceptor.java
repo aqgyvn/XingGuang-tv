@@ -7,7 +7,13 @@ import com.google.common.net.HttpHeaders;
 import java.net.URI;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class AuthInterceptor {
+public class AuthInterceptor implements okhttp3.Interceptor {
+
+    @Override
+    public okhttp3.Response intercept(okhttp3.Interceptor.Chain chain) throws java.io.IOException {
+        com.github.catvod.net.XgRequest request = intercept(com.github.catvod.net.OkHttpBridge.metadata(chain.request()));
+        return chain.proceed(com.github.catvod.net.OkHttpBridge.apply(chain.request(), request));
+    }
 
     private final ConcurrentHashMap<String, String> userMap = new ConcurrentHashMap<>();
 

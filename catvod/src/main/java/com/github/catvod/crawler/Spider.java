@@ -2,9 +2,10 @@ package com.github.catvod.crawler;
 
 import android.content.Context;
 
-import com.github.catvod.net.XgClient;
-import com.github.catvod.net.XgDns;
-import com.github.catvod.net.XgHttp;
+import com.github.catvod.net.OkHttp;
+
+import okhttp3.Dns;
+import okhttp3.OkHttpClient;
 
 import java.util.HashMap;
 import java.util.List;
@@ -72,11 +73,11 @@ public abstract class Spider {
     public void destroy() {
     }
 
-    public static XgDns safeDns() {
-        return XgHttp.dns();
+    public static Dns safeDns() {
+        return OkHttp.dns();
     }
 
-    public static XgClient client() {
-        return XgHttp.client();
+    public static OkHttpClient client() {
+        return OkHttp.client();
     }
 }

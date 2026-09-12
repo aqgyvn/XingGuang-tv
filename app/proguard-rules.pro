@@ -19,6 +19,19 @@
 -keepclassmembers,allowobfuscation class * { @org.simpleframework.xml.Attribute <fields>; }
 -keepclassmembers,allowobfuscation class * { @org.simpleframework.xml.ElementList <fields>; }
 
+# Runtime-loaded crawlers (including native/guard loaders) resolve the original ABI.
+-keep class okhttp3.** { *; }
+-keep class okio.** { *; }
+-keep class com.thegrizzlylabs.sardineandroid.** { *; }
+-keep class com.github.catvod.net.Ok* { *; }
+-keep class com.github.catvod.net.XgDns { *; }
+-keep class com.github.catvod.net.XgAuthenticator { *; }
+-keep class com.github.catvod.net.XgProxySelector { *; }
+-keep class com.github.catvod.net.interceptor.** { *; }
+-keep class com.github.catvod.bean.Doh { *; }
+-keep class com.github.catvod.bean.Proxy { *; }
+-keep class com.github.catvod.utils.Util { *; }
+
 # CatVod
 -keep class com.github.catvod.Proxy { *; }
 -keep class com.github.catvod.crawler.** { *; }
