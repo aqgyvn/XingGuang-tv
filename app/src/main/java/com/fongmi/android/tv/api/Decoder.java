@@ -10,6 +10,10 @@ import com.github.catvod.utils.Util;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,25 +30,38 @@ public class Decoder {
 
     private static final Pattern JS_URI = Pattern.compile("\"(\\.|\\.\\.)/(.?|.+?)\\.js\\?(.?|.+?)\"");
     private static final Pattern HTML_START = Pattern.compile("(?is)\\A[\\s\\uFEFF]*+(?:<!--.*?-->\\s*+)*+(?:<!doctype\\s+html\\b|<html\\b|<head\\b|<body\\b)");
+    private static final Pattern HTML_LINK = Pattern.compile("(?is)(?:href|data-url)\\s*=\\s*[\"']([^\"']+)[\"']");
     private static final OkHttpClient CLIENT = OkHttp.client();
 
     public static String getJson(String url, String tag) throws Exception {
         if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Canceled");
-        url = resolveConfigUrl(url);
-        Request request = new Request.Builder().url(url).tag(String.class, tag).build();
-        String responseUrl = url;
-        String data;
-        try (Response res = CLIENT.newCall(request).execute()) {
-            okhttp3.HttpUrl httpUrl = res.request().url();
-            if (!res.isSuccessful()) throw new IOException("Configuration request failed: HTTP " + res.code() + " (" + httpUrl.host() + ")");
-            int size = request.url().querySize();
-            if (httpUrl.querySize() == size) responseUrl = httpUrl.toString();
-            data = res.body().string();
+        String original = resolveConfigUrl(url);
+        Set<String> pending = new LinkedHashSet<>(configCandidates(original));
+        List<String> attempts = new ArrayList<>();
+        while (!pending.isEmpty()) {
+            String candidate = pending.iterator().next();
+            pending.remove(candidate);
+            try {
+                Fetch fetch = fetch(candidate, tag);
+                if (fetch.body.trim().isEmpty()) {
+                    attempts.add(summary(candidate, "empty body"));
+                    continue;
+                }
+                if (isHtml(fetch.body)) {
+                    attempts.add(summary(candidate, "HTML"));
+                    pending.addAll(discoverFeedCandidates(fetch.url, fetch.body));
+                    continue;
+                }
+                String json = verify(fetch.url, fetch.body);
+                if (!Json.parse(json).isJsonObject()) throw new IOException("invalid JSON object");
+                return json;
+            } catch (InterruptedIOException e) {
+                throw e;
+            } catch (Exception e) {
+                attempts.add(summary(candidate, e.getMessage()));
+            }
         }
-        if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Canceled");
-        if (data.trim().isEmpty()) throw new IOException("Configuration endpoint returned an empty body (" + request.url().host() + ")");
-        if (isHtml(data)) throw new IOException("Configuration endpoint returned HTML instead of a feed (" + request.url().host() + ")");
-        return verify(responseUrl, data);
+        throw new IOException("Configuration request failed (" + original + "): " + String.join("; ", attempts));
     }
 
     public static void cancel(String tag) {
@@ -63,6 +80,71 @@ public class Decoder {
 
     static boolean isHtml(String data) {
         return HTML_START.matcher(data).find();
+    }
+
+    private static Fetch fetch(String url, String tag) throws IOException {
+        Request request = new Request.Builder().url(url).tag(String.class, tag).build();
+        try (Response res = CLIENT.newCall(request).execute()) {
+            okhttp3.HttpUrl httpUrl = res.request().url();
+            String body = res.body() == null ? "" : res.body().string();
+            if (!res.isSuccessful()) {
+                throw new IOException("HTTP " + res.code() + " (" + httpUrl.host() + ")");
+            }
+            String responseUrl = url;
+            responseUrl = httpUrl.toString();
+            return new Fetch(responseUrl, body);
+        }
+    }
+
+    static List<String> configCandidates(String url) {
+        LinkedHashSet<String> candidates = new LinkedHashSet<>();
+        if (url != null && !url.isEmpty()) candidates.add(url);
+        if (!isFishHost(url)) return new ArrayList<>(candidates);
+        candidates.add("http://我不是.摸鱼儿.cc");
+        candidates.add("http://我不是.摸鱼儿.top");
+        candidates.add("https://6800.kstore.vip/fish.json");
+        return new ArrayList<>(candidates);
+    }
+
+    private static boolean isFishHost(String url) {
+        if (url == null) return false;
+        String value = url.toLowerCase();
+        return value.contains("xn--v4q818bf34b.cc")
+                || value.contains("摸鱼儿.cc")
+                || value.contains("摸鱼儿.top");
+    }
+
+    private static List<String> discoverFeedCandidates(String baseUrl, String html) {
+        LinkedHashSet<String> candidates = new LinkedHashSet<>();
+        Matcher matcher = HTML_LINK.matcher(html);
+        while (matcher.find()) {
+            String link = matcher.group(1).trim();
+            if (!isFeedCandidate(link)) continue;
+            String resolved = UrlUtil.resolve(baseUrl, link);
+            if (resolved.startsWith("http://") || resolved.startsWith("https://")) candidates.add(resolved);
+        }
+        return new ArrayList<>(candidates);
+    }
+
+    static boolean isFeedCandidate(String url) {
+        if (url == null || url.isEmpty()) return false;
+        String value = url.toLowerCase();
+        return value.contains(".json")
+                || value.contains("config")
+                || value.contains("fish")
+                || (value.contains("摸鱼儿") && !value.contains("helper") && !value.contains("detail.php"))
+                || (value.contains("xn--v4q818bf34b") && !value.contains("helper") && !value.contains("detail.php"))
+                || value.contains("kstore.vip")
+                || value.endsWith(".jpg")
+                || value.endsWith(".txt");
+    }
+
+    private static String summary(String url, String reason) {
+        String value = reason == null || reason.isEmpty() ? "unknown error" : reason;
+        return url + " -> " + value;
+    }
+
+    private record Fetch(String url, String body) {
     }
 
     private static String verify(String url, String data) throws Exception {
