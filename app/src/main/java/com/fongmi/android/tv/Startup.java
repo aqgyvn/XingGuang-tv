@@ -5,7 +5,6 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.startup.Initializer;
 
-import com.fongmi.android.tv.event.EventIndex;
 import com.fongmi.android.tv.ui.activity.CrashActivity;
 import com.github.catvod.bean.Doh;
 import com.github.catvod.net.XgHttp;
@@ -27,7 +26,8 @@ public class Startup implements Initializer<Void> {
     public Void create(@NonNull Context context) {
         CaocConfig.Builder.create().trackActivities(true).backgroundMode(CaocConfig.BACKGROUND_MODE_SILENT).errorActivity(CrashActivity.class).apply();
         Logger.addLogAdapter(new AndroidLogAdapter(PrettyFormatStrategy.newBuilder().methodCount(0).showThreadInfo(false).tag("TV").build()));
-        EventBus.builder().addIndex(new EventIndex()).installDefaultEventBus();
+        EventBus.builder().installDefaultEventBus();
+        XgHttp.dns().setFallbacks(Doh.get(context));
         XgHttp.dns().setDoh(Doh.objectFrom(Setting.getDoh()));
         return null;
     }

@@ -2,15 +2,15 @@
 
 ## Current APK Version
 
-- `versionCode`: `5720`
-- `versionName`: `5.7.20`
+- `versionCode`: `5726`
+- `versionName`: `5.7.26`
 
 ## Version Bump Rule
 
 Each release task may update the Android version fields once. Intermediate fixes, builds, and tests keep the current version. All implementation, documentation, and progress-log changes completed in the same release task share that single version:
 
 - Increase `versionCode` by 1.
-- Use a semantic display name derived from the build number; for example, `versionCode 5720` uses `versionName "5.7.20"`.
+- Use a semantic display name derived from the build number; for example, `versionCode 5721` uses `versionName "5.7.21"`.
 - Do not reuse the previous version for a new release.
 
 Verification command:

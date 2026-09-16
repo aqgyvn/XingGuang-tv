@@ -13,6 +13,7 @@ import com.fongmi.android.tv.bean.Rule;
 import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.server.Server;
+import com.fongmi.android.tv.ui.dialog.ConfigWebDialog;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.github.catvod.bean.Doh;
@@ -121,9 +122,21 @@ public class VodConfig {
             e.printStackTrace();
             if (isCanceled(e)) return;
             if (taskId.get() != id) return;
+            if (handleBrowserChallenge(id, config, callback, e)) return;
             if (TextUtils.isEmpty(config.getUrl())) App.post(() -> callback.error(""));
             else App.post(() -> callback.error(Notify.getError(R.string.error_config_get, e)));
         }
+    }
+
+    private boolean handleBrowserChallenge(int id, Config config, Callback callback, Throwable error) {
+        if (!(error instanceof Decoder.BrowserChallengeException challenge)) return false;
+        ConfigWebDialog.show(challenge.getUrl(),
+                () -> {
+                    if (taskId.get() != id) return;
+                    App.submit(() -> loadConfig(id, config, callback));
+                },
+                () -> App.post(() -> callback.error(Notify.getError(R.string.error_config_get, error))));
+        return true;
     }
 
     private void checkJson(int id, Config config, Callback callback, JsonObject object) {

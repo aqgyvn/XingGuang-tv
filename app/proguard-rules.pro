@@ -1,6 +1,7 @@
 # TV
 -keep class com.fongmi.quickjs.method.** { *; }
 -keep class com.fongmi.android.tv.bean.** { *; }
+-keepclassmembers class * { @android.webkit.JavascriptInterface <methods>; }
 
 # Gson
 -keep class com.google.gson.** { *; }
