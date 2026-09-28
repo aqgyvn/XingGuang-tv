@@ -2,8 +2,8 @@
 
 ## Current APK Version
 
-- `versionCode`: `5726`
-- `versionName`: `5.7.26`
+- `versionCode`: `5721`
+- `versionName`: `5.7.21`
 
 ## Version Bump Rule
 

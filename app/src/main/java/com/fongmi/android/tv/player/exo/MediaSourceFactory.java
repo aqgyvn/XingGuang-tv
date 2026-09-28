@@ -10,7 +10,6 @@ import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
 import androidx.media3.datasource.DataSource;
 import androidx.media3.datasource.DefaultDataSource;
-import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.datasource.HttpDataSource;
 import androidx.media3.datasource.cache.CacheDataSource;
 import androidx.media3.exoplayer.drm.DrmSessionManagerProvider;
@@ -75,7 +74,12 @@ public class MediaSourceFactory implements MediaSource.Factory {
 
     private boolean isHls(MediaItem mediaItem) {
         if (mediaItem.localConfiguration == null) return false;
-        return androidx.media3.common.util.Util.inferContentType(mediaItem.localConfiguration.uri, mediaItem.localConfiguration.mimeType) == C.CONTENT_TYPE_HLS;
+        Uri uri = mediaItem.localConfiguration.uri;
+        String value = uri.toString().toLowerCase(java.util.Locale.ROOT);
+        String mime = mediaItem.localConfiguration.mimeType == null ? "" : mediaItem.localConfiguration.mimeType.toLowerCase(java.util.Locale.ROOT);
+        return androidx.media3.common.util.Util.inferContentType(uri, mediaItem.localConfiguration.mimeType) == C.CONTENT_TYPE_HLS
+                || mime.contains("mpegurl") || mime.contains("m3u8") || mime.contains("hls")
+                || value.matches(".*(?:m3u8|mpegurl|hls)(?:[?#=&].*)?$");
     }
 
     private MediaItem setHeader(MediaItem mediaItem) {
@@ -110,7 +114,7 @@ public class MediaSourceFactory implements MediaSource.Factory {
     }
 
     private HttpDataSource.Factory getHttpDataSourceFactory() {
-        if (httpDataSourceFactory == null) httpDataSourceFactory = new DefaultHttpDataSource.Factory();
+        if (httpDataSourceFactory == null) httpDataSourceFactory = new XgHttpDataSource.Factory();
         return httpDataSourceFactory;
     }
 }

@@ -1,11 +1,13 @@
 package com.fongmi.android.tv.player.exo;
 
 import androidx.media3.common.PlaybackException;
+import androidx.media3.datasource.DataSpec;
+import androidx.media3.datasource.HttpDataSource;
 
 public class ErrorMsgProvider {
 
     public String get(PlaybackException e) {
-        return switch (e.errorCode) {
+        String message = switch (e.errorCode) {
             case PlaybackException.ERROR_CODE_TIMEOUT -> "Timeout";
             case PlaybackException.ERROR_CODE_UNSPECIFIED -> "Unspecified";
             case PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> "IO Unspecified";
@@ -36,5 +38,32 @@ public class ErrorMsgProvider {
             case PlaybackException.ERROR_CODE_DRM_LICENSE_ACQUISITION_FAILED -> "DRM License Acquisition Failed";
             default -> e.getErrorCodeName();
         };
+        String detail = detail(e.getCause());
+        return detail.isEmpty() ? message : message + " (" + detail + ")";
+    }
+
+    private String detail(Throwable cause) {
+        Throwable current = cause;
+        while (current != null) {
+            if (current instanceof HttpDataSource.InvalidResponseCodeException error) {
+                return "HTTP " + error.responseCode + " " + safe(error.responseMessage) + " @ " + uri(error.dataSpec);
+            }
+            if (current instanceof HttpDataSource.InvalidContentTypeException error) {
+                return "Content-Type " + safe(error.contentType) + " @ " + uri(error.dataSpec);
+            }
+            if (current instanceof HttpDataSource.HttpDataSourceException error) {
+                return safe(error.getMessage()) + " @ " + uri(error.dataSpec);
+            }
+            current = current.getCause();
+        }
+        return "";
+    }
+
+    private String uri(DataSpec dataSpec) {
+        return dataSpec == null || dataSpec.uri == null ? "" : dataSpec.uri.toString();
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
     }
 }
