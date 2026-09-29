@@ -21,8 +21,9 @@ android {
         minSdk 26
         //noinspection ExpiredTargetSdkVersion
         targetSdk 28
-        versionCode 5720
-        versionName "5.7.20"
+        versionCode 5722
+        versionName "5.7.22"
+        testInstrumentationRunner "com.fongmi.android.tv.SourceRegressionRunner"
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments = ["room.schemaLocation": "$projectDir/schemas".toString(), "eventBusIndex": "com.fongmi.android.tv.event.EventIndex"]

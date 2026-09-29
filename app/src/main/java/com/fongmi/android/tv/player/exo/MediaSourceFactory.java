@@ -10,9 +10,6 @@ import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
 import androidx.media3.datasource.DataSource;
 import androidx.media3.datasource.DefaultDataSource;
-import androidx.media3.datasource.DefaultHttpDataSource;
-import androidx.media3.datasource.HttpDataSource;
-import androidx.media3.datasource.cache.CacheDataSource;
 import androidx.media3.exoplayer.drm.DrmSessionManagerProvider;
 import androidx.media3.exoplayer.hls.HlsMediaSource;
 import androidx.media3.exoplayer.source.ConcatenatingMediaSource2;
@@ -26,20 +23,12 @@ import androidx.media3.extractor.ts.TsExtractor;
 import com.fongmi.android.tv.App;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class MediaSourceFactory implements MediaSource.Factory {
 
-    private final DefaultMediaSourceFactory defaultMediaSourceFactory;
-    private final HlsMediaSource.Factory hlsMediaSourceFactory;
-    private HttpDataSource.Factory httpDataSourceFactory;
-    private DataSource.Factory dataSourceFactory;
     private ExtractorsFactory extractorsFactory;
-
-    public MediaSourceFactory() {
-        defaultMediaSourceFactory = new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory());
-        hlsMediaSourceFactory = new HlsMediaSource.Factory(getDataSourceFactory()).setPlaylistParserFactory(new HlsPlaylistParserFactory());
-    }
 
     @NonNull
     @Override
@@ -56,61 +45,84 @@ public class MediaSourceFactory implements MediaSource.Factory {
     @NonNull
     @Override
     public @C.ContentType int[] getSupportedTypes() {
-        return defaultMediaSourceFactory.getSupportedTypes();
+        return new DefaultMediaSourceFactory(new DefaultDataSource.Factory(App.get(), new XgHttpDataSource.Factory()), getExtractorsFactory()).getSupportedTypes();
     }
 
     @NonNull
     @Override
     public MediaSource createMediaSource(@NonNull MediaItem mediaItem) {
         if (mediaItem.mediaId.contains("***") && mediaItem.mediaId.contains("|||")) {
-            return createConcatenatingMediaSource(setHeader(mediaItem));
-        } else {
-            return createSingleMediaSource(setHeader(mediaItem));
+            return createConcatenatingMediaSource(mediaItem);
         }
+        return createSingleMediaSource(mediaItem);
     }
 
     private MediaSource createSingleMediaSource(MediaItem mediaItem) {
-        return isHls(mediaItem) ? hlsMediaSourceFactory.createMediaSource(mediaItem) : defaultMediaSourceFactory.createMediaSource(mediaItem);
+        DataSource.Factory sourceFactory = buildDataSourceFactory(mediaItem);
+        if (isHls(mediaItem)) {
+            return new HlsMediaSource.Factory(sourceFactory)
+                    .setPlaylistParserFactory(new HlsPlaylistParserFactory())
+                    .createMediaSource(mediaItem);
+        }
+        return new DefaultMediaSourceFactory(sourceFactory, getExtractorsFactory()).createMediaSource(mediaItem);
     }
 
     private boolean isHls(MediaItem mediaItem) {
         if (mediaItem.localConfiguration == null) return false;
-        return androidx.media3.common.util.Util.inferContentType(mediaItem.localConfiguration.uri, mediaItem.localConfiguration.mimeType) == C.CONTENT_TYPE_HLS;
-    }
-
-    private MediaItem setHeader(MediaItem mediaItem) {
-        Map<String, String> headers = new HashMap<>();
-        Bundle extras = mediaItem.requestMetadata.extras;
-        if (extras != null) for (String key : extras.keySet()) headers.put(key, extras.get(key).toString());
-        getHttpDataSourceFactory().setDefaultRequestProperties(headers);
-        return mediaItem;
+        Uri uri = mediaItem.localConfiguration.uri;
+        String path = uri.getPath() == null ? "" : uri.getPath().toLowerCase(Locale.ROOT);
+        String mime = mediaItem.localConfiguration.mimeType == null ? "" : mediaItem.localConfiguration.mimeType.toLowerCase(Locale.ROOT);
+        return androidx.media3.common.util.Util.inferContentType(uri, mediaItem.localConfiguration.mimeType) == C.CONTENT_TYPE_HLS
+                || mime.equals("application/vnd.apple.mpegurl")
+                || mime.equals("application/x-mpegurl")
+                || path.endsWith(".m3u8")
+                || path.endsWith(".m3u");
     }
 
     private MediaSource createConcatenatingMediaSource(MediaItem mediaItem) {
         ConcatenatingMediaSource2.Builder builder = new ConcatenatingMediaSource2.Builder();
         for (String split : mediaItem.mediaId.split("\\*\\*\\*")) {
-            String[] info = split.split("\\|\\|\\|");
-            if (info.length >= 2) builder.add(createSingleMediaSource(mediaItem.buildUpon().setUri(Uri.parse(info[0])).build()), Long.parseLong(info[1]));
+            String[] info = split.split("\\|\\|\\|", 2);
+            if (info.length < 2) continue;
+            try {
+                MediaItem item = mediaItem.buildUpon().setUri(Uri.parse(info[0])).setMediaId(info[0]).build();
+                builder.add(createSingleMediaSource(item), Long.parseLong(info[1]));
+            } catch (RuntimeException ignored) {
+                // Ignore malformed concatenated entries instead of breaking the whole playlist.
+            }
         }
         return builder.build();
     }
 
     private ExtractorsFactory getExtractorsFactory() {
-        if (extractorsFactory == null) extractorsFactory = new DefaultExtractorsFactory().setTsExtractorFlags(FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS).setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 10);
+        if (extractorsFactory == null) {
+            extractorsFactory = new DefaultExtractorsFactory()
+                    .setTsExtractorFlags(FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
+                    .setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 10);
+        }
         return extractorsFactory;
     }
 
-    private DataSource.Factory getDataSourceFactory() {
-        if (dataSourceFactory == null) dataSourceFactory = buildReadOnlyCacheDataSource(new DefaultDataSource.Factory(App.get(), getHttpDataSourceFactory()));
-        return dataSourceFactory;
+    private DataSource.Factory buildDataSourceFactory(MediaItem mediaItem) {
+        XgHttpDataSource.Factory httpFactory = new XgHttpDataSource.Factory();
+        Map<String, String> headers = getHeaders(mediaItem);
+        if (!headers.isEmpty()) httpFactory.setDefaultRequestProperties(headers);
+        return new androidx.media3.datasource.cache.CacheDataSource.Factory()
+                .setCache(CacheManager.get().getCache())
+                .setUpstreamDataSourceFactory(new DefaultDataSource.Factory(App.get(), httpFactory))
+                .setCacheWriteDataSinkFactory(null)
+                .setFlags(androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR);
     }
 
-    private CacheDataSource.Factory buildReadOnlyCacheDataSource(DataSource.Factory upstreamFactory) {
-        return new CacheDataSource.Factory().setCache(CacheManager.get().getCache()).setUpstreamDataSourceFactory(upstreamFactory).setCacheWriteDataSinkFactory(null).setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR);
-    }
-
-    private HttpDataSource.Factory getHttpDataSourceFactory() {
-        if (httpDataSourceFactory == null) httpDataSourceFactory = new DefaultHttpDataSource.Factory();
-        return httpDataSourceFactory;
+    private Map<String, String> getHeaders(MediaItem mediaItem) {
+        Map<String, String> headers = new HashMap<>();
+        Bundle extras = mediaItem.requestMetadata.extras;
+        if (extras != null) {
+            for (String key : extras.keySet()) {
+                Object value = extras.get(key);
+                if (value != null) headers.put(key, value.toString());
+            }
+        }
+        return headers;
     }
 }

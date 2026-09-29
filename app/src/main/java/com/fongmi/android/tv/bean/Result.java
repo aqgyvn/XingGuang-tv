@@ -15,6 +15,8 @@ import com.fongmi.android.tv.gson.MsgAdapter;
 import com.fongmi.android.tv.gson.UrlAdapter;
 import com.fongmi.android.tv.utils.Util;
 import com.github.catvod.utils.Trans;
+import com.github.catvod.net.SourceException;
+import com.github.catvod.net.SourceResponse;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 
@@ -109,6 +111,26 @@ public class Result implements Parcelable {
     public static Result fromJson(String str) {
         Result result = objectFrom(str);
         return result == null ? empty() : result.trans();
+    }
+
+    public static Result fromJsonChecked(String str) throws SourceException {
+        String content = SourceResponse.requireObject(str);
+        try {
+            Result result = App.gson().fromJson(content, Result.class);
+            if (result != null) return result.trans();
+        } catch (RuntimeException ignored) {
+        }
+        throw new SourceException(SourceException.Kind.FORMAT, 0);
+    }
+
+    public static Result fromTypeChecked(int type, String str) throws SourceException {
+        if (type != 0) return fromJsonChecked(str);
+        String content = SourceResponse.requireContent(str);
+        try {
+            return new Persister().read(Result.class, content, false).trans();
+        } catch (Exception error) {
+            throw new SourceException(SourceException.Kind.FORMAT, 0);
+        }
     }
 
     public static Result fromXml(String str) {

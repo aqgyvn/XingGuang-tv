@@ -47,11 +47,27 @@ public class XgDns {
     @NonNull
     public List<InetAddress> lookup(@NonNull String hostname) throws IOException {
         String target = get(hostname);
-        if (!target.equals(hostname)) return List.of(InetAddress.getByName(target));
+        if (!target.equals(hostname)) return systemLookup(target);
         Doh current = doh;
-        if (current == null) return List.of(InetAddress.getAllByName(hostname));
-        List<InetAddress> result = lookupDoh(current, hostname);
-        return result.isEmpty() ? List.of(InetAddress.getAllByName(hostname)) : result;
+        if (current == null) return systemLookup(hostname);
+        IOException dohFailure = null;
+        try {
+            List<InetAddress> result = lookupDoh(current, hostname);
+            if (!result.isEmpty()) return result;
+        } catch (IOException | RuntimeException error) {
+            dohFailure = new IOException("Configured DNS resolver failed", error);
+        }
+        if (Thread.currentThread().isInterrupted()) throw new java.io.InterruptedIOException("DNS canceled");
+        try {
+            return systemLookup(hostname);
+        } catch (IOException failure) {
+            if (dohFailure != null) failure.addSuppressed(dohFailure);
+            throw failure;
+        }
+    }
+
+    protected List<InetAddress> systemLookup(String hostname) throws IOException {
+        return List.of(InetAddress.getAllByName(hostname));
     }
 
     private String get(String hostname) {
@@ -69,7 +85,7 @@ public class XgDns {
         return doh != null;
     }
 
-    private List<InetAddress> lookupDoh(Doh item, String hostname) throws IOException {
+    protected List<InetAddress> lookupDoh(Doh item, String hostname) throws IOException {
         byte[] query = dnsQuery(hostname);
         String separator = item.getUrl().contains("?") ? "&" : "?";
         String encoded = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(query);

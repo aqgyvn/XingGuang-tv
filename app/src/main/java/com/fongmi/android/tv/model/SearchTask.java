@@ -7,6 +7,7 @@ import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.bean.Vod;
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.utils.Trans;
+import com.github.catvod.net.SourceException;
 
 import java.util.concurrent.Callable;
 
@@ -38,7 +39,8 @@ public class SearchTask implements Callable<Result> {
         return () -> {
             try {
                 model.search.postValue(call());
-            } catch (Throwable ignored) {
+            } catch (Exception error) {
+                if (!Thread.currentThread().isInterrupted()) SpiderDebug.log("source", "%s: %s", site.getName(), SourceException.describe(error));
             }
         };
     }
@@ -49,8 +51,8 @@ public class SearchTask implements Callable<Result> {
         boolean hasPage = !page.equals("1");
         if (site.getType() == 3) {
             String searchContent = hasPage ? site.spider().searchContent(keyword, quick, page) : site.spider().searchContent(keyword, quick);
+            Result result = Result.fromJsonChecked(searchContent);
             SpiderDebug.log("search", "site=%s,keyword=%s,quick=%s,page=%s\n%s", site.getName(), keyword, quick, page, searchContent.trim());
-            Result result = Result.fromJson(searchContent);
             for (Vod vod : result.getList()) vod.setSite(site);
             return result;
         } else {
@@ -61,7 +63,7 @@ public class SearchTask implements Callable<Result> {
             if (hasPage) params.put("pg", page);
             String searchContent = model.call(site, params);
             SpiderDebug.log("search", "site=%s,keyword=%s,quick=%s,page=%s\n%s", site.getName(), keyword, quick, page, searchContent.trim());
-            Result result = model.fetchPic(site, Result.fromType(site.getType(), searchContent));
+            Result result = model.fetchPic(site, Result.fromTypeChecked(site.getType(), searchContent));
             for (Vod vod : result.getList()) vod.setSite(site);
             return result;
         }

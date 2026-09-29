@@ -21,8 +21,8 @@ import com.fongmi.android.tv.utils.Sniffer;
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.net.XgHttp;
-import com.github.catvod.net.XgCall;
-import com.github.catvod.net.XgResponse;
+import com.github.catvod.net.SourceResponse;
+import com.github.catvod.net.SourceException;
 import com.github.catvod.utils.Prefers;
 import com.github.catvod.utils.Util;
 
@@ -76,13 +76,21 @@ public class SiteViewModel extends ViewModel {
                 Spider spider = site.recent().spider();
                 boolean crash = Prefers.getBoolean("crash");
                 String homeContent = crash ? "" : spider.homeContent(true);
-                String homeVideoContent = crash ? "" : spider.homeVideoContent();
                 Prefers.put("crash", false);
                 SpiderDebug.log("home", homeContent);
-                SpiderDebug.log("homeVideo", homeVideoContent);
-                Result result = Result.fromJson(homeContent);
-                List<Vod> list = Result.fromJson(homeVideoContent).getList();
-                if (!list.isEmpty()) result.setList(list);
+                Result result = crash ? Result.empty() : Result.fromJsonChecked(homeContent);
+                if (!crash) {
+                    try {
+                        String homeVideoContent = spider.homeVideoContent();
+                        if (homeVideoContent != null && !homeVideoContent.trim().isEmpty()) {
+                            List<Vod> list = Result.fromJsonChecked(homeVideoContent).getList();
+                            if (!list.isEmpty()) result.setList(list);
+                        }
+                    } catch (Exception error) {
+                        if (Thread.currentThread().isInterrupted()) throw error;
+                        SpiderDebug.log("source", "%s: %s", site.getName(), SourceException.describe(error));
+                    }
+                }
                 setTypes(site, result);
                 return result;
             } else if (site.getType() == 4) {
@@ -90,18 +98,16 @@ public class SiteViewModel extends ViewModel {
                 params.put("filter", "true");
                 String homeContent = call(site.fetchExt(), params);
                 SpiderDebug.log("home", homeContent);
-                Result result = Result.fromJson(homeContent);
+                Result result = Result.fromJsonChecked(homeContent);
                 setTypes(site, result);
                 return result;
             } else {
-                try (XgResponse response = XgHttp.call(site.getApi(), site.getHeader()).execute()) {
-                    String homeContent = response.body().string();
-                    SpiderDebug.log("home", homeContent);
-                    Result result = Result.fromType(site.getType(), homeContent);
-                    setTypes(site, result);
-                    fetchPic(site, result);
-                    return result;
-                }
+                String homeContent = SourceResponse.fetch(() -> XgHttp.call(site.getApi(), site.getHeader()), site.getType() == 0);
+                SpiderDebug.log("home", homeContent);
+                Result result = Result.fromTypeChecked(site.getType(), homeContent);
+                setTypes(site, result);
+                fetchPic(site, result);
+                return result;
             }
         });
     }
@@ -114,7 +120,7 @@ public class SiteViewModel extends ViewModel {
                 Spider spider = site.recent().spider();
                 String categoryContent = spider.categoryContent(tid, page, filter, extend);
                 SpiderDebug.log("category", categoryContent);
-                return Result.fromJson(categoryContent);
+                return Result.fromJsonChecked(categoryContent);
             } else {
                 ArrayMap<String, String> params = new ArrayMap<>();
                 if (site.getType() == 1 && !extend.isEmpty()) params.put("f", App.gson().toJson(extend));
@@ -124,7 +130,7 @@ public class SiteViewModel extends ViewModel {
                 params.put("pg", page);
                 String categoryContent = call(site, params);
                 SpiderDebug.log("category", categoryContent);
-                return Result.fromType(site.getType(), categoryContent);
+                return Result.fromTypeChecked(site.getType(), categoryContent);
             }
         });
     }
@@ -146,7 +152,7 @@ public class SiteViewModel extends ViewModel {
                 Spider spider = site.recent().spider();
                 String detailContent = spider.detailContent(Arrays.asList(id));
                 SpiderDebug.log("detail", detailContent);
-                Result result = Result.fromJson(detailContent);
+                Result result = Result.fromJsonChecked(detailContent);
                 Source.get().parse(result.getVod().setFlags());
                 return result;
             } else {
@@ -155,7 +161,7 @@ public class SiteViewModel extends ViewModel {
                 params.put("ids", id);
                 String detailContent = call(site, params);
                 SpiderDebug.log("detail", detailContent);
-                Result result = Result.fromType(site.getType(), detailContent);
+                Result result = Result.fromTypeChecked(site.getType(), detailContent);
                 Source.get().parse(result.getVod().setFlags());
                 return result;
             }
@@ -171,7 +177,7 @@ public class SiteViewModel extends ViewModel {
                 Spider spider = site.recent().spider();
                 String playerContent = spider.playerContent(flag, id, VodConfig.get().getFlags());
                 SpiderDebug.log("player", playerContent);
-                Result result = Result.fromJson(playerContent);
+                Result result = Result.fromJsonChecked(playerContent);
                 if (result.getFlag().isEmpty()) result.setFlag(flag);
                 result.setUrl(Source.get().fetch(result));
                 result.setHeader(site.getHeader());
@@ -183,7 +189,7 @@ public class SiteViewModel extends ViewModel {
                 params.put("flag", flag);
                 String playerContent = call(site, params);
                 SpiderDebug.log("player", playerContent);
-                Result result = Result.fromJson(playerContent);
+                Result result = Result.fromJsonChecked(playerContent);
                 if (result.getFlag().isEmpty()) result.setFlag(flag);
                 result.setUrl(Source.get().fetch(result));
                 result.setHeader(site.getHeader());
@@ -231,11 +237,9 @@ public class SiteViewModel extends ViewModel {
 
     public String call(Site site, ArrayMap<String, String> params) throws IOException {
         if (!site.getExt().isEmpty()) params.put("extend", site.getExt());
-        XgCall get = XgHttp.call(site.getApi(), site.getHeader(), params);
-        XgCall post = XgHttp.call(site.getApi(), site.getHeader(), XgHttp.xgBody(params));
-        try (XgResponse response = (site.getExt().length() <= 1000 ? get : post).execute()) {
-            return response.body().string();
-        }
+        return SourceResponse.fetch(() -> site.getExt().length() <= 1000
+                ? XgHttp.call(site.getApi(), site.getHeader(), params)
+                : XgHttp.call(site.getApi(), site.getHeader(), XgHttp.xgBody(params)), site.getType() == 0);
     }
 
     public Result fetchPic(Site site, Result result) throws Exception {
@@ -247,10 +251,16 @@ public class SiteViewModel extends ViewModel {
         ArrayMap<String, String> params = new ArrayMap<>();
         params.put("ac", site.getType() == 0 ? "videolist" : "detail");
         params.put("ids", TextUtils.join(",", ids));
-        try (XgResponse response = XgHttp.call(site.getApi(), site.getHeader(), params).execute()) {
-            result.setList(Result.fromType(site.getType(), response.body().string()).getList());
-            return result;
+        try {
+            String content = SourceResponse.fetch(() -> XgHttp.call(site.getApi(), site.getHeader(), params), site.getType() == 0);
+            List<Vod> enriched = Result.fromTypeChecked(site.getType(), content).getList();
+            if (!enriched.isEmpty()) result.setList(enriched);
+        } catch (IOException error) {
+            if (Thread.currentThread().isInterrupted()) throw error;
+            // An optional poster lookup must not discard already loaded search results.
+            SpiderDebug.log("source", "%s: %s", site.getName(), SourceException.describe(error));
         }
+        return result;
     }
 
     private void setTypes(Site site, Result result) {
@@ -263,18 +273,20 @@ public class SiteViewModel extends ViewModel {
         int currentId = taskId.incrementAndGet();
         if (future != null && !future.isDone()) future.cancel(true);
         if (executor.isShutdown()) return;
-        future = App.submit(callable);
+        Future<Result> currentFuture = App.submit(callable);
+        future = currentFuture;
         executor.execute(() -> {
             try {
-                Result taskResult = future.get(Constant.TIMEOUT_VOD, TimeUnit.MILLISECONDS);
-                if (taskId.get() != currentId) return;
-                result.postValue(taskResult);
+                Result taskResult = currentFuture.get(Constant.TIMEOUT_VOD, TimeUnit.MILLISECONDS);
+                App.post(() -> { if (taskId.get() == currentId) result.setValue(taskResult); });
             } catch (CancellationException ignored) {
             } catch (Throwable e) {
-                if (taskId.get() != currentId) return;
-                if (e.getCause() instanceof ExtractException) result.postValue(Result.error(e.getCause().getMessage()));
-                else result.postValue(Result.empty());
-                e.printStackTrace();
+                currentFuture.cancel(true);
+                if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+                if (taskId.get() != currentId || e instanceof InterruptedException) return;
+                String message = e.getCause() instanceof ExtractException ? e.getCause().getMessage() : SourceException.describe(e);
+                App.post(() -> { if (taskId.get() == currentId) result.setValue(Result.error(message)); });
+                SpiderDebug.log("source", message);
             }
         });
     }

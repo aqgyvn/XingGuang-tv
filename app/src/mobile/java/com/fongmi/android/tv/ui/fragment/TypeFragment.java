@@ -146,6 +146,7 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
     }
 
     private void setAdapter(Result result) {
+        if (result.hasMsg()) Notify.show(result.getMsg());
         boolean first = mScroller.first();
         int size = result.getList().size();
         mBinding.progressLayout.showContent(first, size);

@@ -2,8 +2,6 @@ package com.github.catvod.net.interceptor;
 
 import com.github.catvod.net.XgRequest;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RequestInterceptor implements okhttp3.Interceptor {
@@ -31,7 +29,12 @@ public class RequestInterceptor implements okhttp3.Interceptor {
         String saved = authMap.get(host);
         if (saved == null) return request;
         String separator = query == null || query.isEmpty() ? "?" : "&";
-        return request.newBuilder().url(request.url() + separator + "auth=" + URLEncoder.encode(saved, StandardCharsets.UTF_8)).build();
+        // saved is already the raw encoded query value. Re-encoding breaks signed tokens.
+        String url = request.url().toString();
+        int fragment = url.indexOf('#');
+        String suffix = fragment < 0 ? "" : url.substring(fragment);
+        if (fragment >= 0) url = url.substring(0, fragment);
+        return request.newBuilder().url(url + separator + "auth=" + saved + suffix).build();
     }
 
     private String queryValue(String query, String name) {

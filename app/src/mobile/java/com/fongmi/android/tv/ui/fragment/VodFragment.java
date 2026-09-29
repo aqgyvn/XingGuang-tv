@@ -176,12 +176,13 @@ public class VodFragment extends BaseFragment implements ConfigCallback, SiteCal
     }
 
     private void setAdapter(Result result) {
+        if (result.hasMsg()) Notify.show(result.getMsg());
         mAdapter.addAll(mResult = result);
         mHomeAdapter.setItems(result.getList());
         mBinding.hotRail.setVisibility(result.getList().isEmpty() ? View.GONE : View.VISIBLE);
         mBinding.pager.getAdapter().notifyDataSetChanged();
         setFabVisible(0);
-        mBinding.retry.setVisibility(View.GONE);
+        mBinding.retry.setVisibility(result.hasMsg() ? View.VISIBLE : View.GONE);
         hideProgress();
     }
 
